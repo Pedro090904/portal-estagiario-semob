@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gabarito Oficial & Análise Lógica — Desafio SQL SEMOB-DF</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #090d16;
+      --surface: #111827;
+      --surface-elevated: #1f2937;
+      --border: #374151;
+      --border-subtle: #232d3d;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+      --primary: #38bdf8;
+      --primary-hover: #0284c7;
+      --primary-dim: rgba(56, 189, 248, 0.12);
+      --secondary: #818cf8;
+      --success: #10b981;
+      --success-dim: rgba(16, 185, 129, 0.12);
+      --warning: #f59e0b;
+      --warning-dim: rgba(245, 158, 11, 0.12);
+      --danger: #ef4444;
+      --danger-dim: rgba(239, 68, 68, 0.12);
+      --code-bg: #0b1120;
+      --code-border: #1e293b;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'Fira Code', Menlo, Monaco, Consolas, monospace;
+    }
+
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-elevated: #f1f5f9;
+      --border: #cbd5e1;
+      --border-subtle: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --primary-dim: rgba(2, 132, 199, 0.1);
+      --secondary: #4f46e5;
+      --success: #059669;
+      --success-dim: rgba(5, 150, 105, 0.1);
+      --warning: #d97706;
+      --warning-dim: rgba(217, 119, 6, 0.1);
+      --danger: #dc2626;
+      --danger-dim: rgba(220, 38, 38, 0.1);
+      --code-bg: #f8fafc;
+      --code-border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .top-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(17, 24, 39, 0.94);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.3s;
+    }
+
+    [data-theme="light"] .top-toolbar {
+      background: rgba(255, 255, 255, 0.94);
+    }
+
+    .brand-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--success);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .brand-title svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 0.6rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--surface-elevated);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.45rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: var(--primary);
+      color: #090d16;
+      border-color: var(--primary);
+    }
+
+    .btn-primary {
+      background: var(--success);
+      color: #090d16;
+      border-color: var(--success);
+    }
+
+    .btn-primary:hover {
+      background: #059669;
+      color: #ffffff;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 5rem 1.5rem;
+    }
+
+    .hero-banner {
+      background: linear-gradient(145deg, #111827 0%, #064e3b 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 3.5rem 2.5rem;
+      margin-bottom: 3.5rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+    }
+
+    [data-theme="light"] .hero-banner {
+      background: linear-gradient(145deg, #ffffff 0%, #ecfdf5 100%);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--success-dim);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 0.35rem 0.9rem;
+      border-radius: 9999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero-title {
+      font-size: 2.4rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    .hero-title span {
+      background: linear-gradient(90deg, #10b981, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 850px;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .hero-meta {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .hero-meta strong {
+      color: var(--text);
+    }
+
+    .toc-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.75rem;
+      margin-bottom: 3.5rem;
+    }
+
+    .toc-card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: var(--success);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .toc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 0.75rem 1.5rem;
+      list-style: none;
+      padding: 0;
+    }
+
+    .toc-grid li a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.92rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: color 0.2s;
+    }
+
+    .toc-grid li a:hover {
+      color: var(--success);
+      text-decoration: underline;
+    }
+
+    .toc-grid li a::before {
+      content: "✓";
+      color: var(--success);
+      font-weight: bold;
+    }
+
+    h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 3.5rem 0 1.25rem 0;
+      padding-bottom: 0.6rem;
+      border-bottom: 2px solid var(--success);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    p {
+      margin-bottom: 1.15rem;
+      color: var(--text);
+    }
+
+    .solution-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      border-top: 3px solid var(--success);
+    }
+
+    .solution-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.75rem;
+      gap: 1rem;
+    }
+
+    .solution-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .solution-badge {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      background: var(--success-dim);
+      color: var(--success);
+      white-space: nowrap;
+    }
+
+    .solution-explanation {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+
+    .solution-explanation strong {
+      color: var(--text);
+    }
+
+    .code-container {
+      position: relative;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 0.75rem 0;
+      overflow: hidden;
+    }
+
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid var(--border);
+      padding: 0.45rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    pre {
+      padding: 1.15rem;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: #e2e8f0;
+    }
+
+    [data-theme="light"] pre {
+      color: #1e293b;
+    }
+
+    pre code {
+      background: transparent !important;
+      border: none !important;
+      padding: 0 !important;
+      color: inherit;
+    }
+
+    .copy-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 4px;
+      padding: 0.2rem 0.55rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: var(--success);
+      color: #090d16;
+      border-color: var(--success);
+    }
+
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 10.5pt !important;
+      }
+
+      .top-toolbar, .copy-btn {
+        display: none !important;
+      }
+
+      .container {
+        max-width: 100% !important;
+        padding: 0 !important;
+      }
+
+      .hero-banner {
+        background: #f1f5f9 !important;
+        border: 2px solid #94a3b8 !important;
+        color: #000000 !important;
+        box-shadow: none !important;
+        page-break-after: always;
+      }
+
+      h2 {
+        page-break-before: always;
+        color: #059669 !important;
+      }
+
+      pre, .code-container, .solution-card {
+        page-break-inside: avoid;
+        border: 1px solid #cbd5e1 !important;
+        background: #f8fafc !important;
+        color: #0f172a !important;
+      }
+
+      pre code {
+        color: #0f172a !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="top-toolbar">
+    <div class="brand-title">
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+      <span>Gabarito Oficial SQL — SEMOB-DF / SUTINF</span>
+    </div>
+    <div class="toolbar-actions">
+      <button class="btn" onclick="toggleTheme()" title="Alternar Modo Claro/Escuro">🌓 Tema</button>
+      <button class="btn btn-primary" onclick="window.print()" title="Guardar em PDF ou Imprimir">🖨 Imprimir / PDF</button>
+    </div>
+  </header>
+
+  <main class="container">
+    
+    <section class="hero-banner">
+      <div class="hero-badge">SUTINF • Resolução Técnica Oficial</div>
+      <h1 class="hero-title">Gabarito Oficial & <span>Raciocínio Lógico SQL</span></h1>
+      <p class="hero-subtitle">
+        Caderno completo de respostas para o desafio de banco de dados do plano de estágio: resolução técnica das 25 questões operacionais com junções estritas via WHERE, detalhamento de tabelas e justificativa relacional.
+      </p>
+      <div class="hero-meta">
+        <div><strong>Base Alvo:</strong> <code>dados_mobilidade</code> (PostgreSQL / PostGIS)</div>
+        <div><strong>Padrão de Junção:</strong> Relacionamento Explícito via <code>WHERE</code></div>
+        <div><strong>Status:</strong> Validado contra DDLs Oficiais</div>
+      </div>
+    </section>
+
+    <nav class="toc-card">
+      <h3>📑 Sumário das Resoluções</h3>
+      <ul class="toc-grid">
+        <li><a href="#parte-1">Parte I: Investigando a Linha 0.111 (Questões a-h)</a></li>
+        <li><a href="#parte-2">Parte II: Compreendendo os Sentidos — Linha 0.170 (Questões i-o)</a></li>
+        <li><a href="#parte-3">Parte III: Cruzamentos Estratégicos & BI (Questões p-y)</a></li>
+      </ul>
+    </nav>
+
+    <!-- PARTE I -->
+    <section id="parte-1">
+      <h2>Parte I: Investigando a Linha 0.111</h2>
+      <p>Consultas detalhadas sobre a linha operacional <code>0.111</code>, relacionando catálogo, itinerários, geometria, horários e empresas[cite: 5, 6].</p>
+
+      <!-- a -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">a. Liste as linhas de ônibus disponíveis, trazendo apenas o nome e o número da linha[cite: 5].</span>
+          <span class="solution-badge">tab_linha</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> Trata-se de uma consulta de catálogo simples em tabela única[cite: 13]. Não há necessidade de relacionamentos[cite: 13]. Projetamos a denominação oficial (<code>tx_linha</code>) e o código da linha (<code>cd_linha</code>) aplicando apelidos legíveis[cite: 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    tx_linha AS nome_linha,
+    cd_linha AS numero_linha
+FROM 
+    dados_mobilidade.tab_linha;</code></pre>
+        </div>
+      </div>
+
+      <!-- b -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">b. Apresente o nome, código e extensão especificamente da linha 0.111[cite: 6].</span>
+          <span class="solution-badge">tab_linha + tab_itinerario</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> O nome e o código estão em <code>tab_linha</code>, mas a extensão física (em quilômetros) reside em <code>tab_itinerario</code>[cite: 25]. Declaramos ambas no <code>FROM</code> e igualamos <code>l.id_linha = i.id_linha</code> no <code>WHERE</code>, filtrando em seguida pelo código <code>'0.111'</code>[cite: 5, 13, 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    l.tx_linha AS nome_linha,
+    l.cd_linha AS codigo_linha,
+    i.lin_extensao AS extensao_km
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND l.cd_linha = '0.111';</code></pre>
+        </div>
+      </div>
+
+      <!-- c -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">c. Qual é a extensão total da linha 0.111?[cite: 6]</span>
+          <span class="solution-badge">SUM() + GROUP BY</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> A linha possui trajetos de ida e de volta cadastrados separadamente[cite: 6]. Para obter a extensão total consolidada do serviço, somamos os registros com <code>SUM(i.lin_extensao)</code> agrupando pelo código da linha[cite: 23, 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    l.cd_linha,
+    SUM(i.lin_extensao) AS extensao_total_km
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND l.cd_linha = '0.111'
+GROUP BY 
+    l.cd_linha;</code></pre>
+        </div>
+      </div>
+
+      <!-- d -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">d. Qual o traçado espacial (geometria) da linha 0.111?[cite: 6]</span>
+          <span class="solution-badge">PostGIS • ST_AsText</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> A coluna <code>geo_linhas_lin</code> é do tipo espacial PostGIS (<code>geometry(linestring, 4326)</code>)[cite: 5, 25]. Se consultada diretamente, ela retorna dados binários hexadecimais legíveis apenas por SIGs. Usamos a função nativa <code>ST_AsText()</code> para convertê-la em coordenadas vetoriais legíveis[cite: 5].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    l.cd_linha,
+    i.lin_sentido,
+    public.ST_AsText(i.geo_linhas_lin) AS wkt_geometria
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND l.cd_linha = '0.111';</code></pre>
+        </div>
+      </div>
+
+      <!-- e -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">e. Qual é o itinerário em formato de texto descritivo da linha 0.111?[cite: 6]</span>
+          <span class="solution-badge">3 Tabelas via WHERE</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> O nome das avenidas e pontos percorridos está em <code>tab_itinerario_descritivo</code>[cite: 25]. Esta tabela liga-se a <code>tab_itinerario</code> através de <code>id_itinerario</code>, que por sua vez liga-se a <code>tab_linha</code> por <code>id_linha</code>[cite: 25]. Ordenamos por <code>nm_sequencia</code> para acompanhar o percurso na ordem real de tráfego[cite: 14, 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    l.cd_linha,
+    i.lin_sentido,
+    d.nm_sequencia,
+    d.nm_via,
+    d.localidade
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i,
+    dados_mobilidade.tab_itinerario_descritivo d
+WHERE 
+    l.id_linha = i.id_linha
+    AND i.id_itinerario = d.id_itinerario
+    AND l.cd_linha = '0.111'
+ORDER BY 
+    i.lin_sentido ASC,
+    d.nm_sequencia ASC;</code></pre>
+        </div>
+      </div>
+
+      <!-- f -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">f. Qual o valor atual da tarifa da linha 0.111?[cite: 6]</span>
+          <span class="solution-badge">tab_linha</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> No banco PostgreSQL da SEMOB, o valor tarifário está desnormalizado e acessível diretamente na coluna <code>vl_tarifa</code> da tabela <code>tab_linha</code>[cite: 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    cd_linha,
+    tx_linha,
+    vl_tarifa,
+    fx_tarifaria
+FROM 
+    dados_mobilidade.tab_linha
+WHERE 
+    cd_linha = '0.111';</code></pre>
+        </div>
+      </div>
+
+      <!-- g -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">g. Quais são os horários de operação da linha 0.111, detalhados por dia da semana e ordem de partida?[cite: 6]</span>
+          <span class="solution-badge">tab_horario</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> A tabela <code>tab_horario</code> possui a chave estrangeira <code>id_operadora_linha</code>[cite: 25]. Para chegar até a linha, associamos <code>tab_linha</code> com <code>tab_operadora_linha</code> e esta com <code>tab_horario</code>[cite: 25]. A coluna <code>hr_prevista</code> armazena a hora de partida (ex.: 073000 para 07:30)[cite: 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    l.cd_linha,
+    h.sentido,
+    h.hr_prevista,
+    h.segunda,
+    h.terca,
+    h.quarta,
+    h.quinta,
+    h.sexta,
+    h.sabado,
+    h.domingo
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_operadora_linha ol,
+    dados_mobilidade.tab_horario h
+WHERE 
+    l.id_linha = ol.id_linha
+    AND ol.id_operadora_linha = h.id_operadora_linha
+    AND l.cd_linha = '0.111'
+ORDER BY 
+    h.sentido ASC,
+    h.hr_prevista ASC;</code></pre>
+        </div>
+      </div>
+
+      <!-- h -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">h. Qual empresa permissionária opera a linha 0.111?[cite: 6]</span>
+          <span class="solution-badge">tab_operadora</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> A relação entre linhas e operadoras é de muitos para muitos (N:N), resolvida pela tabela intermediária <code>tab_operadora_linha</code>[cite: 25]. Estabelecemos as duas pontas da ligação no <code>WHERE</code>: <code>l.id_linha = ol.id_linha</code> e <code>ol.id_operadora = o.id_operadora</code>[cite: 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    l.cd_linha,
+    l.tx_linha,
+    o.nm_operadora,
+    o.nm_cpf_cnpj
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_operadora_linha ol,
+    dados_mobilidade.tab_operadora o
+WHERE 
+    l.id_linha = ol.id_linha
+    AND ol.id_operadora = o.id_operadora
+    AND l.cd_linha = '0.111';</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- PARTE II -->
+    <section id="parte-2">
+      <h2>Parte II: Compreendendo os Sentidos (Linha 0.170)</h2>
+      <p>Consultas que demonstram como filtrar e separar registros operacionais por sentido (Ida, Volta ou Circular)[cite: 6].</p>
+
+      <!-- i e j -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">i & j. Nome, código e extensão da linha 0.170, separada por sentido (ida/volta)[cite: 6].</span>
+          <span class="solution-badge">Segmentação de Sentido</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> Em vez de somar as extensões, projetamos individualmente a coluna <code>i.lin_sentido</code>, permitindo visualizar a quilometragem exata percorrida na Ida ('I') e na Volta ('V')[cite: 6, 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    l.cd_linha,
+    l.tx_linha,
+    i.lin_sentido,
+    i.lin_extensao AS extensao_km
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND l.cd_linha = '0.170'
+ORDER BY 
+    i.lin_sentido ASC;</code></pre>
+        </div>
+      </div>
+
+      <!-- k -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">k. Qual o traçado espacial da linha 0.170, segmentado por sentido?[cite: 6]</span>
+          <span class="solution-badge">PostGIS por Sentido</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> O traçado geográfico de ida frequentemente difere da volta devido a vias de mão única. A função <code>ST_AsText()</code> projeta cada geometria associada ao seu respectivo sentido[cite: 5, 6, 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    l.cd_linha,
+    i.lin_sentido,
+    public.ST_AsText(i.geo_linhas_lin) AS wkt_geometria
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND l.cd_linha = '0.170';</code></pre>
+        </div>
+      </div>
+
+      <!-- l -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">l. Qual o itinerário em formato de texto da linha 0.170, por sentido?[cite: 6]</span>
+          <span class="solution-badge">Vias Ordenadas</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> Unimos <code>tab_linha</code>, <code>tab_itinerario</code> e <code>tab_itinerario_descritivo</code> via <code>WHERE</code>, garantindo a ordenação sequencial para cada percurso[cite: 14, 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    l.cd_linha,
+    i.lin_sentido,
+    d.nm_sequencia,
+    d.nm_via,
+    d.localidade
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i,
+    dados_mobilidade.tab_itinerario_descritivo d
+WHERE 
+    l.id_linha = i.id_linha
+    AND i.id_itinerario = d.id_itinerario
+    AND l.cd_linha = '0.170'
+ORDER BY 
+    i.lin_sentido ASC,
+    d.nm_sequencia ASC;</code></pre>
+        </div>
+      </div>
+
+      <!-- m -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">m. Qual o valor da tarifa da linha 0.170?[cite: 6]</span>
+          <span class="solution-badge">Tarifa</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> Consulta pontual sobre a coluna <code>vl_tarifa</code> filtrada por <code>cd_linha = '0.170'</code>[cite: 6, 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    cd_linha,
+    tx_linha,
+    vl_tarifa
+FROM 
+    dados_mobilidade.tab_linha
+WHERE 
+    cd_linha = '0.170';</code></pre>
+        </div>
+      </div>
+
+      <!-- n -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">n. Quais são os horários da linha 0.170, agrupados por sentido?[cite: 6]</span>
+          <span class="solution-badge">Quadro Horário</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> Conectamos a linha até a tabela de horários através de <code>tab_operadora_linha</code>, ordenando pelo sentido e hora prevista[cite: 14, 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    l.cd_linha,
+    h.sentido,
+    h.hr_prevista,
+    h.segunda,
+    h.terca,
+    h.quarta,
+    h.quinta,
+    h.sexta,
+    h.sabado,
+    h.domingo
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_operadora_linha ol,
+    dados_mobilidade.tab_horario h
+WHERE 
+    l.id_linha = ol.id_linha
+    AND ol.id_operadora_linha = h.id_operadora_linha
+    AND l.cd_linha = '0.170'
+ORDER BY 
+    h.sentido ASC,
+    h.hr_prevista ASC;</code></pre>
+        </div>
+      </div>
+
+      <!-- o -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">o. Qual empresa opera a linha 0.170?[cite: 6]</span>
+          <span class="solution-badge">Operadora</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> Vinculamos a linha com a sua respectiva operadora através da tabela associativa[cite: 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    l.cd_linha,
+    o.nm_operadora
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_operadora_linha ol,
+    dados_mobilidade.tab_operadora o
+WHERE 
+    l.id_linha = ol.id_linha
+    AND ol.id_operadora = o.id_operadora
+    AND l.cd_linha = '0.170';</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- PARTE III -->
+    <section id="parte-3">
+      <h2>Parte III: Cruzamentos Estratégicos & Business Intelligence</h2>
+      <p>Consultas avançadas de agregação, filtros numéricos e análise global do ecossistema de transporte[cite: 3, 6, 7].</p>
+
+      <!-- p -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">p. Quais linhas do sistema possuem uma extensão superior a 70 km?[cite: 6]</span>
+          <span class="solution-badge">WHERE lin_extensao > 70</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> Fazemos a junção de <code>tab_linha</code> com <code>tab_itinerario</code> no <code>WHERE</code> e aplicamos o filtro numérico <code>i.lin_extensao > 70.00</code>[cite: 6, 13, 25]. Usamos <code>DISTINCT</code> para evitar que uma mesma linha apareça duplicada caso ambos os sentidos superem 70 km[cite: 15, 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT DISTINCT 
+    l.cd_linha,
+    l.tx_linha,
+    i.lin_sentido,
+    i.lin_extensao
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND i.lin_extensao > 70.00
+ORDER BY 
+    i.lin_extensao DESC;</code></pre>
+        </div>
+      </div>
+
+      <!-- q -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">q. Qual é a linha de ônibus mais curta de todo o sistema?[cite: 6]</span>
+          <span class="solution-badge">Subconsulta Escalar / MIN()</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> Uma subconsulta calcula o menor valor positivo de extensão existente na tabela de itinerários com <code>MIN(lin_extensao)</code>[cite: 21, 23, 25]. A consulta externa iguala a extensão a esse valor mínimo para recuperar o nome e o código da linha[cite: 21, 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    l.cd_linha,
+    l.tx_linha,
+    i.lin_sentido,
+    i.lin_extensao
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND i.lin_extensao = (
+        SELECT MIN(lin_extensao) 
+        FROM dados_mobilidade.tab_itinerario 
+        WHERE lin_extensao > 0
+    );</code></pre>
+        </div>
+      </div>
+
+      <!-- r -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">r. Qual é a linha de ônibus mais longa do sistema?[cite: 6]</span>
+          <span class="solution-badge">Subconsulta Escalar / MAX()</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> Mesma lógica da questão anterior, agora utilizando a função de agregação <code>MAX()</code> para encontrar o maior percurso em quilômetros[cite: 21, 23, 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    l.cd_linha,
+    l.tx_linha,
+    i.lin_sentido,
+    i.lin_extensao
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND i.lin_extensao = (
+        SELECT MAX(lin_extensao) 
+        FROM dados_mobilidade.tab_itinerario
+    );</code></pre>
+        </div>
+      </div>
+
+      <!-- s -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">s. Quantas linhas no total operam no formato "circular"?[cite: 7]</span>
+          <span class="solution-badge">COUNT(DISTINCT)</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> O formato circular é sinalizado pela letra 'C' em <code>lin_sentido</code>[cite: 7, 25]. Usamos <code>COUNT(DISTINCT l.id_linha)</code> para garantir que cada linha seja contabilizada uma única vez[cite: 15, 23, 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    COUNT(DISTINCT l.id_linha) AS total_linhas_circulares
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND (i.lin_sentido = 'C' OR i.lin_sentido ILIKE '%CIRC%');</code></pre>
+        </div>
+      </div>
+
+      <!-- t -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">t. Dentre as linhas de sentido circular, qual possui a maior extensão?[cite: 7]</span>
+          <span class="solution-badge">ORDER BY + LIMIT 1</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> Filtramos apenas itinerários circulares, ordenamos pela extensão em ordem decrescente (<code>DESC</code>) e cortamos a primeira posição com <code>LIMIT 1</code>[cite: 7, 14, 15, 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    l.cd_linha,
+    l.tx_linha,
+    i.lin_extensao
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND (i.lin_sentido = 'C' OR i.lin_sentido ILIKE '%CIRC%')
+ORDER BY 
+    i.lin_extensao DESC
+LIMIT 1;</code></pre>
+        </div>
+      </div>
+
+      <!-- u -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">u. Quais linhas possuem a tarifa exata de R$ 5,50?[cite: 7]</span>
+          <span class="solution-badge">vl_tarifa = 5.50</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> Filtro exato na coluna <code>vl_tarifa = 5.50</code> sobre a tabela <code>tab_linha</code>[cite: 7, 13, 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    cd_linha,
+    tx_linha,
+    vl_tarifa
+FROM 
+    dados_mobilidade.tab_linha
+WHERE 
+    vl_tarifa = 5.50
+ORDER BY 
+    cd_linha ASC;</code></pre>
+        </div>
+      </div>
+
+      <!-- v -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">v. Quais linhas são operadas especificamente pela empresa "Piracicabana"?[cite: 7]</span>
+          <span class="solution-badge">Filtro Textual em tab_operadora</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> Ligamos as 3 tabelas operacionais e aplicamos <code>ILIKE '%PIRACICABANA%'</code> sobre a coluna de razão social/nome fantasia da empresa[cite: 7, 18, 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT DISTINCT 
+    l.cd_linha,
+    l.tx_linha,
+    o.nm_operadora
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_operadora_linha ol,
+    dados_mobilidade.tab_operadora o
+WHERE 
+    l.id_linha = ol.id_linha
+    AND ol.id_operadora = o.id_operadora
+    AND o.nm_operadora ILIKE '%PIRACICABANA%'
+ORDER BY 
+    l.cd_linha ASC;</code></pre>
+        </div>
+      </div>
+
+      <!-- w -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">w. Quais linhas contêm a palavra "Gama" em sua nomenclatura?[cite: 7]</span>
+          <span class="solution-badge">ILIKE '%GAMA%'</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> O curinga <code>%GAMA%</code> localiza qualquer registro onde a palavra apareça no início, meio ou fim do nome da linha[cite: 5, 7, 18].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    cd_linha,
+    tx_linha
+FROM 
+    dados_mobilidade.tab_linha
+WHERE 
+    tx_linha ILIKE '%GAMA%'
+ORDER BY 
+    cd_linha ASC;</code></pre>
+        </div>
+      </div>
+
+      <!-- x -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">x. Quais linhas do sistema possuem operação compartilhada (mais de uma empresa operando)?[cite: 7]</span>
+          <span class="solution-badge">GROUP BY + HAVING COUNT > 1</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> Agrupamos a tabela associativa <code>tab_operadora_linha</code> por linha e filtramos os grupos com <code>HAVING COUNT(DISTINCT ol.id_operadora) > 1</code>, identificando linhas que possuem mais de uma concessionária associada[cite: 7, 16, 23, 25].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT 
+    l.cd_linha,
+    l.tx_linha,
+    COUNT(DISTINCT ol.id_operadora) AS qtd_operadoras
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_operadora_linha ol
+WHERE 
+    l.id_linha = ol.id_linha
+GROUP BY 
+    l.cd_linha,
+    l.tx_linha
+HAVING 
+    COUNT(DISTINCT ol.id_operadora) > 1
+ORDER BY 
+    qtd_operadoras DESC;</code></pre>
+        </div>
+      </div>
+
+      <!-- y -->
+      <div class="solution-card">
+        <div class="solution-header">
+          <span class="solution-title">y. Quais linhas compõem o sistema noturno e operam de madrugada (com partidas entre 00h00 e 04h00)?[cite: 7]</span>
+          <span class="solution-badge">BETWEEN 0 AND 40000</span>
+        </div>
+        <div class="solution-explanation">
+          <strong>Raciocínio Lógico:</strong> A coluna <code>hr_prevista</code> é numérica (formato <code>HHMMSS</code>)[cite: 25]. O intervalo entre 00h00 e 04h00 corresponde aos valores de <code>0</code> a <code>40000</code>[cite: 7, 25]. Usamos <code>BETWEEN</code> para cobrir toda a faixa horária de forma inclusiva[cite: 19].
+        </div>
+        <div class="code-container">
+          <div class="code-header"><span>SQL</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+          <pre><code>SELECT DISTINCT 
+    l.cd_linha,
+    l.tx_linha,
+    h.hr_prevista,
+    h.sentido
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_operadora_linha ol,
+    dados_mobilidade.tab_horario h
+WHERE 
+    l.id_linha = ol.id_linha
+    AND ol.id_operadora_linha = h.id_operadora_linha
+    AND h.hr_prevista BETWEEN 0 AND 40000
+ORDER BY 
+    h.hr_prevista ASC,
+    l.cd_linha ASC;</code></pre>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('semob_db_gabarito_theme', next);
+    }
+
+    const savedTheme = localStorage.getItem('semob_db_gabarito_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    function copyCode(button) {
+      const pre = button.closest('.code-container').querySelector('pre');
+      const text = pre.innerText;
+
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.innerText;
+        button.innerText = 'Copiado! ✓';
+        button.style.borderColor = 'var(--success)';
+        button.style.color = 'var(--success)';
+        
+        setTimeout(() => {
+          button.innerText = originalText;
+          button.style.borderColor = '';
+          button.style.color = '';
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manual Oficial do Git & Engenharia Colaborativa — Do Zero à Produção</title>
+  
+  <!-- Fontes Google -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #090d16;
+      --surface: #111827;
+      --surface-elevated: #1f2937;
+      --border: #374151;
+      --border-subtle: #232d3d;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+      --primary: #38bdf8;
+      --primary-hover: #0284c7;
+      --primary-dim: rgba(56, 189, 248, 0.12);
+      --secondary: #818cf8;
+      --success: #10b981;
+      --success-dim: rgba(16, 185, 129, 0.12);
+      --warning: #f59e0b;
+      --warning-dim: rgba(245, 158, 11, 0.12);
+      --danger: #ef4444;
+      --danger-dim: rgba(239, 68, 68, 0.12);
+      --code-bg: #0b1120;
+      --code-border: #1e293b;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'Fira Code', Menlo, Monaco, Consolas, monospace;
+    }
+
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-elevated: #f1f5f9;
+      --border: #cbd5e1;
+      --border-subtle: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --primary-dim: rgba(2, 132, 199, 0.1);
+      --secondary: #4f46e5;
+      --success: #059669;
+      --success-dim: rgba(5, 150, 105, 0.1);
+      --warning: #d97706;
+      --warning-dim: rgba(217, 119, 6, 0.1);
+      --danger: #dc2626;
+      --danger-dim: rgba(220, 38, 38, 0.1);
+      --code-bg: #f8fafc;
+      --code-border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Navigation Toolbar */
+    .top-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(17, 24, 39, 0.94);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.3s;
+    }
+
+    [data-theme="light"] .top-toolbar {
+      background: rgba(255, 255, 255, 0.94);
+    }
+
+    .brand-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .brand-title svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 0.6rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--surface-elevated);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.45rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: var(--primary);
+      color: #090d16;
+      border-color: var(--primary);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #090d16;
+      border-color: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      color: #ffffff;
+    }
+
+    /* Layout */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 5rem 1.5rem;
+    }
+
+    /* Hero / Cover Section */
+    .hero-banner {
+      background: linear-gradient(145deg, #111827 0%, #172554 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 3.5rem 2.5rem;
+      margin-bottom: 3.5rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+    }
+
+    [data-theme="light"] .hero-banner {
+      background: linear-gradient(145deg, #ffffff 0%, #e0f2fe 100%);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--primary-dim);
+      color: var(--primary);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 0.35rem 0.9rem;
+      border-radius: 9999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero-title {
+      font-size: 2.4rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    .hero-title span {
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .hero-meta {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .hero-meta strong {
+      color: var(--text);
+    }
+
+    /* Table of Contents */
+    .toc-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.75rem;
+      margin-bottom: 3.5rem;
+    }
+
+    .toc-card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .toc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 0.75rem 1.5rem;
+      list-style: none;
+      padding: 0;
+    }
+
+    .toc-grid li a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.92rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: color 0.2s;
+    }
+
+    .toc-grid li a:hover {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+
+    .toc-grid li a::before {
+      content: "→";
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    /* Headings */
+    h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 3.5rem 0 1.25rem 0;
+      padding-bottom: 0.6rem;
+      border-bottom: 2px solid var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    h3 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--secondary);
+      margin: 2rem 0 0.85rem 0;
+    }
+
+    p {
+      margin-bottom: 1.15rem;
+      color: var(--text);
+    }
+
+    ul, ol {
+      margin-bottom: 1.25rem;
+      padding-left: 1.5rem;
+    }
+
+    li {
+      margin-bottom: 0.45rem;
+    }
+
+    /* Callouts / Alert Boxes */
+    .callout {
+      border-radius: 8px;
+      padding: 1.25rem 1.4rem;
+      margin: 1.75rem 0;
+      border-left: 4px solid;
+      background: var(--surface);
+    }
+
+    .callout-header {
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .callout-info {
+      border-color: var(--primary);
+      background: var(--primary-dim);
+    }
+    .callout-info .callout-header { color: var(--primary); }
+
+    .callout-success {
+      border-color: var(--success);
+      background: var(--success-dim);
+    }
+    .callout-success .callout-header { color: var(--success); }
+
+    .callout-warning {
+      border-color: var(--warning);
+      background: var(--warning-dim);
+    }
+    .callout-warning .callout-header { color: var(--warning); }
+
+    .callout-danger {
+      border-color: var(--danger);
+      background: var(--danger-dim);
+    }
+    .callout-danger .callout-header { color: var(--danger); }
+
+    /* Code Blocks and Inline Code */
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      padding: 0.18em 0.45em;
+      border-radius: 4px;
+      color: var(--primary);
+    }
+
+    .code-container {
+      position: relative;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 1.25rem 0 1.75rem 0;
+      overflow: hidden;
+    }
+
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid var(--border);
+      padding: 0.45rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    pre {
+      padding: 1.15rem;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: #e2e8f0;
+    }
+
+    [data-theme="light"] pre {
+      color: #1e293b;
+    }
+
+    pre code {
+      background: transparent !important;
+      border: none !important;
+      padding: 0 !important;
+      color: inherit;
+    }
+
+    .copy-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 4px;
+      padding: 0.2rem 0.55rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: var(--primary);
+      color: #090d16;
+      border-color: var(--primary);
+    }
+
+    /* Tables */
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      margin: 1.5rem 0 2rem 0;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.92rem;
+    }
+
+    th {
+      background: var(--surface-elevated);
+      color: var(--primary);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border-subtle);
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    /* Diagram Containers */
+    .diagram-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.75rem 1.25rem;
+      margin: 2rem 0;
+      text-align: center;
+    }
+
+    .diagram-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .diagram-svg {
+      width: 100%;
+      max-width: 950px;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* Scenario Search & Filter Component */
+    .scenario-filter-bar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 250px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.65rem 1rem;
+      border-radius: 6px;
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--primary);
+    }
+
+    .scenario-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+
+    .scenario-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    .scenario-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .scenario-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .badge-danger { background: var(--danger-dim); color: var(--danger); }
+    .badge-warning { background: var(--warning-dim); color: var(--warning); }
+    .badge-info { background: var(--primary-dim); color: var(--primary); }
+    .badge-success { background: var(--success-dim); color: var(--success); }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 11pt !important;
+      }
+
+      .top-toolbar, .scenario-filter-bar, .copy-btn {
+        display: none !important;
+      }
+
+      .container {
+        max-width: 100% !important;
+        padding: 0 !important;
+      }
+
+      .hero-banner {
+        background: #f1f5f9 !important;
+        border: 2px solid #94a3b8 !important;
+        color: #000000 !important;
+        box-shadow: none !important;
+        page-break-after: always;
+      }
+
+      h2 {
+        page-break-before: always;
+        color: #0369a1 !important;
+      }
+
+      pre, .code-container, .diagram-container, table, .callout {
+        page-break-inside: avoid;
+        border: 1px solid #cbd5e1 !important;
+        background: #f8fafc !important;
+        color: #0f172a !important;
+      }
+
+      pre code {
+        color: #0f172a !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Toolbar -->
+  <header class="top-toolbar">
+    <div class="brand-title">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+      <span>Git Engineering Manual — v2.0</span>
+    </div>
+    <div class="toolbar-actions">
+      <button class="btn" onclick="toggleTheme()" title="Alternar Modo Claro/Escuro">🌓 Tema</button>
+      <button class="btn btn-primary" onclick="window.print()" title="Salvar em PDF ou Imprimir">🖨️ Imprimir / PDF</button>
+    </div>
+  </header>
+
+  <main class="container">
+    
+    <!-- Hero / Capa -->
+    <section class="hero-banner">
+      <div class="hero-badge">Engenharia de Software • Guia e Padronização</div>
+      <h1 class="hero-title">Manual Completo de <span>Git & Fluxo Colaborativo</span></h1>
+      <p class="hero-subtitle">
+        Do zero absoluto à esteira profissional de deploy: fundamentos, analogias, comandos essenciais, padronização de commits, arquitetura de branches e gestão de tags entre ambientes (Dev, Homolog e Prod).
+      </p>
+      <div class="hero-meta">
+        <div><strong>Público:</strong> Estagiários, Desenvolvedores e Tech Leads</div>
+        <div><strong>Padrão:</strong> Conventional Commits + SemVer + GitFlow</div>
+        <div><strong>Ecossistema:</strong> Git Local • GitHub • GitLab</div>
+      </div>
+    </section>
+
+    <!-- Sumário -->
+    <nav class="toc-card">
+      <h3>📑 Sumário de Conteúdos</h3>
+      <ul class="toc-grid">
+        <li><a href="#modulo-1">1. O que é o Git e Como Ele Funciona</a></li>
+        <li><a href="#modulo-2">2. Git vs. GitHub vs. GitLab</a></li>
+        <li><a href="#modulo-3">3. A Arquitetura das 4 Zonas do Git</a></li>
+        <li><a href="#modulo-4">4. Comandos Essenciais do Dia a Dia</a></li>
+        <li><a href="#modulo-5">5. Viagem no Tempo: Desfazendo Alterações</a></li>
+        <li><a href="#modulo-6">6. Tags de Produção, Homologação e Dev</a></li>
+        <li><a href="#modulo-7">7. Padronização (Conventional Commits)</a></li>
+        <li><a href="#modulo-8">8. Boas Práticas em Equipes</a></li>
+        <li><a href="#modulo-9">9. Base de Cenários ("O que fazer quando...?")</a></li>
+      </ul>
+    </nav>
+
+    <!-- MÓDULO 1 -->
+    <section id="modulo-1">
+      <h2>1. O que é o Git, Para que Serve e Como Pensar Nele</h2>
+      
+      <p>
+        O <strong>Git</strong> é um <em>Sistema de Controle de Versões Distribuído</em> (DVCS). Em termos práticos, ele monitora cada alteração feita no código-fonte de um projeto ao longo do tempo, registrando exatamente <strong>quem</strong> alterou, <strong>quando</strong> alterou, <strong>quais linhas</strong> mudaram e <strong>qual o propósito</strong> daquela alteração.
+      </p>
+
+      <div class="callout callout-info">
+        <div class="callout-header">💡 A Analogia Mental do Git</div>
+        <p><strong>Pense no Git como uma Máquina do Tempo com Universos Paralelos e Pontos de Salvamento (Checkpoints):</strong></p>
+        <ul>
+          <li><strong>O Checkpoint (Commit):</strong> Imagine que você está jogando um RPG difícil. Antes de entrar em uma sala perigosa, você salva o progresso. Se morrer, volta para o save exato. No Git, cada commit é esse ponto de salvamento imutável.</li>
+          <li><strong>O Universo Paralelo (Branch):</strong> Se você quer experimentar uma magia nova arriscada sem perder seu progresso no jogo principal, você cria um "clone da realidade". Se a experiência der certo, você funde essa realidade com a principal (Merge). Se der errado, você simplesmente descarta o universo sem danificar nada.</li>
+          <li><strong>O Livro de Histórias (Log):</strong> Cada decisão tomada no código tem data, autor e motivo registrado. Ninguém precisa adivinhar por que uma linha de código foi escrita há 2 anos.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- MÓDULO 2 -->
+    <section id="modulo-2">
+      <h2>2. Git Local vs. Plataformas na Nuvem (GitHub & GitLab)</h2>
+      
+      <p>
+        Um erro clássico de quem está iniciando na área é confundir o Git com o GitHub ou GitLab. Eles não são a mesma coisa:
+      </p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Aspecto</th>
+              <th>Git (Ferramenta Local)</th>
+              <th>GitHub / GitLab (Plataformas em Nuvem)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>O que é?</strong></td>
+              <td>O motor de software instalado no seu computador.</td>
+              <td>Plataformas web que hospedam repositórios Git remotos na nuvem.</td>
+            </tr>
+            <tr>
+              <td><strong>Onde roda?</strong></td>
+              <td>100% offline no seu terminal / máquina de desenvolvimento.</td>
+              <td>Em servidores corporativos ou servidores na nuvem (SaaS).</td>
+            </tr>
+            <tr>
+              <td><strong>Função Principal</strong></td>
+              <td>Rastrear arquivos, criar branches, comitar histórico localmente.</td>
+              <td>Colaboração em equipe, code review, automações e segurança.</td>
+            </tr>
+            <tr>
+              <td><strong>Recursos Chave</strong></td>
+              <td><code>git commit</code>, <code>git branch</code>, <code>git merge</code>, <code>git log</code></td>
+              <td>Pull Request / Merge Request, Issues, Kanban, CI/CD Pipelines.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>GitHub vs. GitLab: Terminologia Equivalente</h3>
+      <ul>
+        <li><strong>GitHub Pull Request (PR) = GitLab Merge Request (MR):</strong> Uma solicitação formal para mesclar o código da sua branch de desenvolvimento para a branch principal, onde colegas revisam o código linha por linha antes de aceitar.</li>
+        <li><strong>GitHub Actions = GitLab CI/CD:</strong> Robôs automatizados configurados para rodar testes unitários, checar regras de estilo (linting) e realizar o deploy automático nos servidores de homologação ou produção sempre que um código novo é aprovado.</li>
+      </ul>
+    </section>
+
+    <!-- MÓDULO 3 -->
+    <section id="modulo-3">
+      <h2>3. A Arquitetura das 4 Zonas do Git</h2>
+      <p>
+        Para dominar o Git, você não deve apenas decorar comandos: você precisa enxergar onde o seu arquivo está fisicamente dentro das 4 camadas fundamentais.
+      </p>
+
+      <div class="diagram-container">
+        <div class="diagram-title">Diagrama: O Fluxo de Dados entre as 4 Camadas do Git</div>
+        <svg class="diagram-svg" viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg">
+          <!-- Zones -->
+          <rect x="20" y="40" width="190" height="240" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+          <text x="115" y="70" fill="#38bdf8" font-family="Inter" font-weight="bold" font-size="14" text-anchor="middle">1. WORKING DIRECTORY</text>
+          <text x="115" y="90" fill="#94a3b8" font-family="Inter" font-size="11" text-anchor="middle">(Seus arquivos reais na IDE)</text>
+          
+          <rect x="250" y="40" width="190" height="240" rx="8" fill="#1e293b" stroke="#818cf8" stroke-width="2"/>
+          <text x="345" y="70" fill="#818cf8" font-family="Inter" font-weight="bold" font-size="14" text-anchor="middle">2. STAGING AREA</text>
+          <text x="345" y="90" fill="#94a3b8" font-family="Inter" font-size="11" text-anchor="middle">(O "palco" de preparação)</text>
+
+          <rect x="480" y="40" width="190" height="240" rx="8" fill="#1e293b" stroke="#10b981" stroke-width="2"/>
+          <text x="575" y="70" fill="#10b981" font-family="Inter" font-weight="bold" font-size="14" text-anchor="middle">3. REPOSITÓRIO LOCAL</text>
+          <text x="575" y="90" fill="#94a3b8" font-family="Inter" font-size="11" text-anchor="middle">(Histórico definitivo (.git))</text>
+
+          <rect x="710" y="40" width="170" height="240" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+          <text x="795" y="70" fill="#f59e0b" font-family="Inter" font-weight="bold" font-size="14" text-anchor="middle">4. REPOSITÓRIO REMOTO</text>
+          <text x="795" y="90" fill="#94a3b8" font-family="Inter" font-size="11" text-anchor="middle">(GitHub / GitLab na Nuvem)</text>
+
+          <!-- Arrows & Actions -->
+          <!-- git add -->
+          <path d="M 210 130 L 250 130" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="230" y="120" fill="#38bdf8" font-family="Fira Code" font-size="11" text-anchor="middle">git add</text>
+
+          <!-- git commit -->
+          <path d="M 440 130 L 480 130" stroke="#818cf8" stroke-width="2"/>
+          <text x="460" y="120" fill="#818cf8" font-family="Fira Code" font-size="11" text-anchor="middle">git commit</text>
+
+          <!-- git push -->
+          <path d="M 670 130 L 710 130" stroke="#10b981" stroke-width="2"/>
+          <text x="690" y="120" fill="#10b981" font-family="Fira Code" font-size="11" text-anchor="middle">git push</text>
+
+          <!-- git fetch / pull (return) -->
+          <path d="M 710 190 L 480 190" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4"/>
+          <text x="595" y="180" fill="#f59e0b" font-family="Fira Code" font-size="11" text-anchor="middle">git fetch / git pull</text>
+
+          <!-- git checkout / restore (undo to working dir) -->
+          <path d="M 480 230 L 210 230" stroke="#ef4444" stroke-width="2" stroke-dasharray="4"/>
+          <text x="345" y="222" fill="#ef4444" font-family="Fira Code" font-size="11" text-anchor="middle">git checkout / git restore</text>
+
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#38bdf8"/>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+
+      <ul>
+        <li><strong>Working Directory:</strong> É a pasta onde você trabalha diariamente na sua IDE (VS Code, IntelliJ, etc.). O arquivo aqui está <em>modificado (Modified)</em> ou <em>não rastreado (Untracked)</em>.</li>
+        <li><strong>Staging Area (Index):</strong> É a antessala do commit. Você escolhe exatamente o que vai entrar no próximo pacote de salvamento usando <code>git add</code>. Isso permite criar commits limpos e atômicos.</li>
+        <li><strong>Repositório Local (.git):</strong> O banco de dados interno na sua máquina onde os commits são salvos em definitivo. Se a internet cair, você continua commitando normalmente aqui.</li>
+        <li><strong>Repositório Remoto:</strong> O servidor centralizado na nuvem (GitHub, GitLab) onde os outros membros da equipe buscam e enviam códigos.</li>
+      </ul>
+    </section>
+
+    <!-- MÓDULO 4 -->
+    <section id="modulo-4">
+      <h2>4. Comandos Essenciais do Dia a Dia</h2>
+
+      <h3>4.1 Conexões Remotas (Gerenciando a Ponte Local ➔ Nuvem)</h3>
+      <p>Comandos para conectar seu código do computador com a nuvem ou transferir projetos existentes.</p>
+
+      <div class="code-container">
+        <div class="code-header">
+          <span>Bash / Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        </div>
+        <pre><code># 1. Clonar um repositório existente na nuvem para seu computador
+git clone https://github.com/organizacao/projeto-backend.git
+
+# 2. Listar todas as conexões remotas configuradas no seu projeto atual
+git remote -v
+
+# 3. Adicionar uma nova conexão remota (geralmente chamada 'origin')
+git remote add origin https://gitlab.com/organizacao/meu-novo-repo.git
+
+# 4. Remover / Cortar uma conexão remota existente
+git remote remove origin
+# (ou a sintaxe abreviada: git remote rm origin)
+
+# 5. Alterar a URL de uma conexão remota que mudou de endereço
+git remote set-url origin https://github.com/organizacao/novo-endereco.git</code></pre>
+      </div>
+
+      <h3>4.2 Ciclo de Vida do Commit (Salvando o Trabalho)</h3>
+
+      <div class="code-container">
+        <div class="code-header">
+          <span>Bash / Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        </div>
+        <pre><code># 1. Ver o estado atual (quais arquivos foram criados, alterados ou deletados)
+git status
+
+# 2. Ver as alterações linha a linha feitas nos arquivos antes de adicionar ao palco
+git diff
+
+# 3. Adicionar um arquivo específico para a Staging Area
+git add src/services/user.service.ts
+
+# 4. Adicionar TODAS as alterações de uma vez só
+git add .
+
+# 5. Criar o ponto de salvamento (commit) com uma mensagem descritiva padronizada
+git commit -m "feat(auth): adiciona validação de token JWT no login"
+
+# 6. Enviar os commits locais para o servidor remoto (primeira vez)
+git push -u origin feature/login-jwt
+
+# 7. Atualizar sua branch com as novidades que seus colegas enviaram
+git pull origin main</code></pre>
+      </div>
+
+      <h3>4.3 Gestão de Branches (Linhas de Desenvolvimento Paralelo)</h3>
+
+      <div class="code-container">
+        <div class="code-header">
+          <span>Bash / Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        </div>
+        <pre><code># 1. Listar todas as branches locais
+git branch
+
+# 2. Criar uma nova branch e entrar nela imediatamente (Método Moderno)
+git switch -c feature/calculo-tarifa
+
+# (Método Clássico equivalente):
+git checkout -b feature/calculo-tarifa
+
+# 3. Trocar entre branches já existentes
+git switch main
+# ou: git checkout main
+
+# 4. Deletar uma branch local que já foi mesclada e finalizada
+git branch -d feature/calculo-tarifa
+
+# 5. Forçar a exclusão de uma branch local mesmo se não foi mesclada
+git branch -D feature/calculo-tarifa</code></pre>
+      </div>
+
+      <h3>4.4 Mesclando Códigos: Merge vs. Rebase</h3>
+      <p>Quando sua funcionalidade está pronta, você precisa integrar seu código com a linha principal.</p>
+
+      <div class="code-container">
+        <div class="code-header">
+          <span>Bash / Terminal</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        </div>
+        <pre><code># Cenário: Você quer trazer o código da 'feature/nova-api' para dentro da 'main'
+
+# 1. Vá para a branch de destino
+git switch main
+
+# 2. Atualize a branch de destino com o que está na nuvem
+git pull origin main
+
+# 3. Execute o merge unindo a branch da funcionalidade
+git merge feature/nova-api
+
+# O Git criará um "Merge Commit" unindo os dois históricos de forma explícita.</code></pre>
+      </div>
+
+      <div class="callout callout-warning">
+        <div class="callout-header">⚠️ Atenção: Merge Local vs. Pull Request / Merge Request</div>
+        <p>
+          Em ambientes profissionais, <strong>você raramente fará <code>git merge</code> direto na sua máquina para a branch principal (<code>main</code> ou <code>master</code>)</strong>. O fluxo correto é:
+        </p>
+        <ol>
+          <li>Você envia sua branch para a nuvem: <code>git push origin feature/minha-tela</code>.</li>
+          <li>Abre um <strong>Pull Request (GitHub)</strong> ou <strong>Merge Request (GitLab)</strong> pelo navegador.</li>
+          <li>Colegas de time revisam o código, a esteira de CI/CD roda os testes, e o botão de Merge é clicado na plataforma web.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- MÓDULO 5 -->
+    <section id="modulo-5">
+      <h2>5. Viagem no Tempo: Desfazendo Alterações e Restaurando Versões</h2>
+      
+      <p>
+        Erros acontecem. A grande vantagem do Git é que <strong>quase nada é irrecuperável</strong> se foi commitado. Veja as 4 ferramentas para voltar atrás:
+      </p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Comando</th>
+              <th>O que faz?</th>
+              <th>Quando Usar?</th>
+              <th>Impacto / Risco</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>git restore &lt;arquivo&gt;</code></td>
+              <td>Descarta as alterações locais não comitadas de um arquivo no Working Directory.</td>
+              <td>Fiz besteira no código hoje e quero voltar para a versão do último commit.</td>
+              <td><span class="scenario-badge badge-warning">Médio</span> (Descarta alterações locais não salvas)</td>
+            </tr>
+            <tr>
+              <td><code>git checkout &lt;hash&gt;</code></td>
+              <td>Move sua visão (HEAD) para um commit passado específico em modo de leitura (Detached HEAD).</td>
+              <td>Quero compilar e ver como o sistema funcionava no commit <code>a1b2c3d</code> sem alterar o código atual.</td>
+              <td><span class="scenario-badge badge-info">Zero</span> (Modo leitura, seguro)</td>
+            </tr>
+            <tr>
+              <td><code>git revert &lt;hash&gt;</code></td>
+              <td>Cria um <strong>novo commit</strong> que faz exatamente o inverso das alterações do commit especificado.</td>
+              <td><strong>O código já subiu para a nuvem/produção</strong> e causou um bug. Preciso desfazer sem reescrever a história.</td>
+              <td><span class="scenario-badge badge-success">Seguríssimo</span> (Ideal para branches compartilhadas)</td>
+            </tr>
+            <tr>
+              <td><code>git reset --soft &lt;hash&gt;</code></td>
+              <td>Desfaz os commits até aquele ponto, mas <strong>mantém todo o código modificado na Staging Area</strong>.</td>
+              <td>Fiz um commit antes da hora ou errei o texto e quero agrupar tudo em um novo commit.</td>
+              <td><span class="scenario-badge badge-info">Baixo</span> (Nenhum código é perdido)</td>
+            </tr>
+            <tr>
+              <td><code>git reset --hard &lt;hash&gt;</code></td>
+              <td><strong>Apaga completamente</strong> todos os commits e alterações do disco até o commit escolhido.</td>
+              <td>Quero jogar tudo o que fiz fora e voltar a estaca zero de um commit passado.</td>
+              <td><span class="scenario-badge badge-danger">Perigo Alto</span> (Apaga código permanentemente)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-container">
+        <div class="code-header">
+          <span>Bash / Exemplos Práticos</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        </div>
+        <pre><code># 1. Descobrir a identificação (Hash) dos commits anteriores
+git log --oneline -n 5
+# Saída:
+# 7f8a9b1 fix(auth): corrige expiração de sessão
+# 3c4d5e6 feat(api): adiciona rota de relatórios
+# 9a8b7c6 feat(db): conecta ao banco PostgreSQL
+
+# 2. Desfazer o commit '3c4d5e6' criando um commit de reversão (SEGURO PARA REPOSITÓRIOS PÚBLICOS):
+git revert 3c4d5e6
+git push origin main
+
+# 3. Voltar atrás apenas localmente mantendo o código no seu editor (para ajustar e recommitar):
+git reset --soft HEAD~1
+
+# 4. Descartar alterações de um arquivo antes de adicionar ao git:
+git restore src/app.controller.ts</code></pre>
+      </div>
+    </section>
+
+    <!-- MÓDULO 6 -->
+    <section id="modulo-6">
+      <h2>6. Tags de Ambientes: Produção, Homologação e Desenvolvimento</h2>
+
+      <p>
+        Uma <strong>Tag</strong> no Git é um marcador de posição fixo e imutável que aponta para um commit específico no histórico. Enquanto as <em>branches</em> se movem continuamente para frente a cada novo commit, <strong>as tags ficam paradas para sempre naquele exato ponto</strong>.
+      </p>
+
+      <p>
+        Elas são a espinha dorsal de <strong>deploy contínuo (CI/CD)</strong> e de rastreabilidade de bugs no mercado profissional:
+      </p>
+
+      <div class="diagram-container">
+        <div class="diagram-title">Diagrama: Estratégia de Branches e Tags por Ambiente (Dev ➔ Homolog ➔ Prod)</div>
+        <svg class="diagram-svg" viewBox="0 0 950 300" xmlns="http://www.w3.org/2000/svg">
+          <!-- Environments Lines -->
+          <!-- PROD -->
+          <line x1="80" y1="60" x2="880" y2="60" stroke="#ef4444" stroke-width="4"/>
+          <text x="30" y="65" fill="#ef4444" font-family="Inter" font-weight="bold" font-size="12">PROD (main)</text>
+
+          <!-- HOMOLOG -->
+          <line x1="80" y1="140" x2="880" y2="140" stroke="#f59e0b" stroke-width="3" stroke-dasharray="6"/>
+          <text x="15" y="145" fill="#f59e0b" font-family="Inter" font-weight="bold" font-size="12">HOMOLOG (staging)</text>
+
+          <!-- DEV -->
+          <line x1="80" y1="220" x2="880" y2="220" stroke="#38bdf8" stroke-width="2"/>
+          <text x="10" y="225" fill="#38bdf8" font-family="Inter" font-weight="bold" font-size="12">DEV (develop / feat)</text>
+
+          <!-- Commits on DEV -->
+          <circle cx="160" cy="220" r="7" fill="#38bdf8"/>
+          <circle cx="260" cy="220" r="7" fill="#38bdf8"/>
+          <circle cx="360" cy="220" r="7" fill="#38bdf8"/>
+
+          <!-- Promote to Homolog -->
+          <path d="M 360 220 L 460 140" stroke="#818cf8" stroke-width="2" stroke-dasharray="3"/>
+          <circle cx="460" cy="140" r="8" fill="#f59e0b"/>
+          
+          <!-- Homolog Tag -->
+          <rect x="420" y="105" width="80" height="22" rx="4" fill="#f59e0b"/>
+          <text x="460" y="120" fill="#090d16" font-family="Fira Code" font-weight="bold" font-size="10" text-anchor="middle">v1.2.0-rc.1</text>
+
+          <!-- Promote to Prod -->
+          <path d="M 460 140 L 600 60" stroke="#10b981" stroke-width="2"/>
+          <circle cx="600" cy="60" r="9" fill="#ef4444"/>
+
+          <!-- Prod Tag -->
+          <rect x="565" y="18" width="70" height="24" rx="4" fill="#10b981"/>
+          <text x="600" y="34" fill="#ffffff" font-family="Fira Code" font-weight="bold" font-size="11" text-anchor="middle">v1.2.0</text>
+
+          <!-- Hotfix directly to Prod -->
+          <circle cx="750" cy="60" r="8" fill="#ef4444"/>
+          <rect x="715" y="18" width="70" height="24" rx="4" fill="#ef4444"/>
+          <text x="750" y="34" fill="#ffffff" font-family="Fira Code" font-weight="bold" font-size="11" text-anchor="middle">v1.2.1</text>
+        </svg>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Ambiente</th>
+              <th>Padrão de Nomeclatura de Tag</th>
+              <th>Propósito e Quem Utiliza</th>
+              <th>Gatilho no CI/CD</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. Desenvolvimento (DEV)</strong></td>
+              <td><code>dev-latest</code> ou tags de build automático (ex: <code>v1.2.0-alpha.1</code>, <code>build-20261002-42</code>)</td>
+              <td>Usado exclusivamente por desenvolvedores para testar integrações entre microsserviços e banco de dados local/remoto compartilhado.</td>
+              <td>Qualquer merge na branch <code>develop</code> ou push de tag <code>dev-*</code> sobe nos containers de teste interno.</td>
+            </tr>
+            <tr>
+              <td><strong>2. Homologação / Staging (HML)</strong></td>
+              <td><code>v1.2.0-rc.1</code>, <code>v1.2.0-beta.2</code><br><em>(RC = Release Candidate)</em></td>
+              <td>Ambiente idêntico à produção em hardware e dados mascarados. Utilizado pela equipe de QA (Testes), Tech Leads e Clientes/Usuários finais para homologar antes da liberação oficial.</td>
+              <td>Ao criar uma tag <code>*-rc.*</code>, o CI/CD gera a imagem Docker e publica no ambiente de Homologação.</td>
+            </tr>
+            <tr>
+              <td><strong>3. Produção (PROD)</strong></td>
+              <td><code>v1.0.0</code>, <code>v1.2.0</code>, <code>v1.2.1</code><br><em>(Seguindo estritamente SemVer)</em></td>
+              <td>O ambiente real onde os usuários e clientes finais estão operando. O código aqui é considerado estável, auditado e imutável.</td>
+              <td>A publicação da tag <code>vX.Y.Z</code> dispara o pipeline de produção que atualiza os clusters de Kubernetes sem tempo de inatividade.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>6.1 Padrão de Versionamento Semântico (SemVer: <code>vMAJOR.MINOR.PATCH</code>)</h3>
+      <ul>
+        <li><strong>MAJOR (<code>v2.0.0</code>):</strong> Alterações incompatíveis na API (quebra de contratos antigos).</li>
+        <li><strong>MINOR (<code>v1.1.0</code>):</strong> Adição de novas funcionalidades mantendo compatibilidade com o que já existia.</li>
+        <li><strong>PATCH (<code>v1.0.1</code>):</strong> Correções rápidas de bugs emergenciais (hotfixes) sem novas funcionalidades.</li>
+      </ul>
+
+      <div class="code-container">
+        <div class="code-header">
+          <span>Bash / Como Criar e Gerenciar Tags</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+        </div>
+        <pre><code># 1. Listar todas as tags do repositório
+git tag
+
+# 2. Criar uma Tag Anotada (com autor, data e mensagem descritiva - PADRÃO DE PRODUÇÃO)
+git tag -a v1.2.0 -m "Release v1.2.0: Módulo de integração com bilhetagem e GPS"
+
+# 3. Criar uma Tag de Homologação (Release Candidate)
+git tag -a v1.2.0-rc.1 -m "Candidato a release para validação da equipe de QA"
+
+# 4. Criar tag para um commit que ficou no passado (especificando o hash)
+git tag -a v1.0.1 9a8b7c6 -m "Hotfix emergencial aplicado no cálculo de frota"
+
+# 5. IMPORTANTE: 'git push' convencional NÃO envia tags! Você precisa enviar explicitamente:
+# Enviar uma tag específica:
+git push origin v1.2.0
+
+# Ou enviar todas as novas tags locais de uma vez:
+git push origin --tags
+
+# 6. Deletar uma tag local e na nuvem (caso tenha criado por engano):
+git tag -d v1.2.0-rc.1
+git push origin --delete v1.2.0-rc.1</code></pre>
+      </div>
+    </section>
+
+    <!-- MÓDULO 7 -->
+    <section id="modulo-7">
+      <h2>7. Padronização de Nomenclatura (Conventional Commits & Branches)</h2>
+
+      <p>
+        Em um projeto profissional compartilhado, a mensagem de commit não serve apenas para "cumprir tabela". Ela gera documentação viva, changelogs automáticos e permite entender a evolução do produto. O padrão adotado pela indústria é o <strong>Conventional Commits</strong>:
+      </p>
+
+      <div class="callout callout-info">
+        <div class="callout-header">Formato Oficial da Mensagem</div>
+        <code>&lt;tipo&gt;(&lt;escopo opcional&gt;): &lt;descrição sucinta no presente&gt;</code>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Prefixo</th>
+              <th>Propósito</th>
+              <th>Exemplo de Mensagem</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>feat</code></td>
+              <td>Adição de uma nova funcionalidade no sistema.</td>
+              <td><code>feat(auth): adiciona autenticação de usuários via JWT</code></td>
+            </tr>
+            <tr>
+              <td><code>fix</code></td>
+              <td>Correção de um bug ou comportamento incorreto.</td>
+              <td><code>fix(api): corrige estouro de memória no cálculo de rotas</code></td>
+            </tr>
+            <tr>
+              <td><code>docs</code></td>
+              <td>Alterações exclusivamente em documentação (README, Swagger, etc.).</td>
+              <td><code>docs: documenta variáveis de ambiente no manual de onboarding</code></td>
+            </tr>
+            <tr>
+              <td><code>style</code></td>
+              <td>Ajustes de formatação, ponto e vírgula, indentação (sem alterar lógica).</td>
+              <td><code>style: formata arquivos com prettier e eslint</code></td>
+            </tr>
+            <tr>
+              <td><code>refactor</code></td>
+              <td>Reescrita interna de código que não adiciona recurso nem corrige bug.</td>
+              <td><code>refactor(service): desacopla lógica de envio de email</code></td>
+            </tr>
+            <tr>
+              <td><code>perf</code></td>
+              <td>Otimização de performance de código ou consultas SQL.</td>
+              <td><code>perf(db): adiciona índice na coluna cd_linha para busca rápida</code></td>
+            </tr>
+            <tr>
+              <td><code>test</code></td>
+              <td>Criação ou ajuste de baterias de testes unitários ou e2e.</td>
+              <td><code>test(user): adiciona casos de teste para senha fraca</code></td>
+            </tr>
+            <tr>
+              <td><code>chore</code></td>
+              <td>Tarefas rotineiras de manutenção, build, dockerfile ou dependências.</td>
+              <td><code>chore(deps): atualiza versão do node para 20-alpine</code></td>
+            </tr>
+            <tr>
+              <td><code>ci</code></td>
+              <td>Alterações nos scripts e configurações de pipelines (GitHub Actions, GitLab CI).</td>
+              <td><code>ci: adiciona etapa de validação de testes antes do deploy</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>7.1 Padrão de Nomenclatura para Branches</h3>
+      <ul>
+        <li><code>feature/nome-da-funcionalidade</code>: Ex: <code>feature/login-govbr</code>, <code>feature/exportacao-csv</code></li>
+        <li><code>fix/nome-do-bug</code>: Ex: <code>fix/calculo-tarifa-feriado</code></li>
+        <li><code>hotfix/correcao-urgente</code>: Ex: <code>hotfix/vazamento-memoria-prod</code> (correção direta que vai para a tag de patch)</li>
+        <li><code>refactor/modulo-alterado</code>: Ex: <code>refactor/repositorios-typeorm</code></li>
+      </ul>
+    </section>
+
+    <!-- MÓDULO 8 -->
+    <section id="modulo-8">
+      <h2>8. As 6 Regras de Ouro em Repositórios Compartilhados</h2>
+
+      <div class="callout callout-danger">
+        <div class="callout-header">🚨 REGRA 1: NUNCA dê commit ou push direto na 'main' ou 'master'</div>
+        <p>A branch principal é sagrada. Ela reflete código que pode ir para produção a qualquer instante. Todo o trabalho deve ser feito em branches separadas e incorporado via Pull Request / Merge Request com aprovação de pares.</p>
+      </div>
+
+      <div class="callout callout-warning">
+        <div class="callout-header">⚠️ REGRA 2: Cuidado Extremo com 'git push --force' (-f)</div>
+        <p>O <code>push --force</code> reescreve a história remota. Se você rodar esse comando em uma branch que outros desenvolvedores estão usando, você poderá <strong>apagar commits de outras pessoas permanentemente</strong>. Regra prática: <em>Nunca use force push em branches públicas</em>.</p>
+      </div>
+
+      <ul>
+        <li><strong>3. Faça Commits Atômicos:</strong> Não acumule 3 dias de trabalho para fazer um único commit com 50 arquivos alterados chamado <em>"ajustes gerais"</em>. Faça commits pequenos, cada um resolvendo um problema único e isolado.</li>
+        <li><strong>4. Atualize sua branch logo no início do expediente:</strong> Antes de começar a programar, vá na branch principal, dê <code>git pull</code>, volte para a sua branch e traga as novidades (<code>git merge main</code>). Resolver conflitos pequenos diariamente evita ter que resolver centenas de conflitos gigantes no fim do mês.</li>
+        <li><strong>5. Não comite arquivos gerados ou segredos:</strong> Nunca suba pastas <code>node_modules/</code>, arquivos <code>dist/</code>, arquivos <code>.env</code> com senhas de banco ou chaves de API. Configure sempre um arquivo <code>.gitignore</code> robusto.</li>
+        <li><strong>6. Revise seu próprio Diff antes de abrir PR/MR:</strong> Antes de solicitar revisão para o Tech Lead ou colega, leia as suas alterações na interface do GitHub/GitLab. Você frequentemente encontrará <code>console.log</code> esquecidos, códigos comentados e formatações desnecessárias.</li>
+      </ul>
+    </section>
+
+    <!-- MÓDULO 9 -->
+    <section id="modulo-9">
+      <h2>9. Base de Conhecimento e Cenários Rápidos ("O que fazer quando...?")</h2>
+      <p>Guia prático para você consultar rapidamente na hora do desespero ou da dúvida no trabalho.</p>
+
+      <div class="scenario-filter-bar">
+        <input type="text" class="search-input" id="scenarioSearch" placeholder="🔍 Digite sua dúvida (ex: esqueci, errei o commit, conflito, branch errada)..." onkeyup="filterScenarios()">
+      </div>
+
+      <div id="scenarioList">
+        
+        <div class="scenario-card">
+          <div class="scenario-header">
+            <h4>1. Errei a mensagem do último commit que fiz e AINDA NÃO enviei para a nuvem.</h4>
+            <span class="scenario-badge badge-info">Fácil / Seguro</span>
+          </div>
+          <p>Basta usar o modificador <code>--amend</code> para corrigir a mensagem imediatamente:</p>
+          <code>git commit --amend -m "feat(auth): mensagem correta agora"</code>
+        </div>
+
+        <div class="scenario-card">
+          <div class="scenario-header">
+            <h4>2. Fiz um commit mas esqueci de incluir um arquivo nele.</h4>
+            <span class="scenario-badge badge-info">Fácil / Seguro</span>
+          </div>
+          <p>Adicione o arquivo esquecido ao palco e agrupe no commit anterior sem criar um commit novo:</p>
+          <code>git add arquivo-esquecido.ts</code><br>
+          <code>git commit --amend --no-edit</code>
+        </div>
+
+        <div class="scenario-card">
+          <div class="scenario-header">
+            <h4>3. Comecei a programar na branch 'main' por engano e ainda não comitei nada!</h4>
+            <span class="scenario-badge badge-warning">Atenção</span>
+          </div>
+          <p>Não se desespere. O Git permite mover seu trabalho não salvo diretamente para uma branch nova:</p>
+          <code>git switch -c feature/minha-tarefa-correta</code><br>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.4rem;">Todas as alterações não comitadas migrarão com você para a nova branch intactas.</p>
+        </div>
+
+        <div class="scenario-card">
+          <div class="scenario-header">
+            <h4>4. Preciso trocar de branch agora para ajudar um colega, mas meu código atual está incompleto e quebrado.</h4>
+            <span class="scenario-badge badge-info">Uso Diário</span>
+          </div>
+          <p>Use o "esconderijo" temporário do Git (Stash):</p>
+          <code>git stash              # Guarda suas alterações em uma gaveta limpa</code><br>
+          <code>git switch outra-branch  # Faz o que precisa na outra branch</code><br>
+          <code>git switch minha-branch # Volta para a sua branch</code><br>
+          <code>git stash pop          # Recupera suas alterações exatamente de onde parou</code>
+        </div>
+
+        <div class="scenario-card">
+          <div class="scenario-header">
+            <h4>5. Enviei um commit com BUG para a nuvem/produção e preciso anular IMEDIATAMENTE.</h4>
+            <span class="scenario-badge badge-danger">Crítico / Produção</span>
+          </div>
+          <p>Nunca use <code>reset</code> em produção. Crie um commit reverso que desfaz as alterações com segurança:</p>
+          <code>git log --oneline -n 3           # Localize o hash do commit com bug (ex: 8b3d4f1)</code><br>
+          <code>git revert 8b3d4f1                # Cria o commit desfazendo</code><br>
+          <code>git push origin main               # Envia a correção para produção</code>
+        </div>
+
+        <div class="scenario-card">
+          <div class="scenario-header">
+            <h4>6. Deu Conflito de Merge (CONFLICT). O que fazer?</h4>
+            <span class="scenario-badge badge-warning">Resolução de Conflito</span>
+          </div>
+          <p>O conflito acontece quando duas pessoas alteraram as mesmas linhas do mesmo arquivo. Passos:</p>
+          <ol style="font-size: 0.9rem; margin-top: 0.4rem;">
+            <li>Abra o arquivo no VS Code: ele mostrará em verde e azul o que é seu código e o que veio da branch de destino.</li>
+            <li>Escolha a versão correta (Accept Current, Accept Incoming ou edite manualmente).</li>
+            <li>Salve o arquivo e rode:</li>
+          </ol>
+          <code>git add arquivo-resolvido.ts</code><br>
+          <code>git commit -m "chore: resolve conflito de merge com a main"</code>
+        </div>
+
+        <div class="scenario-card">
+          <div class="scenario-header">
+            <h4>7. Quero pegar apenas UM commit específico de outra branch sem mesclar ela inteira.</h4>
+            <span class="scenario-badge badge-info">Avançado</span>
+          </div>
+          <p>Use o comando <strong>Cherry-Pick</strong>:</p>
+          <code>git cherry-pick &lt;hash-do-commit-desejado&gt;</code>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // Alternador de Tema Claro / Escuro
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('git_manual_theme', next);
+    }
+
+    // Carregar preferência salva
+    const savedTheme = localStorage.getItem('git_manual_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    // Função de Cópia de Código
+    function copyCode(button) {
+      const pre = button.closest('.code-container').querySelector('pre');
+      const text = pre.innerText;
+
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.innerText;
+        button.innerText = 'Copiado! ✓';
+        button.style.borderColor = 'var(--success)';
+        button.style.color = 'var(--success)';
+        
+        setTimeout(() => {
+          button.innerText = originalText;
+          button.style.borderColor = '';
+          button.style.color = '';
+        }, 2000);
+      });
+    }
+
+    // Filtro em Tempo Real para os Cenários
+    function filterScenarios() {
+      const query = document.getElementById('scenarioSearch').value.toLowerCase();
+      const cards = document.querySelectorAll('.scenario-card');
+
+      cards.forEach(card => {
+        const text = card.innerText.toLowerCase();
+        if (text.includes(query)) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

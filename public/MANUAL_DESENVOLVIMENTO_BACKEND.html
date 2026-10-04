@@ -1,0 +1,1641 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manual Oficial de Desenvolvimento Back-end — SISMOB / SEMOB-DF</title>
+  
+  <!-- Fontes Google -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Highlight.js para coloração de código -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark-dimmed.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+
+  <!-- Mermaid.js para diagramas vetoriais -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'neutral',
+      securityLevel: 'loose',
+      fontFamily: 'Inter, sans-serif'
+    });
+  </script>
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #38bdf8;
+      --primary-dark: #0284c7;
+      --primary-light: #bae6fd;
+      --secondary: #6366f1;
+      --accent: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --code-bg: #182234;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'Fira Code', Consolas, Monaco, monospace;
+    }
+
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --primary: #0284c7;
+      --primary-dark: #0369a1;
+      --primary-light: #e0f2fe;
+      --code-bg: #f1f5f9;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Barra de Ações Superior (Apenas Tela) */
+    .top-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.75rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    [data-theme="light"] .top-toolbar {
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .brand-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--card-border);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: var(--primary);
+      color: #0f172a;
+      border-color: var(--primary);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #0f172a;
+      border-color: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      color: #ffffff;
+    }
+
+    /* Layout do Conteúdo Principal */
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 3rem 2rem 5rem 2rem;
+    }
+
+    /* Capa Editorial Institucional */
+    .cover-page {
+      background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 4rem 3rem;
+      margin-bottom: 3.5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+    }
+
+    [data-theme="light"] .cover-page {
+      background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+    }
+
+    .cover-badge {
+      display: inline-block;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--primary);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .cover-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+
+    .cover-title span {
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .cover-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 750px;
+      margin: 0 auto 2rem auto;
+    }
+
+    .cover-meta {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--card-border);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .cover-meta strong {
+      color: var(--text);
+    }
+
+    /* Tipografia e Títulos */
+    h1, h2, h3, h4 {
+      color: var(--text);
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin: 2.5rem 0 1.25rem 0;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--primary);
+      color: var(--primary);
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      margin: 3rem 0 1rem 0;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--card-border);
+      color: #7dd3fc;
+      page-break-before: always;
+    }
+
+    [data-theme="light"] h2 {
+      color: #0369a1;
+    }
+
+    h3 {
+      font-size: 1.2rem;
+      margin: 2rem 0 0.75rem 0;
+      color: #a5b4fc;
+    }
+
+    [data-theme="light"] h3 {
+      color: #4338ca;
+    }
+
+    h4 {
+      font-size: 1rem;
+      margin: 1.5rem 0 0.5rem 0;
+      color: var(--text);
+    }
+
+    p {
+      margin-bottom: 1.1rem;
+    }
+
+    ul, ol {
+      margin-bottom: 1.25rem;
+      padding-left: 1.6rem;
+    }
+
+    li {
+      margin-bottom: 0.4rem;
+    }
+
+    hr {
+      border: 0;
+      height: 1px;
+      background: var(--card-border);
+      margin: 3rem 0;
+    }
+
+    /* Links */
+    a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* Tabelas */
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin: 1.5rem 0 2rem 0;
+      background: var(--card-bg);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+    }
+
+    th {
+      background: #182234;
+      color: #7dd3fc;
+      font-weight: 700;
+      padding: 0.85rem 1rem;
+      text-align: left;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    [data-theme="light"] th {
+      background: #e2e8f0;
+      color: #0369a1;
+    }
+
+    td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--card-border);
+      font-size: 0.9rem;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    [data-theme="light"] tr:nth-child(even) {
+      background: rgba(0, 0, 0, 0.02);
+    }
+
+    /* Código e Pre */
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      background: var(--code-bg);
+      padding: 0.2em 0.45em;
+      border-radius: 4px;
+      border: 1px solid var(--card-border);
+      color: #38bdf8;
+    }
+
+    [data-theme="light"] code {
+      color: #0284c7;
+    }
+
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1.25rem 0 1.75rem 0;
+      overflow-x: auto;
+      position: relative;
+    }
+
+    pre code {
+      background: transparent;
+      padding: 0;
+      border: none;
+      color: #e2e8f0;
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+
+    /* Caixas de Alerta (Callouts) */
+    .callout {
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1.5rem 0;
+      border-left: 4px solid;
+      background: var(--card-bg);
+    }
+
+    .callout-header {
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .callout-body p {
+      margin-bottom: 0.5rem;
+    }
+
+    .callout-body p:last-child {
+      margin-bottom: 0;
+    }
+
+    .callout-note {
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.06);
+    }
+    .callout-note .callout-header { color: #38bdf8; }
+
+    .callout-tip {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.06);
+    }
+    .callout-tip .callout-header { color: #10b981; }
+
+    .callout-important {
+      border-color: #6366f1;
+      background: rgba(99, 102, 241, 0.06);
+    }
+    .callout-important .callout-header { color: #818cf8; }
+
+    .callout-warning {
+      border-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.06);
+    }
+    .callout-warning .callout-header { color: #f59e0b; }
+
+    .callout-caution {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.06);
+    }
+    .callout-caution .callout-header { color: #ef4444; }
+
+    /* Mermaid Container */
+    .mermaid {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0 2rem 0;
+      text-align: center;
+      overflow-x: auto;
+    }
+
+    /* Checklist */
+    input[type="checkbox"] {
+      margin-right: 0.5rem;
+      accent-color: var(--primary);
+    }
+
+    /* ========================================================
+       REGRAS ESPECÍFICAS PARA IMPRESSÃO EM PDF (@media print)
+       ======================================================== */
+    @page {
+      size: A4;
+      margin: 15mm 12mm 18mm 12mm;
+    }
+
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        font-size: 11pt !important;
+        line-height: 1.5 !important;
+      }
+
+      .top-toolbar {
+        display: none !important;
+      }
+
+      .container {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      .cover-page {
+        background: #f8fafc !important;
+        border: 2px solid #cbd5e1 !important;
+        box-shadow: none !important;
+        color: #0f172a !important;
+        padding: 4rem 2rem !important;
+        page-break-after: always !important;
+        min-height: 80vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+      }
+
+      .cover-title {
+        color: #0f172a !important;
+      }
+
+      .cover-title span {
+        color: #0284c7 !important;
+        -webkit-text-fill-color: initial !important;
+      }
+
+      h1 {
+        color: #0284c7 !important;
+        border-bottom-color: #0284c7 !important;
+        page-break-before: always;
+      }
+
+      h2 {
+        color: #0369a1 !important;
+        border-bottom-color: #cbd5e1 !important;
+        page-break-before: always;
+      }
+
+      h3 {
+        color: #1e40af !important;
+        page-break-after: avoid;
+      }
+
+      table, pre, .callout, .mermaid {
+        page-break-inside: avoid !important;
+        border: 1px solid #cbd5e1 !important;
+      }
+
+      th {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+      }
+
+      pre {
+        background: #f8fafc !important;
+      }
+
+      pre code {
+        color: #0f172a !important;
+      }
+
+      .mermaid {
+        background: #ffffff !important;
+      }
+
+      .callout {
+        background: #f8fafc !important;
+      }
+
+      a {
+        color: #0284c7 !important;
+        text-decoration: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Barra de Ferramentas Superior (Apenas Tela) -->
+  <header class="top-toolbar">
+    <div class="brand-title">
+      <span>🏛️</span>
+      <span>SISMOB — Manual de Engenharia Back-end</span>
+    </div>
+    <div class="toolbar-actions">
+      <button class="btn" onclick="toggleTheme()" title="Alternar Modo Claro / Escuro">🌓 Tema</button>
+      <button class="btn btn-primary" onclick="window.print()" title="Imprimir ou Salvar em PDF">🖨️ Imprimir / Salvar em PDF</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Capa Editorial Institucional -->
+    <section class="cover-page">
+      <div class="cover-badge">SEMOB-DF • Engenharia de Software • SISMOB</div>
+      <h1 class="cover-title">Manual Oficial de <span>Desenvolvimento Back-end</span></h1>
+      <p class="cover-subtitle">Guia Arquitetural Definitivo, Padrões de Código e Tutorial Prático de Onboarding (NestJS • TypeScript • TypeORM • PostgreSQL • JWT)</p>
+      
+      <div class="cover-meta">
+        <div><strong>Ecossistema:</strong> Sistema de Mobilidade Urbana (SISMOB)</div>
+        <div><strong>Versão:</strong> 1.0.0 (Outubro/2026)</div>
+        <div><strong>Público:</strong> Engenheiros, Estagiários e Devs Júnior</div>
+      </div>
+    </section>
+
+    <!-- Conteúdo Markdown Renderizado -->
+    <article id="manual-content">
+      <h1>🏛️ Manual Oficial de Desenvolvimento Back-end — SISMOB / SEMOB-DF</h1>
+<blockquote>
+<p><strong>Classificação:</strong> Documento Técnico de Engenharia &amp; Padronização Arquitetural<br><strong>Público-Alvo:</strong> Desenvolvedores Backend, Tech Leads, Arquitetos, Engenheiros de Software, Desenvolvedores Júnior e Estagiários<br><strong>Ecossistema:</strong> SISMOB (Sistema de Mobilidade Urbana) — SEMOB-DF<br><strong>Versão:</strong> 1.0.0 — Outubro/2026  </p>
+</blockquote>
+<hr>
+<h2>📑 Sumário</h2>
+<ol>
+<li><a href="#1-vis%C3%A3o-geral-da-arquitetura-e-stack-tecnol%C3%B3gico">Visão Geral da Arquitetura e Stack Tecnológico</a><ul>
+<li><a href="#11-stack-tecnol%C3%B3gico">1.1 Stack Tecnológico</a></li>
+<li><a href="#12-padr%C3%A3o-arquitetural-adotado">1.2 Padrão Arquitetural Adotado</a></li>
+<li><a href="#13-ciclo-de-vida-de-uma-requisi%C3%A7%C3%A3o-request-lifecycle">1.3 Ciclo de Vida de uma Requisição (Request Lifecycle)</a></li>
+</ul>
+</li>
+<li><a href="#2-estrutura-de-pastas-e-responsabilidades">Estrutura de Pastas e Responsabilidades</a><ul>
+<li><a href="#21-mapeamento-completo-de-diret%C3%B3rios">2.1 Mapeamento Completo de Diretórios</a></li>
+<li><a href="#22-matriz-de-responsabilidades-o-que-fazer-vs-o-que-nunca-fazer">2.2 Matriz de Responsabilidades (O Que Fazer vs. O Que NUNCA Fazer)</a></li>
+</ul>
+</li>
+<li><a href="#3-padr%C3%B5es-de-c%C3%B3digo-e-contratos-code-style">Padrões de Código e Contratos (Code Style)</a><ul>
+<li><a href="#31-conven%C3%A7%C3%B5es-de-nomenclatura">3.1 Convenções de Nomenclatura</a></li>
+<li><a href="#32-uso-de-dtos-e-valida%C3%A7%C3%A3o-de-entrada">3.2 Uso de DTOs e Validação de Entrada</a></li>
+<li><a href="#33-padroniza%C3%A7%C3%A3o-de-respostas-e-status-codes-http">3.3 Padronização de Respostas e Status Codes HTTP</a></li>
+</ul>
+</li>
+<li><a href="#4-tratamento-de-erros-e-middlewares">Tratamento de Erros e Middlewares</a><ul>
+<li><a href="#41-filtro-global-de-exce%C3%A7%C3%B5es-allexceptionsfilter">4.1 Filtro Global de Exceções (<code>AllExceptionsFilter</code>)</a></li>
+<li><a href="#42-hierarquia-de-exce%C3%A7%C3%B5es-de-dom%C3%ADnio">4.2 Hierarquia de Exceções de Domínio</a></li>
+<li><a href="#43-middlewares-pipes-e-guards-de-seguran%C3%A7a">4.3 Middlewares, Pipes e Guards de Segurança</a></li>
+</ul>
+</li>
+<li><a href="#5-acesso-a-dados-banco-de-dados">Acesso a Dados (Banco de Dados)</a><ul>
+<li><a href="#51-decis%C3%A3o-arquitetural-orm-entity-vs-sql-nativo-parametrizado">5.1 Decisão Arquitetural: ORM (Entity) vs. SQL Nativo Parametrizado</a></li>
+<li><a href="#52-blindagem-r%C3%ADgida-contra-sql-injection">5.2 Blindagem Rígida Contra SQL Injection</a></li>
+<li><a href="#53-modelagem-de-entidades-e-estrat%C3%A9gia-de-migrationsseeds">5.3 Modelagem de Entidades e Estratégia de Migrations/Seeds</a></li>
+</ul>
+</li>
+<li><a href="#6-tutorial-pr%C3%A1tico-para-estagi%C3%A1rios-do-zero-ao-endpoint-completo">Tutorial Prático para Estagiários: Do Zero ao Endpoint Completo</a><ul>
+<li><a href="#61-passo-1-cria%C3%A7%C3%A3o-da-entidade-de-banco">6.1 Passo 1: Criação da Entidade de Banco</a></li>
+<li><a href="#62-passo-2-defini%C3%A7%C3%A3o-dos-dtos-de-entrada-e-valida%C3%A7%C3%A3o">6.2 Passo 2: Definição dos DTOs de Entrada e Validação</a></li>
+<li><a href="#63-passo-3-cria%C3%A7%C3%A3o-do-reposit%C3%B3rio-especializado">6.3 Passo 3: Criação do Repositório Especializado</a></li>
+<li><a href="#64-passo-4-implementa%C3%A7%C3%A3o-do-service-com-regras-de-neg%C3%B3cio">6.4 Passo 4: Implementação do Service com Regras de Negócio</a></li>
+<li><a href="#65-passo-5-cria%C3%A7%C3%A3o-do-controller-e-documenta%C3%A7%C3%A3o-openapi">6.5 Passo 5: Criação do Controller e Documentação OpenAPI</a></li>
+<li><a href="#66-passo-6-cria%C3%A7%C3%A3o-do-m%C3%B3dulo-e-registro-no-appmodule">6.6 Passo 6: Criação do Módulo e Registro no <code>AppModule</code></a></li>
+<li><a href="#67-valida%C3%A7%C3%A3o-e-teste-do-novo-recurso-via-swagger">6.7 Validação e Teste do Novo Recurso via Swagger</a></li>
+</ul>
+</li>
+<li><a href="#7-scripts-%C3%BAteis-setup-e-testes-automatizados">Scripts Úteis, Setup e Testes Automatizados</a><ul>
+<li><a href="#71-setup-do-ambiente-local-docker-vs-nativo">7.1 Setup do Ambiente Local (Docker vs. Nativo)</a></li>
+<li><a href="#72-guia-de-comandos-npm">7.2 Guia de Comandos NPM</a></li>
+<li><a href="#73-como-escrever-testes-unit%C3%A1rios-e-e2e">7.3 Como Escrever Testes Unitários e E2E</a></li>
+<li><a href="#74-checklist-final-de-qualidade-de-c%C3%B3digo-dod">7.4 Checklist Final de Qualidade de Código (DoD)</a></li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2>1. Visão Geral da Arquitetura e Stack Tecnológico</h2>
+<p>O backend do ecossistema <strong>SISMOB</strong> foi concebido para atender a operações de transporte público e mobilidade urbana com alta confiabilidade, concorrência massiva, blindagem de segurança contra injeção de código e estrita aderência a contratos de API RESTful.</p>
+<h3>1.1 Stack Tecnológico</h3>
+<table>
+<thead>
+<tr>
+<th>Camada / Função</th>
+<th>Tecnologia Adotada</th>
+<th>Justificativa Técnica</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Linguagem</strong></td>
+<td><strong>TypeScript 5.7+</strong> sobre <strong>Node.js 20+ / 22 LTS</strong></td>
+<td>Tipagem estática rigorosa em tempo de compilação, prevenção de bugs de runtime e autocompletion avançado.</td>
+</tr>
+<tr>
+<td><strong>Framework Principal</strong></td>
+<td><strong>NestJS 11</strong> (<code>@nestjs/core</code>, <code>@nestjs/common</code>)</td>
+<td>Arquitetura corporativa opinionada baseada em Injeção de Dependências (IoC), módulos independentes e ciclo de vida padronizado.</td>
+</tr>
+<tr>
+<td><strong>Camada HTTP</strong></td>
+<td><strong>Express</strong> (<code>@nestjs/platform-express</code>)</td>
+<td>Plataforma HTTP robusta, consolidada e com amplo ecossistema de interceptores e middlewares.</td>
+</tr>
+<tr>
+<td><strong>ORM &amp; Query Builder</strong></td>
+<td><strong>TypeORM 0.3.x</strong> (<code>@nestjs/typeorm</code>)</td>
+<td>Abstração relacional híbrida: mapeamento declarativo de entidades (Active Record / Data Mapper) e execução de SQL nativo parametrizado.</td>
+</tr>
+<tr>
+<td><strong>Banco de Dados Relacional</strong></td>
+<td><strong>PostgreSQL 15</strong> (com extensão <strong>PostGIS</strong>) / <strong>Oracle Database</strong></td>
+<td>Confiabilidade ACID, suporte a indexação geográfica e compatibilidade com os legados corporativos do GDF.</td>
+</tr>
+<tr>
+<td><strong>Validação de Payload</strong></td>
+<td><strong>class-validator</strong> + <strong>class-transformer</strong></td>
+<td>Validação declarativa por anotações em runtime com sanitização de campos desconhecidos (<code>whitelist</code>).</td>
+</tr>
+<tr>
+<td><strong>Autenticação &amp; Segurança</strong></td>
+<td><strong>JWT (JSON Web Token)</strong> via <code>@nestjs/jwt</code> + <strong>Bcrypt</strong></td>
+<td>Tokens de acesso compactos, stateless, com validação criptográfica em guardas de rota (<code>JwtAuthGuard</code>).</td>
+</tr>
+<tr>
+<td><strong>Documentação Interativa</strong></td>
+<td><strong>Swagger / OpenAPI 3.0</strong> (<code>@nestjs/swagger</code>)</td>
+<td>Documentação viva gerada diretamente a partir dos decoradores das classes e DTOs da aplicação.</td>
+</tr>
+<tr>
+<td><strong>Containerização &amp; Deploy</strong></td>
+<td><strong>Docker</strong>, <strong>Docker Compose</strong> e <strong>Kubernetes (K8s)</strong></td>
+<td>Portabilidade total de desenvolvimento e deploy declarativo com escalabilidade horizontal em produção.</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>1.2 Padrão Arquitetural Adotado</h3>
+<p>O projeto adota uma <strong>Arquitetura em Camadas (Layered Architecture)</strong> com <strong>Modularidade por Domínio</strong> e <strong>Inversão de Controle / Injeção de Dependências (IoC / DI)</strong>.</p>
+<p>As camadas seguem o princípio da <strong>responsabilidade única (SRP)</strong> e da <strong>dependência unidirecional descendente</strong>: cada camada só pode invocar serviços da camada imediatamente inferior, nunca da superior e nunca pulando etapas:</p>
+<pre><code>[ Cliente HTTP ]
+       │
+       ▼
+[ Camada de Entrada ] ──────► Controllers, DTOs &amp; Swagger
+       │
+       ▼
+[ Camada de Domínio ] ──────► Services &amp; Exceções de Negócio
+       │
+       ▼
+[ Camada de Persistência ] ──► Repositories (TypeORM / SQL Parametrizado)
+       │
+       ▼
+[ Camada de Dados ] ────────► Entidades &amp; Banco de Dados (PostgreSQL / Oracle)
+</code></pre>
+<div class="callout callout-important"><div class="callout-header">REGRA IMPORTANTE</div><div class="callout-body"><p><strong>Regra Fundamental de Isolamento:</strong></p>
+<ul>
+<li>O <strong>Controller</strong> nunca acessa o banco de dados diretamente;</li>
+<li>O <strong>Repository</strong> nunca conhece objetos de requisição HTTP (<code>Request</code>, <code>Response</code>) e não contém regras de validação de negócio;</li>
+<li>O <strong>Service</strong> é o único detentor das decisões, orquestrações e regras do domínio.</li>
+</ul></div></div>
+<hr>
+<h3>1.3 Ciclo de Vida de uma Requisição (Request Lifecycle)</h3>
+<p>O fluxo detalhado percorrido por qualquer requisição que chega à API segue rigorosamente a esteira de execução do NestJS:</p>
+<div class="mermaid">sequenceDiagram
+    autonumber
+    actor Cliente as 🌐 Cliente HTTP (Front-end / App)
+    participant Prefix as 🛡️ Global Prefix (/api)
+    participant Guard as 🔒 JwtAuthGuard
+    participant Pipe as 🔍 ValidationPipe (DTO)
+    participant Ctrl as 🎮 Controller
+    participant Svc as 🧠 Service (Regras)
+    participant Repo as 🗄️ Repository
+    participant DB as 🐘 PostgreSQL / Oracle
+    participant Filter as 🚨 AllExceptionsFilter
+
+    Cliente->>Prefix: HTTP Request (Method, Headers, Body, Query)
+    Prefix->>Guard: Avalia Rota (Pública ou Privada?)
+    
+    alt Rota Protegida & Token Inválido / Ausente
+        Guard-->>Filter: Dispara UnauthorizedException (401)
+        Filter-->>Cliente: Resposta JSON Padronizada de Erro (401)
+    else Token Válido ou Rota Pública
+        Guard->>Pipe: Anexa payload decodificado em request.user
+        Pipe->>Pipe: Valida dados contra o DTO (rejeita campos extras)
+        
+        alt Dados Inválidos
+            Pipe-->>Filter: Dispara BadRequestException (400)
+            Filter-->>Cliente: Resposta JSON com lista de erros (400)
+        else DTO Aprovado
+            Pipe->>Ctrl: Encaminha DTO tipado e sanitizado
+            Ctrl->>Svc: Invoca método de negócio correspondente
+            
+            alt Violação de Regra de Negócio
+                Svc-->>Filter: Dispara BusinessException (400/404/409)
+                Filter-->>Cliente: Resposta de Domínio Padronizada
+            else Regra de Negócio Válida
+                Svc->>Repo: Solicita consulta ou persistência
+                Repo->>DB: Executa Query Parametrizada ($1, $2)
+                DB-->>Repo: Retorna Rows / Records do banco
+                Repo-->>Svc: Mapeia para Entidade / DTO de saída
+                Svc-->>Ctrl: Retorna dados consolidados
+                Ctrl-->>Cliente: Resposta HTTP de Sucesso (200 / 201 / 204)
+            end
+        end
+    end
+</div>
+<hr>
+<h2>2. Estrutura de Pastas e Responsabilidades</h2>
+<h3>2.1 Mapeamento Completo de Diretórios</h3>
+<p>O diretório <code>src/</code> está organizado da seguinte forma:</p>
+<pre><code>SISMOB-BOILERPLATE/
+├── src/
+│   ├── config/                   ← Configurações de infraestrutura e variáveis de ambiente
+│   │   ├── Database.ts           ← Provedor de configuração dinâmica do TypeORM
+│   │   ├── Jwt.ts                ← Provedor de parâmetros e expiração do JWT
+│   │   └── tab_linha.sql         ← Scripts DDL e DML de semente (Seeds)
+│   ├── controller/               ← Camada de entrada REST (Controllers)
+│   │   ├── Auth.ts               ← Endpoints públicos de login e emissão de tokens
+│   │   ├── Docs.ts               ← Endpoint de distribuição de documentação técnica
+│   │   └── Linha.ts              ← Endpoints de linhas de transporte coletivo
+│   ├── service/                  ← Camada de lógica de negócio (Services)
+│   │   ├── Auth.ts               ← Validação de credenciais e geração de JWT
+│   │   ├── Linha.ts              ← Regras de busca e validações de linhas
+│   │   └── Seed.ts               ← Carga inicial de dados na inicialização da aplicação
+│   ├── repository/               ← Camada de persistência customizada (Data Access)
+│   │   └── Linha.ts              ← Queries SQL nativas anti-injection e queries TypeORM
+│   ├── entity/                   ← Mapeamento relacional das tabelas (TypeORM Entities)
+│   │   └── Linha.ts              ← Modelo da tabela &#39;dados_mobilidade.tab_linha&#39;
+│   ├── dto/                      ← Contratos de transferência de dados (DTOs)
+│   │   ├── Auth.ts               ← Schemas de login (LoginDto)
+│   │   └── Linha.ts              ← Schemas de filtros e buscas (FilterLinhaDto)
+│   ├── guards/                   ← Guardas de rota para autenticação e autorização
+│   │   └── Jwt.ts                ← JwtAuthGuard (validação de Bearer Token)
+│   ├── filters/                  ← Tratamento global e formatação uniforme de erros
+│   │   └── all-exceptions.filter.ts ← AllExceptionsFilter (captura de exceções HTTP e 500)
+│   ├── exceptions/               ← Exceções semânticas de negócio customizadas
+│   │   ├── Business.ts           ← BusinessException (base para erros 400)
+│   │   ├── entity-not-found.exception.ts ← EntityNotFoundException (erro 404)
+│   │   └── entity-already-exists.exception.ts ← EntityAlreadyExistsException (erro 409)
+│   ├── module/                   ← Módulos isolados por domínio (NestJS Modules)
+│   │   └── Linha.ts              ← LinhaModule (agrupa controller, service, repository, entity)
+│   ├── utils/                    ← Classes base, utilitários e formatadores transversais
+│   │   └── Base.ts               ← BaseEntity abstrata com timestamps de auditoria
+│   ├── docs/                     ← Bootstrap e metadados do OpenAPI / Swagger
+│   │   └── Swagger.ts            ← setupSwagger (configuração da UI de documentação)
+│   ├── k8s/                      ← Manifestos de orquestração Kubernetes
+│   │   ├── app-deployment.yaml   ← Especificação de réplicas e injeção de segredos
+│   │   └── app-service.yaml      ← Roteamento interno e balanceamento de carga
+│   ├── app.module.ts             ← Módulo raiz: orquestra configurações e submódulos
+│   └── main.ts                   ← Ponto de entrada: bootstrap, pipes, filtros e porta
+├── test/                         ← Baterias de testes automatizados E2E
+│   ├── app.e2e-spec.ts           ← Bateria de teste ponta a ponta
+│   └── jest-e2e.json             ← Configuração de runner do Jest E2E
+├── .env                          ← Variáveis de ambiente locais (não versionar dados sensíveis)
+├── docker-compose.yml            ← Orquestração de containers locais (Postgres, Oracle, pgAdmin)
+├── Dockerfile                    ← Imagem multi-stage de produção (Node 20 Alpine)
+├── init.sql                      ← Inicializador de schemas do PostgreSQL
+└── package.json                  ← Manifesto de dependências e scripts NPM
+</code></pre>
+<hr>
+<h3>2.2 Matriz de Responsabilidades (O Que Fazer vs. O Que NUNCA Fazer)</h3>
+<table>
+<thead>
+<tr>
+<th>Diretório / Camada</th>
+<th>O QUE DEVE SER FEITO AQUI ✅</th>
+<th>O QUE NUNCA DEVE SER FEITO AQUI ❌</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong><code>/controller</code></strong></td>
+<td>• Definir rotas HTTP (<code>@Get</code>, <code>@Post</code>, etc.)<br>• Associar DTOs de entrada aos parâmetros (<code>@Body()</code>, <code>@Query()</code>, <code>@Param()</code>)<br>• Declarar documentação OpenAPI (<code>@ApiTags</code>, <code>@ApiOperation</code>, <code>@ApiResponse</code>)<br>• Aplicar guards de autenticação (<code>@UseGuards(JwtAuthGuard)</code>)</td>
+<td>• <strong>NUNCA</strong> faça queries SQL ou acesse repositories diretamente.<br>• <strong>NUNCA</strong> implemente lógica de <code>if/else</code> com regras de negócio.<br>• <strong>NUNCA</strong> formate dados manualmente sem uso de DTOs ou Services.</td>
+</tr>
+<tr>
+<td><strong><code>/service</code></strong></td>
+<td>• Conter 100% da lógica e regras de negócio da aplicação.<br>• Validar restrições de negócio e lançar exceções semânticas (<code>BusinessException</code>, etc.).<br>• Orquestrar chamadas a um ou múltiplos repositories.<br>• Executar transações de banco de dados (<code>QueryRunner</code>).</td>
+<td>• <strong>NUNCA</strong> acesse objetos da requisição Express (<code>req</code>, <code>res</code>).<br>• <strong>NUNCA</strong> defina status codes HTTP diretamente no código.<br>• <strong>NUNCA</strong> monte queries SQL dinâmicas (isso é responsabilidade do Repository).</td>
+</tr>
+<tr>
+<td><strong><code>/repository</code></strong></td>
+<td>• Executar queries SQL parametrizadas nativas (<code>this.dataSource.query</code>).<br>• Utilizar métodos do ORM TypeORM (<code>find</code>, <code>findOne</code>, <code>save</code>, <code>delete</code>).<br>• Mapear projeções de dados complexos para DTOs ou entidades.</td>
+<td>• <strong>NUNCA</strong> aplique regras de validação de negócio aqui.<br>• <strong>NUNCA</strong> concatene strings em queries SQL (<code>+ param</code>).<br>• <strong>NUNCA</strong> lance erros genéricos sem tratamento prévio.</td>
+</tr>
+<tr>
+<td><strong><code>/entity</code></strong></td>
+<td>• Mapear tabelas, colunas, tipos e constraints relacionais.<br>• Definir chaves primárias (<code>@PrimaryColumn</code>, <code>@PrimaryGeneratedColumn</code>) e nomes físicos de colunas.</td>
+<td>• <strong>NUNCA</strong> insira lógica de negócio pesada ou chamadas assíncronas nas entidades.<br>• <strong>NUNCA</strong> retorne entidades com campos sensíveis (senhas, hashes) diretamente na API.</td>
+</tr>
+<tr>
+<td><strong><code>/dto</code></strong></td>
+<td>• Declarar contratos de entrada e saída com tipagem estática.<br>• Aplicar decorators de validação do <code>class-validator</code>.<br>• Documentar propriedades para o Swagger com <code>@ApiProperty()</code>.</td>
+<td>• <strong>NUNCA</strong> insira métodos que interagem com o banco de dados.<br>• <strong>NUNCA</strong> use tipos genéricos (<code>any</code>) nos atributos do DTO.</td>
+</tr>
+<tr>
+<td><strong><code>/guards</code></strong></td>
+<td>• Avaliar se a requisição tem permissão para prosseguir.<br>• Validar assinaturas de tokens JWT e decodificar claims.</td>
+<td>• <strong>NUNCA</strong> processe regras de negócio ou altere dados do payload do usuário.</td>
+</tr>
+<tr>
+<td><strong><code>/filters</code></strong></td>
+<td>• Interceptar exceções disparadas em qualquer ponto da execução.<br>• Logar erros críticos e sanitizar respostas devolvidas ao cliente.</td>
+<td>• <strong>NUNCA</strong> engula erros silenciosamente sem gerar log no console.</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>3. Padrões de Código e Contratos (Code Style)</h2>
+<h3>3.1 Convenções de Nomenclatura</h3>
+<p>Para manter consistência em todo o ecossistema SISMOB, utilize rigorosamente o padrão abaixo:</p>
+<table>
+<thead>
+<tr>
+<th>Elemento</th>
+<th>Convenção</th>
+<th>Exemplo Correto</th>
+<th>Exemplo Incorreto</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Arquivos de Módulo/Camada</strong></td>
+<td>PascalCase</td>
+<td><code>Linha.ts</code>, <code>Veiculo.ts</code>, <code>Auth.ts</code></td>
+<td><code>linha.controller.ts</code>, <code>veiculo_service.ts</code></td>
+</tr>
+<tr>
+<td><strong>Arquivos de Filtros/Exceções</strong></td>
+<td>kebab-case com sufixo</td>
+<td><code>all-exceptions.filter.ts</code>, <code>entity-not-found.exception.ts</code></td>
+<td><code>Filter.ts</code>, <code>NotFound.ts</code></td>
+</tr>
+<tr>
+<td><strong>Classes de Controller</strong></td>
+<td>PascalCase com sufixo <code>Controller</code></td>
+<td><code>LinhaController</code>, <code>VeiculoController</code></td>
+<td><code>LinhaCtrl</code>, <code>Linhas</code></td>
+</tr>
+<tr>
+<td><strong>Classes de Service</strong></td>
+<td>PascalCase com sufixo <code>Service</code></td>
+<td><code>LinhaService</code>, <code>AuthService</code></td>
+<td><code>LinhaManager</code>, <code>LinhaLogic</code></td>
+</tr>
+<tr>
+<td><strong>Classes de Repository</strong></td>
+<td>PascalCase com sufixo <code>Repository</code></td>
+<td><code>LinhaRepository</code>, <code>VeiculoRepository</code></td>
+<td><code>LinhaDao</code>, <code>LinhaDb</code></td>
+</tr>
+<tr>
+<td><strong>Classes de Entidade</strong></td>
+<td>PascalCase singular</td>
+<td><code>Linha</code>, <code>Veiculo</code>, <code>Usuario</code></td>
+<td><code>Linhas</code>, <code>TabLinha</code></td>
+</tr>
+<tr>
+<td><strong>Classes DTO</strong></td>
+<td>PascalCase com sufixo <code>Dto</code></td>
+<td><code>FilterLinhaDto</code>, <code>CreateVeiculoDto</code></td>
+<td><code>LinhaFilter</code>, <code>VeiculoInput</code></td>
+</tr>
+<tr>
+<td><strong>Métodos e Variáveis</strong></td>
+<td>camelCase</td>
+<td><code>buscarLinhas()</code>, <code>validarPrefixo()</code>, <code>codigoLinha</code></td>
+<td><code>BuscarLinhas()</code>, <code>codigo_linha</code></td>
+</tr>
+<tr>
+<td><strong>Tabelas de Banco</strong></td>
+<td>snake_case com prefixo</td>
+<td><code>dados_mobilidade.tab_linha</code>, <code>tab_veiculo</code></td>
+<td><code>Linhas</code>, <code>TBL_LINHAS</code></td>
+</tr>
+<tr>
+<td><strong>Colunas de Banco</strong></td>
+<td>snake_case descritivo</td>
+<td><code>id_linha</code>, <code>cd_linha</code>, <code>tx_linha</code>, <code>vl_tarifa</code></td>
+<td><code>idLinha</code>, <code>CodLinha</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>3.2 Uso de DTOs e Validação de Entrada</h3>
+<p>Todo dado que ingressa na API por meio da <code>Query String</code>, <code>Route Params</code> ou <code>Body</code> <strong>DEVE</strong> ser tipado e validado por um DTO.</p>
+<p>O projeto utiliza o <code>ValidationPipe</code> do NestJS configurado globalmente no <code>src/main.ts</code>:</p>
+<pre><code class="language-typescript">app.useGlobalPipes(
+  new ValidationPipe({
+    whitelist: true,            // Remove automaticamente qualquer propriedade não declarada no DTO
+    forbidNonWhitelisted: true, // Lança HTTP 400 se o cliente enviar propriedades estranhas
+    transform: true,            // Converte strings em tipos primitivos automaticamente (ex: &#39;123&#39; -&gt; 123)
+  }),
+);
+</code></pre>
+<h4>Exemplo de DTO com Validação e Swagger:</h4>
+<pre><code class="language-typescript">import { IsString, IsNotEmpty, IsOptional, MaxLength, Matches } from &#39;class-validator&#39;;
+import { ApiProperty, ApiPropertyOptional } from &#39;@nestjs/swagger&#39;;
+
+export class FilterLinhaDto {
+  @ApiPropertyOptional({
+    description: &#39;Código oficial da linha no padrão SEMOB&#39;,
+    example: &#39;0.108&#39;,
+  })
+  @IsOptional()
+  @IsString({ message: &#39;O código da linha deve ser uma string.&#39; })
+  @MaxLength(8, { message: &#39;O código da linha não pode exceder 8 caracteres.&#39; })
+  codigo?: string;
+
+  @ApiPropertyOptional({
+    description: &#39;Descrição ou itinerário da linha&#39;,
+    example: &#39;W3 Norte&#39;,
+  })
+  @IsOptional()
+  @IsString({ message: &#39;A descrição deve ser um texto válido.&#39; })
+  @MaxLength(255, { message: &#39;A descrição não pode exceder 255 caracteres.&#39; })
+  descricao?: string;
+}
+</code></pre>
+<hr>
+<h3>3.3 Padronização de Respostas e Status Codes HTTP</h3>
+<p>As rotas da API devem utilizar os verbos e status codes semanticamente corretos:</p>
+<table>
+<thead>
+<tr>
+<th>Verbo HTTP</th>
+<th>Status Code</th>
+<th>Quando Utilizar</th>
+<th>Payload de Resposta</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>GET</strong></td>
+<td><code>200 OK</code></td>
+<td>Busca de listagens ou recurso pontual por ID</td>
+<td>Retorna o objeto encontrado ou array de objetos</td>
+</tr>
+<tr>
+<td><strong>POST</strong></td>
+<td><code>201 Created</code></td>
+<td>Criação bem-sucedida de um novo recurso</td>
+<td>Retorna o objeto recém-criado com seu respectivo ID gerado</td>
+</tr>
+<tr>
+<td><strong>POST</strong></td>
+<td><code>200 OK</code></td>
+<td>Operações de processamento, comandos ou login</td>
+<td>Retorna tokens ou confirmação da operação (<code>{ access_token: ... }</code>)</td>
+</tr>
+<tr>
+<td><strong>PUT</strong></td>
+<td><code>200 OK</code></td>
+<td>Atualização completa de um recurso existente</td>
+<td>Retorna o recurso com seus dados atualizados</td>
+</tr>
+<tr>
+<td><strong>PATCH</strong></td>
+<td><code>200 OK</code></td>
+<td>Atualização parcial de atributos específicos</td>
+<td>Retorna o recurso com seus dados atualizados</td>
+</tr>
+<tr>
+<td><strong>DELETE</strong></td>
+<td><code>200 OK</code> ou <code>204 No Content</code></td>
+<td>Remoção de um recurso do sistema</td>
+<td><code>200</code> com <code>{ message: &quot;Removido com sucesso&quot; }</code> ou <code>204</code> sem body</td>
+</tr>
+<tr>
+<td><strong>QUALQUER</strong></td>
+<td><code>400 Bad Request</code></td>
+<td>Falha de validação no DTO ou violação de regra de negócio</td>
+<td>JSON de erro padronizado contendo <code>statusCode: 400</code> e mensagem</td>
+</tr>
+<tr>
+<td><strong>QUALQUER</strong></td>
+<td><code>401 Unauthorized</code></td>
+<td>Token ausente, inválido ou expirado</td>
+<td>JSON de erro padronizado com <code>statusCode: 401</code></td>
+</tr>
+<tr>
+<td><strong>QUALQUER</strong></td>
+<td><code>403 Forbidden</code></td>
+<td>Usuário autenticado, mas sem permissão de acesso</td>
+<td>JSON de erro padronizado com <code>statusCode: 403</code></td>
+</tr>
+<tr>
+<td><strong>QUALQUER</strong></td>
+<td><code>404 Not Found</code></td>
+<td>Recurso solicitado não existe no banco de dados</td>
+<td>JSON de erro padronizado com <code>statusCode: 404</code></td>
+</tr>
+<tr>
+<td><strong>QUALQUER</strong></td>
+<td><code>409 Conflict</code></td>
+<td>Violação de unicidade (ex: placa ou CPF já cadastrado)</td>
+<td>JSON de erro padronizado com <code>statusCode: 409</code></td>
+</tr>
+<tr>
+<td><strong>QUALQUER</strong></td>
+<td><code>500 Internal Error</code></td>
+<td>Erro inesperado de infraestrutura ou exceção não tratada</td>
+<td>JSON de erro padronizado com <code>statusCode: 500</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>4. Tratamento de Erros e Middlewares</h2>
+<h3>4.1 Filtro Global de Exceções (<code>AllExceptionsFilter</code>)</h3>
+<p>Nenhuma exceção não tratada deve vazar para o cliente como stack trace de Node.js. O projeto conta com o <code>AllExceptionsFilter</code> (<code>src/filters/all-exceptions.filter.ts</code>), ativado globalmente no <code>main.ts</code>.</p>
+<h4>Contrato Único de Resposta de Erro:</h4>
+<p>Toda resposta com código de status <code>&gt;= 400</code> devolve obrigatoriamente a seguinte estrutura JSON:</p>
+<pre><code class="language-json">{
+  &quot;statusCode&quot;: 404,
+  &quot;timestamp&quot;: &quot;2026-10-01T16:50:00.000Z&quot;,
+  &quot;path&quot;: &quot;/api/veiculos/999&quot;,
+  &quot;method&quot;: &quot;GET&quot;,
+  &quot;message&quot;: &quot;Veículo com identificador &#39;999&#39; não foi encontrado.&quot;
+}
+</code></pre>
+<h4>Implementação do Filtro:</h4>
+<pre><code class="language-typescript">@Catch()
+export class AllExceptionsFilter implements ExceptionFilter {
+  private readonly logger = new Logger(AllExceptionsFilter.name);
+
+  catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse&lt;Response&gt;();
+    const request = ctx.getRequest&lt;Request&gt;();
+
+    const status =
+      exception instanceof HttpException
+        ? exception.getStatus()
+        : HttpStatus.INTERNAL_SERVER_ERROR;
+
+    const message =
+      exception instanceof HttpException
+        ? (exception.getResponse() as any).message || exception.message
+        : &#39;Internal server error&#39;;
+
+    const errorResponse = {
+      statusCode: status,
+      timestamp: new Date().toISOString(),
+      path: request.url,
+      method: request.method,
+      message: message,
+    };
+
+    if (status === HttpStatus.INTERNAL_SERVER_ERROR) {
+      this.logger.error(
+        `${request.method} ${request.url}`,
+        exception instanceof Error ? exception.stack : &#39;Unknown Error&#39;,
+      );
+    } else {
+      this.logger.warn(
+        `${request.method} ${request.url} - Status: ${status} - Message: ${JSON.stringify(message)}`,
+      );
+    }
+
+    response.status(status).json(errorResponse);
+  }
+}
+</code></pre>
+<hr>
+<h3>4.2 Hierarquia de Exceções de Domínio</h3>
+<p>Nunca lance <code>throw new Error(&#39;mensagem&#39;)</code> dentro dos Services. O projeto disponibiliza classes semânticas derivadas de <code>HttpException</code>:</p>
+<pre><code>          ┌──────────────────────────┐
+          │      HttpException       │
+          └─────────────┬────────────┘
+                        │
+                        ▼
+          ┌──────────────────────────┐
+          │    BusinessException     │  ──► Status 400 (Bad Request)
+          └─────────────┬────────────┘
+                        │
+          ┌─────────────┴────────────────────────────┐
+          ▼                                          ▼
+┌───────────────────────────┐              ┌───────────────────────────┐
+│  EntityNotFoundException  │              │EntityAlreadyExistsException│
+│   ──► Status 404          │              │    ──► Status 409         │
+└───────────────────────────┘              └───────────────────────────┘
+</code></pre>
+<h4>Padrão de Utilização no Service:</h4>
+<pre><code class="language-typescript">import { EntityNotFoundException } from &#39;../exceptions/entity-not-found.exception&#39;;
+import { EntityAlreadyExistsException } from &#39;../exceptions/entity-already-exists.exception&#39;;
+import { BusinessException } from &#39;../exceptions/Business&#39;;
+
+// 1. Recurso não localizado
+if (!registro) {
+  throw new EntityNotFoundException(&#39;Linha&#39;, codigo);
+}
+
+// 2. Conflito de duplicidade
+if (existeLinha) {
+  throw new EntityAlreadyExistsException(&#39;Linha&#39;, &#39;código&#39;, codigo);
+}
+
+// 3. Regra de negócio violada
+if (valorTarifa &lt; 0) {
+  throw new BusinessException(&#39;O valor da tarifa não pode ser negativo.&#39;);
+}
+</code></pre>
+<hr>
+<h3>4.3 Middlewares, Pipes e Guards de Segurança</h3>
+<h4>1. <code>JwtAuthGuard</code> (Autenticação Stateless)</h4>
+<p>Localizado em <code>src/guards/Jwt.ts</code>, extrai o Bearer Token do cabeçalho <code>Authorization</code>, valida criptograficamente a assinatura e a data de expiração, e injeta as credenciais decodificadas em <code>request.user</code>.</p>
+<pre><code class="language-typescript">// Para proteger uma rota ou controller inteiro:
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@Controller(&#39;recurso&#39;)
+export class RecursoController { ... }
+</code></pre>
+<h4>2. <code>ValidationPipe</code> (Sanitização e Validação)</h4>
+<p>Previne <code>mass-assignment vulnerabilities</code> rejeitando parâmetros fora do schema especificado no DTO.</p>
+<h4>3. <code>CORS</code> (Cross-Origin Resource Sharing)</h4>
+<p>Ativado globalmente no bootstrap para possibilitar consumo seguro pelos clientes web e mobile do SISMOB.</p>
+<hr>
+<h2>5. Acesso a Dados (Banco de Dados)</h2>
+<h3>5.1 Decisão Arquitetural: ORM (Entity) vs. SQL Nativo Parametrizado</h3>
+<p>Para suportar a alta demanda de transações e relatórios da SEMOB-DF mantendo produtividade no dia a dia, adotamos a seguinte regra:</p>
+<pre><code>                                 Qual é o tipo de operação?
+                                             │
+                      ┌──────────────────────┴──────────────────────┐
+                      ▼                                             ▼
+          [ Operações de CRUD ]                         [ Consultas Complexas ]
+      • Criação, edição e deleção                   • Múltiplos JOINS (3+ tabelas)
+      • Busca simples por Chave Primária            • Agregações pesadas (SUM, COUNT, GROUP BY)
+      • Validação estrutural de tipos               • Queries dinâmicas com muitos filtros
+                      │                                             │
+                      ▼                                             ▼
+          Use TypeORM Entity / Methods                  Use SQL Nativo Parametrizado
+          (this.save, this.findOne)                     (this.dataSource.query)
+</code></pre>
+<ul>
+<li><strong>Por que usar TypeORM nos CRUDs?</strong><br>Acelera o desenvolvimento, garante tipagem forte, simplifica inserções e mantém histórico de auditoria automatizado (<code>CreateDateColumn</code>, <code>UpdateDateColumn</code>).</li>
+<li><strong>Por que usar SQL Nativo nas Consultas Complexas?</strong><br>Performance extrema (elimina o overhead de <em>hydration</em> do ORM), permite utilizar recursos específicos do PostgreSQL/Oracle (PostGIS, índices funcionais, CTEs) e oferece legibilidade total para os engenheiros de dados.</li>
+</ul>
+<hr>
+<h3>5.2 Blindagem Rígida Contra SQL Injection</h3>
+<div class="callout callout-caution"><div class="callout-header">ALERTA DE SEGURANÇA / CUIDADO</div><div class="callout-body"><p><strong>TOLERÂNCIA ZERO PARA CONCATENAÇÃO DE SQL:</strong>
+Sob nenhuma circunstância utilize concatenação (<code>+</code>, <code>${var}</code>) para inserir valores externos no comando SQL.</p></div></div>
+<p>O padrão oficial para consultas dinâmicas utiliza <strong>queries parametrizadas</strong> com arrays de valores separados:</p>
+<pre><code class="language-typescript">// ✅ PADRÃO CORRETO (SEGURO CONTRA SQL INJECTION):
+async findByFilters(codigo?: string, descricao?: string): Promise&lt;Linha[]&gt; {
+  let sql = `
+    SELECT 
+      id_linha as &quot;id&quot;, 
+      cd_linha as &quot;codigo&quot;, 
+      tx_linha as &quot;descricao&quot;, 
+      vl_tarifa as &quot;valorTarifa&quot;
+    FROM dados_mobilidade.tab_linha 
+    WHERE 1=1
+  `;
+
+  const params: any[] = [];
+
+  if (codigo) {
+    // No PostgreSQL nativo usamos $1, $2, $3...
+    sql += ` AND cd_linha = $${params.length + 1}`;
+    params.push(codigo);
+  }
+
+  if (descricao) {
+    sql += ` AND tx_linha ILIKE $${params.length + 1}`;
+    params.push(`%${descricao}%`);
+  }
+
+  // O driver do PostgreSQL (pg) substitui os parâmetros com escape seguro
+  return this.dataSource.query(sql, params);
+}
+</code></pre>
+<pre><code class="language-typescript">// ❌ CÓDIGO VULNERÁVEL (ESTRITAMENTE PROIBIDO):
+const sql = `SELECT * FROM tab_linha WHERE cd_linha = &#39;` + codigo + `&#39;`; // VULNERÁVEL A SQL INJECTION!
+</code></pre>
+<hr>
+<h3>5.3 Modelagem de Entidades e Estratégia de Migrations/Seeds</h3>
+<h4>Convenções de Mapeamento:</h4>
+<ol>
+<li>Sempre defina explicitamente o nome da tabela física e do schema (<code>@Entity({ name: &#39;tab_linha&#39;, schema: &#39;dados_mobilidade&#39; })</code>).</li>
+<li>Mapeie os nomes de colunas do banco (<code>snake_case</code>) para propriedades em <code>camelCase</code> na classe TypeScript.</li>
+<li>Utilize a classe abstrata <code>BaseEntity</code> (<code>src/utils/Base.ts</code>) para incluir automaticamente colunas de auditoria temporal.</li>
+</ol>
+<h4>Políticas de Sincronização:</h4>
+<ul>
+<li><strong>Ambiente Local (<code>development</code>):</strong> <code>DB_SYNCHRONIZE=true</code> pode ser utilizado para acelerar a prototipagem inicial.</li>
+<li><strong>Ambientes de Homologação e Produção:</strong> <code>DB_SYNCHRONIZE=false</code> é <strong>obrigatório</strong>. Modificações de schema devem ser aplicadas via scripts SQL versionados ou migrations controladas.</li>
+<li><strong>Seeds Automatizados (<code>SeedService</code>):</strong> O <code>SeedService</code> (<code>src/service/Seed.ts</code>) executa arquivos SQL declarativos no evento <code>onApplicationBootstrap()</code> apenas se a tabela correspondente estiver vazia, garantindo idempotência.</li>
+</ul>
+<hr>
+<h2>6. Tutorial Prático para Estagiários: Do Zero ao Endpoint Completo</h2>
+<p>Nesta seção, você aprenderá o passo a passo exato para criar uma nova funcionalidade do zero. Vamos implementar o módulo completo de <strong>Veículos</strong> (<code>Veiculo</code>), com CRUD e busca avançada.</p>
+<h3>Ordem Oficial de Desenvolvimento:</h3>
+<pre><code>1. Entidade ──► 2. DTOs ──► 3. Repository ──► 4. Service ──► 5. Controller ──► 6. Module ──► 7. AppModule
+</code></pre>
+<hr>
+<h3>6.1 Passo 1: Criação da Entidade de Banco</h3>
+<p>Crie o arquivo <a href="file:///c:/Users/01009368425/Desktop/Nova%20pasta/01009368425/Padr%C3%A3o_back/SISMOB-BOILERPLATE/src/entity/Veiculo.ts">src/entity/Veiculo.ts</a>:</p>
+<pre><code class="language-typescript">import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from &#39;typeorm&#39;;
+
+@Entity({ name: &#39;tab_veiculo&#39;, schema: &#39;dados_mobilidade&#39; })
+export class Veiculo {
+  @PrimaryGeneratedColumn({ name: &#39;id_veiculo&#39; })
+  id: number;
+
+  @Column({ name: &#39;nr_prefixo&#39;, length: 10, unique: true })
+  prefixo: string; // Ex: &#39;115201&#39;
+
+  @Column({ name: &#39;nr_placa&#39;, length: 8, unique: true })
+  placa: string; // Ex: &#39;ABC1D23&#39;
+
+  @Column({ name: &#39;ds_modelo&#39;, length: 100 })
+  modelo: string; // Ex: &#39;Caio Millennium IV&#39;
+
+  @Column({ name: &#39;st_ativo&#39;, type: &#39;boolean&#39;, default: true })
+  ativo: boolean;
+
+  @CreateDateColumn({ name: &#39;dataregistro&#39; })
+  dataRegistro: Date;
+}
+</code></pre>
+<hr>
+<h3>6.2 Passo 2: Definição dos DTOs de Entrada e Validação</h3>
+<p>Crie o arquivo <a href="file:///c:/Users/01009368425/Desktop/Nova%20pasta/01009368425/Padr%C3%A3o_back/SISMOB-BOILERPLATE/src/dto/Veiculo.ts">src/dto/Veiculo.ts</a>:</p>
+<pre><code class="language-typescript">import { IsString, IsNotEmpty, IsOptional, MaxLength, IsBoolean } from &#39;class-validator&#39;;
+import { ApiProperty, ApiPropertyOptional } from &#39;@nestjs/swagger&#39;;
+
+export class CreateVeiculoDto {
+  @ApiProperty({ description: &#39;Número do prefixo do veículo&#39;, example: &#39;115201&#39; })
+  @IsNotEmpty({ message: &#39;O prefixo é obrigatório.&#39; })
+  @IsString({ message: &#39;O prefixo deve ser texto.&#39; })
+  @MaxLength(10, { message: &#39;Prefixo não pode exceder 10 caracteres.&#39; })
+  prefixo: string;
+
+  @ApiProperty({ description: &#39;Placa do veículo (padrão Mercosul)&#39;, example: &#39;ABC1D23&#39; })
+  @IsNotEmpty({ message: &#39;A placa é obrigatória.&#39; })
+  @IsString({ message: &#39;A placa deve ser texto.&#39; })
+  @MaxLength(8, { message: &#39;Placa não pode exceder 8 caracteres.&#39; })
+  placa: string;
+
+  @ApiProperty({ description: &#39;Modelo ou fabricante do veículo&#39;, example: &#39;Caio Millennium IV&#39; })
+  @IsNotEmpty({ message: &#39;O modelo é obrigatório.&#39; })
+  @IsString({ message: &#39;O modelo deve ser texto.&#39; })
+  @MaxLength(100, { message: &#39;Modelo não pode exceder 100 caracteres.&#39; })
+  modelo: string;
+}
+
+export class FilterVeiculoDto {
+  @ApiPropertyOptional({ description: &#39;Filtro por prefixo&#39;, example: &#39;115&#39; })
+  @IsOptional()
+  @IsString()
+  prefixo?: string;
+
+  @ApiPropertyOptional({ description: &#39;Filtro por status ativo/inativo&#39;, example: true })
+  @IsOptional()
+  @IsBoolean()
+  ativo?: boolean;
+}
+</code></pre>
+<hr>
+<h3>6.3 Passo 3: Criação do Repositório Especializado</h3>
+<p>Crie o arquivo <a href="file:///c:/Users/01009368425/Desktop/Nova%20pasta/01009368425/Padr%C3%A3o_back/SISMOB-BOILERPLATE/src/repository/Veiculo.ts">src/repository/Veiculo.ts</a>:</p>
+<pre><code class="language-typescript">import { Injectable } from &#39;@nestjs/common&#39;;
+import { DataSource, Repository } from &#39;typeorm&#39;;
+import { Veiculo } from &#39;../entity/Veiculo&#39;;
+
+@Injectable()
+export class VeiculoRepository extends Repository&lt;Veiculo&gt; {
+  constructor(private dataSource: DataSource) {
+    super(Veiculo, dataSource.createEntityManager());
+  }
+
+  /**
+   * Consulta parametrizada com alta performance para listagens dinâmicas
+   */
+  async findByFilters(prefixo?: string, ativo?: boolean): Promise&lt;Veiculo[]&gt; {
+    let sql = `
+      SELECT 
+        id_veiculo as &quot;id&quot;,
+        nr_prefixo as &quot;prefixo&quot;,
+        nr_placa as &quot;placa&quot;,
+        ds_modelo as &quot;modelo&quot;,
+        st_ativo as &quot;ativo&quot;,
+        dataregistro as &quot;dataRegistro&quot;
+      FROM dados_mobilidade.tab_veiculo
+      WHERE 1=1
+    `;
+
+    const params: any[] = [];
+
+    if (prefixo) {
+      sql += ` AND nr_prefixo LIKE $${params.length + 1}`;
+      params.push(`%${prefixo}%`);
+    }
+
+    if (ativo !== undefined) {
+      sql += ` AND st_ativo = $${params.length + 1}`;
+      params.push(ativo);
+    }
+
+    sql += ` ORDER BY nr_prefixo ASC`;
+
+    return this.dataSource.query(sql, params);
+  }
+}
+</code></pre>
+<hr>
+<h3>6.4 Passo 4: Implementação do Service com Regras de Negócio</h3>
+<p>Crie o arquivo <a href="file:///c:/Users/01009368425/Desktop/Nova%20pasta/01009368425/Padr%C3%A3o_back/SISMOB-BOILERPLATE/src/service/Veiculo.ts">src/service/Veiculo.ts</a>:</p>
+<pre><code class="language-typescript">import { Injectable } from &#39;@nestjs/common&#39;;
+import { VeiculoRepository } from &#39;../repository/Veiculo&#39;;
+import { Veiculo } from &#39;../entity/Veiculo&#39;;
+import { CreateVeiculoDto, FilterVeiculoDto } from &#39;../dto/Veiculo&#39;;
+import { EntityNotFoundException } from &#39;../exceptions/entity-not-found.exception&#39;;
+import { EntityAlreadyExistsException } from &#39;../exceptions/entity-already-exists.exception&#39;;
+
+@Injectable()
+export class VeiculoService {
+  constructor(private readonly veiculoRepository: VeiculoRepository) {}
+
+  async listar(filters: FilterVeiculoDto): Promise&lt;Veiculo[]&gt; {
+    return this.veiculoRepository.findByFilters(filters.prefixo, filters.ativo);
+  }
+
+  async buscarPorId(id: number): Promise&lt;Veiculo&gt; {
+    const veiculo = await this.veiculoRepository.findOne({ where: { id } });
+    if (!veiculo) {
+      throw new EntityNotFoundException(&#39;Veículo&#39;, id);
+    }
+    return veiculo;
+  }
+
+  async criar(dto: CreateVeiculoDto): Promise&lt;Veiculo&gt; {
+    // 1. Regra de Negócio: Não permitir duplicidade de placa
+    const placaExistente = await this.veiculoRepository.findOne({ where: { placa: dto.placa } });
+    if (placaExistente) {
+      throw new EntityAlreadyExistsException(&#39;Veículo&#39;, &#39;placa&#39;, dto.placa);
+    }
+
+    // 2. Regra de Negócio: Não permitir duplicidade de prefixo
+    const prefixoExistente = await this.veiculoRepository.findOne({ where: { prefixo: dto.prefixo } });
+    if (prefixoExistente) {
+      throw new EntityAlreadyExistsException(&#39;Veículo&#39;, &#39;prefixo&#39;, dto.prefixo);
+    }
+
+    // 3. Persistência via ORM
+    const novoVeiculo = this.veiculoRepository.create(dto);
+    return this.veiculoRepository.save(novoVeiculo);
+  }
+}
+</code></pre>
+<hr>
+<h3>6.5 Passo 5: Criação do Controller e Documentação OpenAPI</h3>
+<p>Crie o arquivo <a href="file:///c:/Users/01009368425/Desktop/Nova%20pasta/01009368425/Padr%C3%A3o_back/SISMOB-BOILERPLATE/src/controller/Veiculo.ts">src/controller/Veiculo.ts</a>:</p>
+<pre><code class="language-typescript">import { Controller, Get, Post, Body, Param, Query, UseGuards, HttpStatus, HttpCode } from &#39;@nestjs/common&#39;;
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from &#39;@nestjs/swagger&#39;;
+import { VeiculoService } from &#39;../service/Veiculo&#39;;
+import { CreateVeiculoDto, FilterVeiculoDto } from &#39;../dto/Veiculo&#39;;
+import { JwtAuthGuard } from &#39;../guards/Jwt&#39;;
+
+@ApiTags(&#39;Veículos&#39;)
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@Controller(&#39;veiculos&#39;)
+export class VeiculoController {
+  constructor(private readonly veiculoService: VeiculoService) {}
+
+  @Get()
+  @ApiOperation({ summary: &#39;Listar veículos com filtros opcionais&#39; })
+  @ApiResponse({ status: 200, description: &#39;Listagem retornada com sucesso.&#39; })
+  async listar(@Query() filters: FilterVeiculoDto) {
+    return this.veiculoService.listar(filters);
+  }
+
+  @Get(&#39;:id&#39;)
+  @ApiOperation({ summary: &#39;Obter detalhes de um veículo por ID&#39; })
+  @ApiResponse({ status: 200, description: &#39;Veículo localizado.&#39; })
+  @ApiResponse({ status: 404, description: &#39;Veículo não encontrado.&#39; })
+  async buscarPorId(@Param(&#39;id&#39;) id: number) {
+    return this.veiculoService.buscarPorId(id);
+  }
+
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: &#39;Cadastrar um novo veículo na frota&#39; })
+  @ApiResponse({ status: 201, description: &#39;Veículo cadastrado com sucesso.&#39; })
+  @ApiResponse({ status: 400, description: &#39;Dados inválidos fornecidos.&#39; })
+  @ApiResponse({ status: 409, description: &#39;Prefixo ou placa já existente.&#39; })
+  async criar(@Body() dto: CreateVeiculoDto) {
+    return this.veiculoService.criar(dto);
+  }
+}
+</code></pre>
+<hr>
+<h3>6.6 Passo 6: Criação do Módulo e Registro no <code>AppModule</code></h3>
+<h4>1. Criar o Módulo de Veículo:</h4>
+<p>Crie o arquivo <a href="file:///c:/Users/01009368425/Desktop/Nova%20pasta/01009368425/Padr%C3%A3o_back/SISMOB-BOILERPLATE/src/module/Veiculo.ts">src/module/Veiculo.ts</a>:</p>
+<pre><code class="language-typescript">import { Module } from &#39;@nestjs/common&#39;;
+import { TypeOrmModule } from &#39;@nestjs/typeorm&#39;;
+import { Veiculo } from &#39;../entity/Veiculo&#39;;
+import { VeiculoRepository } from &#39;../repository/Veiculo&#39;;
+import { VeiculoService } from &#39;../service/Veiculo&#39;;
+import { VeiculoController } from &#39;../controller/Veiculo&#39;;
+
+@Module({
+  imports: [TypeOrmModule.forFeature([Veiculo])],
+  controllers: [VeiculoController],
+  providers: [VeiculoService, VeiculoRepository],
+  exports: [VeiculoService],
+})
+export class VeiculoModule {}
+</code></pre>
+<h4>2. Registrar no Módulo Raiz (<code>AppModule</code>):</h4>
+<p>Edite o arquivo <a href="file:///c:/Users/01009368425/Desktop/Nova%20pasta/01009368425/Padr%C3%A3o_back/SISMOB-BOILERPLATE/src/app.module.ts">src/app.module.ts</a> adicionando <code>VeiculoModule</code>:</p>
+<pre><code class="language-typescript">// Adicionar o import:
+import { VeiculoModule } from &#39;./module/Veiculo&#39;;
+
+@Module({
+  imports: [
+    // ... outros módulos ...
+    LinhaModule,
+    VeiculoModule, // &lt;-- REGISTRO OBRIGATÓRIO DO NOVO MÓDULO
+  ],
+  // ...
+})
+export class AppModule {}
+</code></pre>
+<hr>
+<h3>6.7 Validação e Teste do Novo Recurso via Swagger</h3>
+<ol>
+<li><strong>Acesse a Documentação Swagger:</strong><br>Abra no navegador: <code>http://localhost:8097/api/docs</code></li>
+<li><strong>Obtenha o Token de Acesso:</strong><br>Execute <code>POST /api/auth/login</code> com:<pre><code class="language-json">{
+  &quot;username&quot;: &quot;admin&quot;,
+  &quot;password&quot;: &quot;sismob@2026&quot;
+}
+</code></pre>
+</li>
+<li><strong>Autorize no Swagger:</strong><br>Copie o <code>access_token</code>, clique em <strong>Authorize</strong> (topo direito do Swagger) e cole o token.</li>
+<li><strong>Execute as Requisições:</strong><br>Os endpoints de <code>Veículos</code> estarão prontos para receber cadastros e consultas em tempo real!</li>
+</ol>
+<hr>
+<h2>7. Scripts Úteis, Setup e Testes Automatizados</h2>
+<h3>7.1 Setup do Ambiente Local (Docker vs. Nativo)</h3>
+<h4>Opção A: Execução com Docker Compose (Recomendado)</h4>
+<p>Sobe o banco PostgreSQL, a extensão PostGIS e o pgAdmin automaticamente:</p>
+<pre><code class="language-bash"># 1. Subir os serviços em segundo plano:
+docker compose up -d
+
+# 2. Verificar os containers em execução:
+docker compose ps
+
+# 3. Acessar a interface visual pgAdmin:
+# URL: http://localhost:5050
+# Usuário: admin@sismob.com | Senha: admin
+# Conexão no Postgres: Host &quot;sismob-db&quot;, Porta 5432, User/Pass definidos no .env
+</code></pre>
+<h4>Opção B: Execução da Aplicação NestJS na Máquina Host</h4>
+<pre><code class="language-bash"># 1. Instalar as dependências do projeto:
+npm install
+
+# 2. Configurar o arquivo de variáveis de ambiente:
+# Certifique-se de que o arquivo .env aponta para o host localhost:5432
+
+# 3. Iniciar em modo de desenvolvimento (hot-reload ativado):
+npm run start:dev
+</code></pre>
+<hr>
+<h3>7.2 Guia de Comandos NPM</h3>
+<table>
+<thead>
+<tr>
+<th>Comando</th>
+<th>Descrição da Ação</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>npm run start:dev</code></td>
+<td>Inicia o servidor com monitoramento de arquivos (<code>watch mode</code>)</td>
+</tr>
+<tr>
+<td><code>npm run build</code></td>
+<td>Compila o código TypeScript para JavaScript na pasta <code>dist/</code></td>
+</tr>
+<tr>
+<td><code>npm run start:prod</code></td>
+<td>Executa o bundle de produção otimizado (<code>node dist/main</code>)</td>
+</tr>
+<tr>
+<td><code>npm run lint</code></td>
+<td>Executa o ESLint com autocorreção de formatação e tipagem</td>
+</tr>
+<tr>
+<td><code>npm run format</code></td>
+<td>Executa o Prettier para formatar todos os arquivos <code>.ts</code> do projeto</td>
+</tr>
+<tr>
+<td><code>npm test</code></td>
+<td>Executa os testes unitários do Jest</td>
+</tr>
+<tr>
+<td><code>npm run test:watch</code></td>
+<td>Executa testes em tempo real a cada alteração de código</td>
+</tr>
+<tr>
+<td><code>npm run test:cov</code></td>
+<td>Gera o relatório de cobertura de testes na pasta <code>coverage/</code></td>
+</tr>
+<tr>
+<td><code>npm run test:e2e</code></td>
+<td>Executa a bateria de testes de ponta a ponta (End-to-End)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>7.3 Como Escrever Testes Automatizados</h3>
+<h4>Testes Unitários de Service (Mockando Repositories)</h4>
+<p>Os testes unitários devem isolar a camada de serviço de qualquer conexão real com o banco de dados. Crie testes com a extensão <code>.spec.ts</code> ao lado do arquivo correspondente:</p>
+<pre><code class="language-typescript">// Exemplo: src/service/Veiculo.spec.ts
+import { Test, TestingModule } from &#39;@nestjs/testing&#39;;
+import { VeiculoService } from &#39;./Veiculo&#39;;
+import { VeiculoRepository } from &#39;../repository/Veiculo&#39;;
+import { EntityNotFoundException } from &#39;../exceptions/entity-not-found.exception&#39;;
+
+describe(&#39;VeiculoService&#39;, () =&gt; {
+  let service: VeiculoService;
+  let repository: Partial&lt;Record&lt;keyof VeiculoRepository, jest.Mock&gt;&gt;;
+
+  beforeEach(async () =&gt; {
+    repository = {
+      findOne: jest.fn(),
+      findByFilters: jest.fn(),
+      save: jest.fn(),
+      create: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        VeiculoService,
+        { provide: VeiculoRepository, useValue: repository },
+      ],
+    }).compile();
+
+    service = module.get&lt;VeiculoService&gt;(VeiculoService);
+  });
+
+  it(&#39;deve lançar EntityNotFoundException se o veículo não existir&#39;, async () =&gt; {
+    repository.findOne!.mockResolvedValue(null);
+
+    await expect(service.buscarPorId(999)).rejects.toThrow(EntityNotFoundException);
+  });
+
+  it(&#39;deve retornar o veículo quando o ID existir&#39;, async () =&gt; {
+    const mockVeiculo = { id: 1, prefixo: &#39;115201&#39;, placa: &#39;ABC1D23&#39; };
+    repository.findOne!.mockResolvedValue(mockVeiculo);
+
+    const resultado = await service.buscarPorId(1);
+    expect(resultado).toEqual(mockVeiculo);
+    expect(repository.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
+  });
+});
+</code></pre>
+<hr>
+<h3>7.4 Checklist Final de Qualidade de Código (DoD)</h3>
+<p>Antes de abrir um Merge Request (MR) ou submeter seu código para code review, garanta que:</p>
+<ul>
+<li><input disabled="" type="checkbox"> A rota possui <strong>DTO de entrada</strong> com validações do <code>class-validator</code> e documentação Swagger;</li>
+<li><input disabled="" type="checkbox"> O Controller <strong>não contém nenhuma regra de negócio</strong> ou lógica de banco;</li>
+<li><input disabled="" type="checkbox"> O Service <strong>lança exceções semânticas</strong> (<code>EntityNotFoundException</code>, etc.) em vez de erros genéricos;</li>
+<li><input disabled="" type="checkbox"> O Repository <strong>não utiliza concatenação de strings</strong> em comandos SQL;</li>
+<li><input disabled="" type="checkbox"> A rota está protegida com <code>@UseGuards(JwtAuthGuard)</code> (a menos que seja deliberadamente pública);</li>
+<li><input disabled="" type="checkbox"> O novo módulo foi devidamente importado no <code>src/app.module.ts</code>;</li>
+<li><input disabled="" type="checkbox"> O comando <code>npm run lint</code> executa sem nenhum erro ou aviso;</li>
+<li><input disabled="" type="checkbox"> Todos os testes unitários (<code>npm test</code>) passam com 100% de sucesso.</li>
+</ul>
+<hr>
+<p><em>Manual elaborado pela Arquitetura de Software e Engenharia de Backend — SEMOB-DF / SISMOB.</em><br><em>Dúvidas, sugestões ou melhorias arquiteturais devem ser submetidas via Merge Request.</em></p>
+
+    </article>
+  </main>
+
+  <script>
+    // Inicializar Highlight.js
+    hljs.highlightAll();
+
+    // Alternar tema Claro / Escuro
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('sismob_manual_theme', next);
+    }
+
+    // Carregar tema salvo
+    const savedTheme = localStorage.getItem('sismob_manual_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  </script>
+</body>
+</html>
