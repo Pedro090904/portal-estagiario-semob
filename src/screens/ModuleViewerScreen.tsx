@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ModuleMetadata, QuizAttempt, ScreenType } from '../types';
 import { QUIZZES } from '../services/dataService';
 import { QuizBlock } from '../components/QuizBlock';
+import { ModuleNotesPanel } from '../components/ModuleNotesPanel';
 import { 
   CheckCircle2, 
   ArrowLeft, 
@@ -11,7 +12,13 @@ import {
   List, 
   X, 
   ChevronRight, 
-  ExternalLink 
+  ExternalLink,
+  FileText,
+  Columns,
+  Maximize2,
+  Minimize2,
+  Clock,
+  Edit3
 } from 'lucide-react';
 
 interface TocItem {
@@ -29,6 +36,8 @@ interface ModuleViewerScreenProps {
   onSaveQuizAttempt: (attempt: QuizAttempt) => void;
   nextModule?: ModuleMetadata;
   prevModule?: ModuleMetadata;
+  userNotes?: string;
+  onSaveNotes?: (notes: string) => void;
 }
 
 declare global {
@@ -51,6 +60,8 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
   onSaveQuizAttempt,
   nextModule,
   prevModule,
+  userNotes = '',
+  onSaveNotes,
 }) => {
   const [contentHtml, setContentHtml] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -61,9 +72,18 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
   const [readingProgress, setReadingProgress] = useState<number>(0);
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'xlarge'>('normal');
 
+  // Novos modos de visualização inspirados no player avançado
+  const [viewerMode, setViewerMode] = useState<'read' | 'notes' | 'split'>('read');
+  const [zenMode, setZenMode] = useState<boolean>(false);
+
   const contentRef = useRef<HTMLDivElement>(null);
   const quizSectionRef = useRef<HTMLDivElement>(null);
   const quizData = QUIZZES.find((q) => q.id === module.quizId);
+
+  // Estimativa de tempo de leitura restante
+  const durationNumber = parseInt(module.duration.replace(/\D/g, ''), 10) || 30;
+  const estimatedRemainingMinutes = Math.max(1, Math.round(durationNumber * (1 - readingProgress / 100)));
+  const hasUserNotes = Boolean(userNotes && userNotes.trim().length > 0);
 
   // Carregamento e higienização robusta do HTML para dispositivos móveis
   useEffect(() => {
@@ -200,7 +220,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
         scrollToSection(targetId);
       });
     });
-  }, [contentHtml, isLoading]);
+  }, [contentHtml, isLoading, viewerMode]);
 
   // ScrollSpy e Progresso de Leitura
   const handleScroll = useCallback(() => {
@@ -246,7 +266,14 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
   };
 
   const scrollToQuiz = () => {
-    quizSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (viewerMode === 'notes') {
+      setViewerMode('read');
+      setTimeout(() => {
+        quizSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } else {
+      quizSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const cycleFontSize = () => {
@@ -256,7 +283,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
   };
 
   return (
-    <div className={`native-manual-page font-size-${fontSize}`}>
+    <div className={`native-manual-page font-size-${fontSize} ${zenMode ? 'is-zen-mode' : ''}`}>
       {/* Barra de Progresso de Leitura Fixa no Topo */}
       <div className="reading-progress-track">
         <div className="reading-progress-bar" style={{ width: `${readingProgress}%` }}></div>
@@ -272,28 +299,85 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
             <span className="crumb-sep">/</span>
             <span className="crumb-current">{module.shortTitle}</span>
           </div>
-          <h1 className="manual-toolbar-title">{module.shortTitle}</h1>
+          <div className="toolbar-title-row">
+            <h1 className="manual-toolbar-title">{module.shortTitle}</h1>
+            {viewerMode === 'read' && (
+              <span className="reading-time-badge" title="Tempo restante estimado com base no progresso de rolagem">
+                <Clock size={12} className="text-primary" />
+                <span>~{estimatedRemainingMinutes} min restantes</span>
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Seletor de Modos do Player (Leitura / Anotações / Lado a Lado) */}
+        <div className="viewer-mode-selector">
+          <button
+            type="button"
+            onClick={() => setViewerMode('read')}
+            className={`mode-btn ${viewerMode === 'read' ? 'active' : ''}`}
+            title="Exibir apenas o conteúdo oficial do manual"
+          >
+            <BookOpen size={14} />
+            <span>Leitura</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setViewerMode('notes')}
+            className={`mode-btn ${viewerMode === 'notes' ? 'active' : ''}`}
+            title="Abrir caderno de notas técnicas pessoais"
+          >
+            <FileText size={14} />
+            <span>Anotações</span>
+            {hasUserNotes && <span className="notes-has-content-dot" title="Você tem anotações neste módulo" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setViewerMode('split')}
+            className={`mode-btn split-screen-btn ${viewerMode === 'split' ? 'active' : ''}`}
+            title="Exibir manual e caderno de anotações lado a lado (recomendado para desktop)"
+          >
+            <Columns size={14} />
+            <span>Lado a Lado</span>
+          </button>
         </div>
 
         <div className="toolbar-actions">
           {/* Botão de Sumário visível no mobile */}
-          <button
-            onClick={() => setMobileTocOpen(true)}
-            className="btn-secondary btn-sm mobile-toc-trigger"
-            title="Abrir Sumário do Documento"
-          >
-            <List size={15} />
-            <span>Índice ({tocItems.length})</span>
-          </button>
+          {viewerMode !== 'notes' && (
+            <button
+              onClick={() => setMobileTocOpen(true)}
+              className="btn-secondary btn-sm mobile-toc-trigger"
+              title="Abrir Sumário do Documento"
+            >
+              <List size={15} />
+              <span>Índice ({tocItems.length})</span>
+            </button>
+          )}
 
           {/* Ajuste de Fonte */}
+          {viewerMode !== 'notes' && (
+            <button
+              onClick={cycleFontSize}
+              className="btn-secondary btn-sm font-toggle-btn"
+              title="Alterar tamanho do texto de leitura"
+            >
+              <span className="font-label">Aa</span>
+              <span className="font-current-tag">{fontSize === 'normal' ? '100%' : fontSize === 'large' ? '115%' : '130%'}</span>
+            </button>
+          )}
+
+          {/* Modo Foco / Zen */}
           <button
-            onClick={cycleFontSize}
-            className="btn-secondary btn-sm font-toggle-btn"
-            title="Alterar tamanho do texto de leitura"
+            type="button"
+            onClick={() => setZenMode(!zenMode)}
+            className={`btn-secondary btn-sm zen-toggle-btn ${zenMode ? 'active' : ''}`}
+            title={zenMode ? 'Sair do Modo Foco' : 'Ativar Modo Foco (oculta distrações da tela)'}
           >
-            <span className="font-label">Aa</span>
-            <span className="font-current-tag">{fontSize === 'normal' ? '100%' : fontSize === 'large' ? '115%' : '130%'}</span>
+            {zenMode ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+            <span className="zen-btn-label">{zenMode ? 'Normal' : 'Foco'}</span>
           </button>
 
           {quizData && (
@@ -313,188 +397,345 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
         </div>
       </header>
 
-      {/* Grid Principal: Artigo + Sidebar */}
-      <div className="manual-layout-grid">
-        <article className="manual-article-column">
-          {isLoading && (
-            <div className="manual-loading-state">
-              <div className="spinner"></div>
-              <p>Carregando conteúdo oficial do manual...</p>
-            </div>
-          )}
-
-          {loadError && (
-            <div className="manual-error-state">
-              <h3>Não foi possível carregar este manual diretamente</h3>
-              <p>{loadError}</p>
-              <a
-                href={`/${module.htmlFile}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-primary"
-              >
-                <ExternalLink size={16} />
-                Abrir Arquivo em Nova Aba
-              </a>
-            </div>
-          )}
-
-          {!isLoading && !loadError && (
-            <div
-              ref={contentRef}
-              className="native-manual-content"
-              dangerouslySetInnerHTML={{ __html: contentHtml }}
-            />
-          )}
-
-          {/* Quiz Nativo ao Final */}
-          {quizData && (
-            <section className="manual-bottom-quiz-section" ref={quizSectionRef}>
-              <div className="quiz-section-divider">
-                <span className="divider-line"></span>
-                <span className="divider-badge">🎯 TESTE SEUS CONHECIMENTOS</span>
-                <span className="divider-line"></span>
+      {/* =====================================================================
+          MODO 1: APENAS ANOTAÇÕES (Tela cheia para anotações)
+          ===================================================================== */}
+      {viewerMode === 'notes' && (
+        <main className="manual-notes-view-mode">
+          <div className="notes-view-container">
+            <div className="notes-view-banner">
+              <div>
+                <h2>Caderno de Anotações: {module.title}</h2>
+                <p>Anote pontos-chave, comandos Git, consultas PostgreSQL ou regras de negócio para consultar mais tarde no seu estágio.</p>
               </div>
-
-              <QuizBlock
-                quiz={quizData}
-                existingAttempt={quizAttempt}
-                onSaveAttempt={onSaveQuizAttempt}
-              />
-            </section>
-          )}
-
-          {/* Navegação Entre Módulos */}
-          <nav className="manual-bottom-nav">
-            {prevModule ? (
               <button
-                onClick={() => {
-                  onNavigate(prevModule.screenKey);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="nav-page-btn prev"
+                type="button"
+                onClick={() => setViewerMode('read')}
+                className="btn-secondary btn-sm"
               >
-                <span className="nav-dir-label"><ArrowLeft size={14} /> Módulo Anterior</span>
-                <span className="nav-title-label">{prevModule.shortTitle}</span>
+                <BookOpen size={14} />
+                <span>Voltar ao Manual</span>
               </button>
-            ) : (
-              <button onClick={() => onNavigate('roteiro')} className="nav-page-btn prev">
-                <span className="nav-dir-label"><ArrowLeft size={14} /> Início</span>
-                <span className="nav-title-label">Roteiro de Integração</span>
-              </button>
-            )}
-
-            <button
-              onClick={() => onToggleComplete(module.id)}
-              className={`btn-primary btn-finish-reading ${isCompleted ? 'btn-green' : ''}`}
-            >
-              <CheckCircle2 size={18} />
-              <span>{isCompleted ? '✓ Módulo Finalizado com Sucesso' : 'Finalizar Estudo do Módulo'}</span>
-            </button>
-
-            {nextModule ? (
-              <button
-                onClick={() => {
-                  onNavigate(nextModule.screenKey);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="nav-page-btn next"
-              >
-                <span className="nav-dir-label">Próximo Módulo <ArrowRight size={14} /></span>
-                <span className="nav-title-label">{nextModule.shortTitle}</span>
-              </button>
-            ) : (
-              <button onClick={() => onNavigate('quizzes')} className="nav-page-btn next">
-                <span className="nav-dir-label">Avançar <ArrowRight size={14} /></span>
-                <span className="nav-title-label">Central de Quizzes</span>
-              </button>
-            )}
-          </nav>
-        </article>
-
-        {/* Sidebar Direita de Sumário (Desktop) */}
-        <aside className="manual-toc-sidebar">
-          <div className="toc-sidebar-inner">
-            <div className="toc-sidebar-header">
-              <BookOpen size={16} className="text-primary" />
-              <span>Neste Manual</span>
             </div>
 
-            <nav className="toc-links-list">
-              {tocItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => scrollToSection(item.id)}
-                  className={`toc-link-item level-${item.level} ${activeTocId === item.id ? 'active' : ''}`}
-                >
-                  <span className="toc-dot"></span>
-                  <span className="toc-text">{item.title}</span>
-                </button>
-              ))}
+            <ModuleNotesPanel
+              module={module}
+              initialNotes={userNotes}
+              onSaveNotes={onSaveNotes || (() => {})}
+            />
+          </div>
+        </main>
+      )}
 
-              {quizData && (
-                <button
-                  onClick={scrollToQuiz}
-                  className="toc-link-item toc-quiz-link"
+      {/* =====================================================================
+          MODO 2: TELA DIVIDIDA (Manual à esquerda + Anotações à direita)
+          ===================================================================== */}
+      {viewerMode === 'split' && (
+        <div className="manual-split-view-grid">
+          {/* Coluna da Esquerda: Conteúdo do Manual com scroll autônomo */}
+          <div className="split-column-manual">
+            {isLoading && (
+              <div className="manual-loading-state">
+                <div className="spinner"></div>
+                <p>Carregando conteúdo oficial do manual...</p>
+              </div>
+            )}
+
+            {!isLoading && !loadError && (
+              <div
+                ref={contentRef}
+                className="native-manual-content"
+                dangerouslySetInnerHTML={{ __html: contentHtml }}
+              />
+            )}
+
+            {/* Quiz Nativo no split */}
+            {quizData && (
+              <section className="manual-bottom-quiz-section" ref={quizSectionRef}>
+                <div className="quiz-section-divider">
+                  <span className="divider-line"></span>
+                  <span className="divider-badge">🎯 TESTE SEUS CONHECIMENTOS</span>
+                  <span className="divider-line"></span>
+                </div>
+
+                <QuizBlock
+                  quiz={quizData}
+                  existingAttempt={quizAttempt}
+                  onSaveAttempt={onSaveQuizAttempt}
+                />
+              </section>
+            )}
+          </div>
+
+          {/* Coluna da Direita: Caderno de Anotações Fixo */}
+          <div className="split-column-notes">
+            <div className="split-notes-sticky-wrap">
+              <ModuleNotesPanel
+                module={module}
+                initialNotes={userNotes}
+                onSaveNotes={onSaveNotes || (() => {})}
+                isSplitView={true}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          MODO 3: LEITURA PADRÃO (Artigo centralizado + Sumário lateral)
+          ===================================================================== */}
+      {viewerMode === 'read' && (
+        <div className="manual-layout-grid">
+          <article className="manual-article-column">
+            {isLoading && (
+              <div className="manual-loading-state">
+                <div className="spinner"></div>
+                <p>Carregando conteúdo oficial do manual...</p>
+              </div>
+            )}
+
+            {loadError && (
+              <div className="manual-error-state">
+                <h3>Não foi possível carregar este manual diretamente</h3>
+                <p>{loadError}</p>
+                <a
+                  href={`/${module.htmlFile}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary"
                 >
-                  <Sparkles size={14} className="text-amber" />
-                  <span>🎯 Teste de Conhecimentos</span>
+                  <ExternalLink size={16} />
+                  Abrir Arquivo em Nova Aba
+                </a>
+              </div>
+            )}
+
+            {!isLoading && !loadError && (
+              <div
+                ref={contentRef}
+                className="native-manual-content"
+                dangerouslySetInnerHTML={{ __html: contentHtml }}
+              />
+            )}
+
+            {/* Callout de Anotações: Convite didático para registrar notas */}
+            <div className="notes-callout-card">
+              <div className="notes-callout-content">
+                <div className="notes-callout-icon">
+                  <FileText size={20} className="text-primary" />
+                </div>
+                <div>
+                  <h4 className="notes-callout-title">Caderno de Anotações deste Módulo</h4>
+                  <p className="notes-callout-desc">
+                    {hasUserNotes
+                      ? 'Você já possui notas salvas para este manual. Acesse para revisar ou atualizar seus comandos.'
+                      : 'Precisa fixar comandos de terminal, conexões de banco ou dúvidas para o supervisor? Salve no seu caderno de anotações.'}
+                  </p>
+                </div>
+              </div>
+              <div className="notes-callout-btns">
+                <button
+                  type="button"
+                  onClick={() => setViewerMode('notes')}
+                  className="btn-secondary btn-sm"
+                >
+                  <Edit3 size={14} />
+                  <span>{hasUserNotes ? 'Abrir Anotações' : 'Criar Anotações'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewerMode('split')}
+                  className="btn-secondary btn-sm desktop-only"
+                  title="Abrir manual e anotações lado a lado"
+                >
+                  <Columns size={14} />
+                  <span>Ver Lado a Lado</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quiz Nativo ao Final */}
+            {quizData && (
+              <section className="manual-bottom-quiz-section" ref={quizSectionRef}>
+                <div className="quiz-section-divider">
+                  <span className="divider-line"></span>
+                  <span className="divider-badge">🎯 TESTE SEUS CONHECIMENTOS</span>
+                  <span className="divider-line"></span>
+                </div>
+
+                <QuizBlock
+                  quiz={quizData}
+                  existingAttempt={quizAttempt}
+                  onSaveAttempt={onSaveQuizAttempt}
+                />
+              </section>
+            )}
+
+            {/* Navegação Entre Módulos */}
+            <nav className="manual-bottom-nav">
+              {prevModule ? (
+                <button
+                  onClick={() => {
+                    onNavigate(prevModule.screenKey);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="nav-page-btn prev"
+                >
+                  <span className="nav-dir-label"><ArrowLeft size={14} /> Módulo Anterior</span>
+                  <span className="nav-title-label">{prevModule.shortTitle}</span>
+                </button>
+              ) : (
+                <button onClick={() => onNavigate('roteiro')} className="nav-page-btn prev">
+                  <span className="nav-dir-label"><ArrowLeft size={14} /> Início</span>
+                  <span className="nav-title-label">Roteiro de Integração</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => onToggleComplete(module.id)}
+                className={`btn-primary btn-finish-reading ${isCompleted ? 'btn-green' : ''}`}
+              >
+                <CheckCircle2 size={18} />
+                <span>{isCompleted ? '✓ Módulo Finalizado com Sucesso' : 'Finalizar Estudo do Módulo'}</span>
+              </button>
+
+              {nextModule ? (
+                <button
+                  onClick={() => {
+                    onNavigate(nextModule.screenKey);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="nav-page-btn next"
+                >
+                  <span className="nav-dir-label">Próximo Módulo <ArrowRight size={14} /></span>
+                  <span className="nav-title-label">{nextModule.shortTitle}</span>
+                </button>
+              ) : (
+                <button onClick={() => onNavigate('quizzes')} className="nav-page-btn next">
+                  <span className="nav-dir-label">Avançar <ArrowRight size={14} /></span>
+                  <span className="nav-title-label">Central de Quizzes</span>
                 </button>
               )}
             </nav>
+          </article>
 
-            <div className="toc-sidebar-progress">
-              <div className="progress-label">
-                <span>Progresso</span>
-                <strong>{readingProgress}%</strong>
+          {/* Sidebar Direita de Sumário (Desktop) */}
+          <aside className="manual-toc-sidebar">
+            <div className="toc-sidebar-inner">
+              <div className="toc-sidebar-header">
+                <BookOpen size={16} className="text-primary" />
+                <span>Neste Manual</span>
               </div>
-              <div className="progress-track">
-                <div className="progress-fill" style={{ width: `${readingProgress}%` }}></div>
+
+              <nav className="toc-links-list">
+                {tocItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => scrollToSection(item.id)}
+                    className={`toc-link-item level-${item.level} ${activeTocId === item.id ? 'active' : ''}`}
+                  >
+                    <span className="toc-dot"></span>
+                    <span className="toc-text">{item.title}</span>
+                  </button>
+                ))}
+
+                {quizData && (
+                  <button
+                    onClick={scrollToQuiz}
+                    className="toc-link-item toc-quiz-link"
+                  >
+                    <Sparkles size={14} className="text-amber" />
+                    <span>🎯 Teste de Conhecimentos</span>
+                  </button>
+                )}
+              </nav>
+
+              <div className="toc-sidebar-progress">
+                <div className="progress-label">
+                  <span>Progresso</span>
+                  <strong>{readingProgress}%</strong>
+                </div>
+                <div className="progress-track">
+                  <div className="progress-fill" style={{ width: `${readingProgress}%` }}></div>
+                </div>
+              </div>
+
+              {/* Acesso rápido às anotações na sidebar */}
+              <div className="toc-sidebar-notes-shortcut">
+                <button
+                  type="button"
+                  onClick={() => setViewerMode('notes')}
+                  className="sidebar-notes-btn"
+                >
+                  <FileText size={14} />
+                  <span>Caderno de Notas</span>
+                  {hasUserNotes && <span className="notes-badge-count">Ativo</span>}
+                </button>
               </div>
             </div>
-          </div>
-        </aside>
-      </div>
+          </aside>
+        </div>
+      )}
 
       {/* Drawer Off-Canvas para Sumário no Mobile */}
       {mobileTocOpen && (
         <div className="mobile-toc-overlay" onClick={() => setMobileTocOpen(false)}>
           <div className="mobile-toc-drawer" onClick={(e) => e.stopPropagation()}>
-            <div className="drawer-drag-pill"></div>
-            <div className="drawer-header">
-              <div className="drawer-title">
+            <div className="mobile-toc-header">
+              <div className="mobile-toc-title">
                 <BookOpen size={18} className="text-primary" />
-                <span>Índice do Manual ({tocItems.length} seções)</span>
+                <h3>Sumário do Manual</h3>
               </div>
-              <button onClick={() => setMobileTocOpen(false)} className="btn-close-drawer">
-                <X size={20} />
+              <button
+                onClick={() => setMobileTocOpen(false)}
+                className="btn-icon-close"
+                aria-label="Fechar índice"
+              >
+                <X size={18} />
               </button>
             </div>
 
-            <div className="drawer-body">
-              {tocItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => scrollToSection(item.id)}
-                  className={`drawer-toc-item level-${item.level} ${activeTocId === item.id ? 'active' : ''}`}
-                >
-                  <ChevronRight size={14} className="drawer-chevron" />
-                  <span>{item.title}</span>
-                </button>
-              ))}
+            <div className="mobile-toc-body">
+              <nav className="toc-links-list">
+                {tocItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => scrollToSection(item.id)}
+                    className={`toc-link-item level-${item.level} ${activeTocId === item.id ? 'active' : ''}`}
+                  >
+                    <span className="toc-dot"></span>
+                    <span className="toc-text">{item.title}</span>
+                    <ChevronRight size={14} className="toc-arrow" />
+                  </button>
+                ))}
 
-              {quizData && (
-                <button
-                  onClick={() => {
-                    setMobileTocOpen(false);
-                    scrollToQuiz();
-                  }}
-                  className="drawer-toc-item toc-quiz-link"
-                >
-                  <Sparkles size={16} className="text-amber" />
-                  <span>🎯 Ir para o Teste de Conhecimentos</span>
-                </button>
-              )}
+                {quizData && (
+                  <button
+                    onClick={() => {
+                      setMobileTocOpen(false);
+                      scrollToQuiz();
+                    }}
+                    className="toc-link-item toc-quiz-link"
+                  >
+                    <Sparkles size={14} className="text-amber" />
+                    <span>🎯 Teste de Conhecimentos</span>
+                  </button>
+                )}
+              </nav>
+            </div>
+
+            <div className="mobile-toc-footer">
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileTocOpen(false);
+                  setViewerMode('notes');
+                }}
+                className="btn-secondary w-full"
+              >
+                <FileText size={15} />
+                <span>Abrir Caderno de Notas</span>
+              </button>
             </div>
           </div>
         </div>

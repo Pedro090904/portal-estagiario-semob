@@ -66,6 +66,8 @@ export const App: React.FC = () => {
             quizAttempt={progress.quizAttempts[mod.quizId]}
             onSaveQuizAttempt={recordQuizAttempt}
             nextModule={next}
+            userNotes={progress.notes[mod.id] || ''}
+            onSaveNotes={(noteText) => recordNote(mod.id, noteText)}
           />
         );
       }
@@ -84,6 +86,8 @@ export const App: React.FC = () => {
             onSaveQuizAttempt={recordQuizAttempt}
             prevModule={prev}
             nextModule={next}
+            userNotes={progress.notes[mod.id] || ''}
+            onSaveNotes={(noteText) => recordNote(mod.id, noteText)}
           />
         );
       }
@@ -102,6 +106,8 @@ export const App: React.FC = () => {
             onSaveQuizAttempt={recordQuizAttempt}
             prevModule={prev}
             nextModule={next}
+            userNotes={progress.notes[mod.id] || ''}
+            onSaveNotes={(noteText) => recordNote(mod.id, noteText)}
           />
         );
       }
@@ -120,6 +126,8 @@ export const App: React.FC = () => {
             onSaveQuizAttempt={recordQuizAttempt}
             prevModule={prev}
             nextModule={next}
+            userNotes={progress.notes[mod.id] || ''}
+            onSaveNotes={(noteText) => recordNote(mod.id, noteText)}
           />
         );
       }
@@ -136,6 +144,8 @@ export const App: React.FC = () => {
             quizAttempt={progress.quizAttempts[mod.quizId]}
             onSaveQuizAttempt={recordQuizAttempt}
             prevModule={prev}
+            userNotes={progress.notes[mod.id] || ''}
+            onSaveNotes={(noteText) => recordNote(mod.id, noteText)}
           />
         );
       }
