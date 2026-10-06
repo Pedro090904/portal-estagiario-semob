@@ -2419,9 +2419,10 @@ button {
    ========================================================================== */
 .manual-toc-sidebar {
   position: sticky;
-  top: 130px; /* Alinhado abaixo da toolbar */
-  max-height: calc(100vh - 150px);
+  top: 64px;
+  max-height: calc(100vh - 84px);
   overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .toc-sidebar-inner {
@@ -2709,8 +2710,11 @@ body:has(.is-zen-mode) footer {
 
   .split-column-notes {
     position: sticky;
-    top: 130px;
-    height: calc(100vh - 150px);
+    top: 64px;
+    height: calc(100vh - 84px);
+    max-height: calc(100vh - 84px);
+    overflow-y: auto;
+    align-self: start;
   }
 
   .split-notes-sticky-wrap {
@@ -5214,41 +5218,379 @@ body:has(.is-zen-mode) footer {
 }
 
 /* ==========================================================================
-   PRINT STYLES FOR CERTIFICATE
+   NAVIGATION & READER CONTROLS (VOLTAR AO ROTEIRO & SCROLL TO TOP)
    ========================================================================== */
+.btn-back-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.btn-back-track:hover {
+  background: var(--primary-glow);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateX(-2px);
+}
+
+.btn-scroll-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.45);
+  cursor: pointer;
+  z-index: 995;
+  transition: all var(--transition-bounce);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.btn-scroll-top:hover {
+  transform: translateY(-4px) scale(1.06);
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.65);
+  background: var(--primary-hover);
+}
+
+.btn-scroll-top:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+/* Modo Manual em Tela Cheia Nativa */
+.in-manual-view .main-manual-fullscreen {
+  padding: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+.in-manual-view .manual-top-toolbar {
+  top: 0 !important;
+}
+
+/* ==========================================================================
+   CERTIFICADO OFICIAL — EDIÇÃO DO PROCESSO SEI & QR CODE VETORIAL
+   ========================================================================== */
+.cert-config-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  background: var(--surface-hover);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  margin-top: 1.25rem;
+}
+
+.cert-config-field {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.cert-config-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.sei-code {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(2, 132, 199, 0.1);
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+}
+
+.btn-edit-sei {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.btn-edit-sei:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.sei-edit-inline,
+.sei-inline-editor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sei-input-box,
+.sei-inline-input {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  color: #0f172a;
+  background: #ffffff;
+  outline: none;
+  min-width: 250px;
+}
+
+.cert-sei-ref-wrapper {
+  display: inline-block;
+  margin-top: 0.35rem;
+}
+
+.cert-sei-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.76rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: #0369a1;
+  background: #f0f9ff;
+  padding: 0.2rem 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #bae6fd;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.cert-sei-ref:hover {
+  background: #e0f2fe;
+}
+
+.authentic-qr-code-svg {
+  display: block;
+  margin: 0 auto;
+  border-radius: 2px;
+}
+
+/* ==========================================================================
+   PRINT STYLES FOR CERTIFICATE — STRICT 1-PAGE A4 LANDSCAPE
+   ========================================================================== */
+@page {
+  size: A4 landscape;
+  margin: 6mm 8mm;
+}
+
 @media print {
-  body {
+  html, body {
     background: #ffffff !important;
-    color: #000000 !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-size: 10pt !important;
   }
 
+  .navbar,
+  .portal-footer,
   .site-header,
   .site-footer,
   .no-print,
+  .cert-page-header,
+  .cert-status-card,
+  .cert-bottom-actions,
   .viewer-toolbar,
   .viewer-actions,
   .step-actions,
   .btn-primary,
-  .btn-secondary {
+  .btn-secondary,
+  .btn-scroll-top,
+  .btn-back-track {
     display: none !important;
   }
 
+  .app-layout,
+  .app-container,
   .main-content-area,
-  .certificate-screen {
+  .certificate-screen,
+  .certificate-outer-wrapper {
     padding: 0 !important;
     margin: 0 !important;
     max-width: 100% !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+    height: 100% !important;
   }
 
   .certificate-sheet {
     box-shadow: none !important;
-    padding: 1.5cm !important;
+    border-radius: 0 !important;
     width: 100% !important;
+    max-width: 100% !important;
+    height: 194mm !important;
+    max-height: 194mm !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    page-break-inside: avoid !important;
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
   }
 
   .cert-border-inner {
-    border: 3px double #0284c7 !important;
-    padding: 1cm !important;
+    border: 2.5pt double #0284c7 !important;
+    padding: 5mm 8mm !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+  }
+
+  .cert-header {
+    margin-bottom: 2mm !important;
+    padding-bottom: 2mm !important;
+    border-bottom: 1.5pt solid #e2e8f0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .cert-gdf-emblem svg {
+    width: 58px !important;
+    height: 58px !important;
+  }
+
+  .gov-titles h2 {
+    font-size: 1.05rem !important;
+    margin-bottom: 0.05rem !important;
+  }
+  .gov-titles h3 {
+    font-size: 0.85rem !important;
+    margin-bottom: 0.05rem !important;
+  }
+  .gov-titles h4 {
+    font-size: 0.76rem !important;
+    margin-bottom: 0.05rem !important;
+  }
+  .gov-titles h5 {
+    font-size: 0.7rem !important;
+  }
+
+  .cert-seal {
+    padding: 0.35rem 0.65rem !important;
+  }
+
+  .cert-title-section {
+    margin-bottom: 2mm !important;
+    text-align: center !important;
+  }
+
+  .cert-main-title {
+    font-size: 1.35rem !important;
+    margin-bottom: 1mm !important;
+  }
+
+  .cert-sei-ref {
+    font-size: 0.72rem !important;
+    padding: 0.1rem 0.5rem !important;
+  }
+
+  .cert-intro {
+    font-size: 0.82rem !important;
+    line-height: 1.4 !important;
+    margin-bottom: 2mm !important;
+    text-align: justify !important;
+  }
+
+  .cert-recipient-box {
+    margin-bottom: 2.5mm !important;
+    text-align: center !important;
+  }
+
+  .recipient-name {
+    font-size: 1.65rem !important;
+    border-bottom: 2pt solid #0284c7 !important;
+  }
+
+  .cert-body-text {
+    font-size: 0.82rem !important;
+    line-height: 1.5 !important;
+    margin-bottom: 2.5mm !important;
+    text-align: justify !important;
+  }
+
+  .cert-footer {
+    margin-top: 2mm !important;
+    padding-top: 2mm !important;
+    gap: 1rem !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-end !important;
+    justify-content: space-between !important;
+  }
+
+  .sig-line {
+    width: 155px !important;
+  }
+
+  .cert-signature-box strong {
+    font-size: 0.74rem !important;
+  }
+
+  .cert-signature-box span {
+    font-size: 0.66rem !important;
+  }
+
+  .val-hash {
+    font-size: 0.68rem !important;
+  }
+  .val-crc {
+    font-size: 0.64rem !important;
+  }
+  .val-date {
+    font-size: 0.66rem !important;
+  }
+
+  .cert-sei-legal-footer {
+    margin-top: 1.5mm !important;
+    padding-top: 1mm !important;
+    font-size: 0.62rem !important;
+    line-height: 1.3 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
   }
 }
 

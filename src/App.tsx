@@ -223,21 +223,25 @@ export const App: React.FC = () => {
     }
   };
 
-  return (
-    <div className="app-layout">
-      <Navbar
-        currentScreen={currentScreen}
-        onNavigate={handleNavigate}
-        theme={theme}
-        onToggleTheme={toggleTheme}
-        overallPercentage={metrics.overallPercentage}
-      />
+  const isViewingManual = currentScreen.startsWith('modulo-');
 
-      <main className="main-content-area">
+  return (
+    <div className={`app-layout ${isViewingManual ? 'in-manual-view' : ''}`}>
+      {!isViewingManual && (
+        <Navbar
+          currentScreen={currentScreen}
+          onNavigate={handleNavigate}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          overallPercentage={metrics.overallPercentage}
+        />
+      )}
+
+      <main className={`main-content-area ${isViewingManual ? 'main-manual-fullscreen' : ''}`}>
         {renderCurrentScreen()}
       </main>
 
-      <Footer onNavigate={handleNavigate} />
+      {!isViewingManual && <Footer onNavigate={handleNavigate} />}
     </div>
   );
 };

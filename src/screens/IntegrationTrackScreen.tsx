@@ -10,6 +10,7 @@ import {
   Terminal, 
   CheckCircle2, 
   ArrowRight, 
+  ArrowLeft,
   ShieldAlert, 
   HelpCircle, 
   ChevronDown, 
@@ -17,7 +18,10 @@ import {
   Cpu,
   Boxes,
   Lock,
-  ExternalLink
+  ExternalLink,
+  BookOpen,
+  Code2,
+  Sparkles
 } from 'lucide-react';
 
 interface IntegrationTrackScreenProps {
@@ -30,6 +34,16 @@ export const IntegrationTrackScreen: React.FC<IntegrationTrackScreenProps> = ({ 
 
   const toggleReveal = (id: string) => {
     setRevealedQuestions((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleTabChange = (newTab: number) => {
+    setActiveTab(newTab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const navigateAndScroll = (screen: ScreenType) => {
+    onNavigate(screen);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -45,48 +59,68 @@ export const IntegrationTrackScreen: React.FC<IntegrationTrackScreenProps> = ({ 
           Guia de acolhimento e nivelamento prático: do primeiro dia ao desenvolvimento de soluções completas em nosso ecossistema de transporte público.
         </p>
 
-        {/* Navigation Tabs */}
+        {/* Navigation Tabs (9 Etapas Sequenciais Padronizadas) */}
         <div className="track-tabs-bar">
           <button 
             className={`track-tab-btn ${activeTab === 1 ? 'active' : ''}`}
-            onClick={() => setActiveTab(1)}
+            onClick={() => handleTabChange(1)}
           >
-            1. Institucional & Stack
+            1. Institucional
           </button>
           <button 
             className={`track-tab-btn ${activeTab === 2 ? 'active' : ''}`}
-            onClick={() => setActiveTab(2)}
+            onClick={() => handleTabChange(2)}
           >
-            2. Git & GitLab Flow
+            2. Git & GitLab
           </button>
           <button 
             className={`track-tab-btn ${activeTab === 3 ? 'active' : ''}`}
-            onClick={() => setActiveTab(3)}
+            onClick={() => handleTabChange(3)}
           >
-            3. Bancos & SQL (bdg vs prod)
+            3. Banco de Dados
           </button>
           <button 
             className={`track-tab-btn ${activeTab === 4 ? 'active' : ''}`}
-            onClick={() => setActiveTab(4)}
+            onClick={() => handleTabChange(4)}
           >
-            4. Back-end (SISMOB Boilerplate)
+            4. Desafio SQL
           </button>
           <button 
             className={`track-tab-btn ${activeTab === 5 ? 'active' : ''}`}
-            onClick={() => setActiveTab(5)}
+            onClick={() => handleTabChange(5)}
           >
-            5. Front-end (InfoÔnibus)
+            5. Back-end SUTINF
           </button>
           <button 
             className={`track-tab-btn ${activeTab === 6 ? 'active' : ''}`}
-            onClick={() => setActiveTab(6)}
+            onClick={() => handleTabChange(6)}
           >
-            6. Trilha do Zero a Júnior
+            6. Desafio Back-end
+          </button>
+          <button 
+            className={`track-tab-btn ${activeTab === 7 ? 'active' : ''}`}
+            onClick={() => handleTabChange(7)}
+          >
+            7. Front-end SUTINF
+          </button>
+          <button 
+            className={`track-tab-btn ${activeTab === 8 ? 'active' : ''}`}
+            onClick={() => handleTabChange(8)}
+          >
+            8. Desafio Front-end
+          </button>
+          <button 
+            className={`track-tab-btn ${activeTab === 9 ? 'active' : ''}`}
+            onClick={() => handleTabChange(9)}
+          >
+            9. Trilha & Certificado
           </button>
         </div>
       </div>
 
-      {/* TAB 1: INSTITUCIONAL & STACK */}
+      {/* =====================================================================
+          TAB 1: INSTITUCIONAL & STACK
+          ===================================================================== */}
       {activeTab === 1 && (
         <section className="track-content-card">
           <div className="card-section-tag">ETAPA 01</div>
@@ -98,87 +132,46 @@ export const IntegrationTrackScreen: React.FC<IntegrationTrackScreenProps> = ({ 
           <div className="highlight-box">
             <h3>🏛️ O Papel da SUTINF</h3>
             <p>
-              Dentro desse ecossistema, a <strong>Subsecretaria de Tecnologia da Informação (SUTINF)</strong> atua como o motor tecnológico da pasta. Nossa missão é gerir processos tecnológicos, garantir alta disponibilidade de dados e desenvolver soluções que otimizem a operação do transporte público.
-            </p>
-            <p>
-              Como estagiário(a), você atuará diretamente no suporte e desenvolvimento de soluções de ponta, integrando sistemas web, aplicativos móveis e bases geoespaciais vitais para o Distrito Federal.
+              A <strong>Subsecretaria de Tecnologia da Informação (SUTINF)</strong> é o motor de engenharia, dados e inovação tecnológica de toda a SEMOB. É aqui que construímos, mantemos e auditamos as soluções computacionais que operam o Sistema de Transporte Público Coletivo do DF (STPC/DF), como o SISMOB, INFOMOB, sistemas de telemetria GPS em tempo real e bilhetagem automática.
             </p>
           </div>
 
-          <h3>Nosso Stack Tecnológico Corporativo</h3>
-          <div className="stack-grid">
-            <div className="stack-item-card">
-              <div className="item-icon-box bg-cyan-subtle">
-                <Layout className="text-cyan" size={24} />
-              </div>
-              <h4>Front-end Moderno</h4>
-              <p>React.js (versão ^18.0) com Vite, TypeScript rígido e empacotamento híbrido mobile com Capacitor.</p>
+          <h3>Nossa Stack Tecnológica Institucional</h3>
+          <div className="tech-stack-grid">
+            <div className="tech-item">
+              <div className="tech-icon"><GitBranch className="text-sky" size={24} /></div>
+              <h4>Versionamento</h4>
+              <p>GitLab corporativo com branches protegidas, Merge Requests e pipelines rigorosos de CI/CD.</p>
             </div>
-
-            <div className="stack-item-card">
-              <div className="item-icon-box bg-indigo-subtle">
-                <Server className="text-indigo" size={24} />
-              </div>
-              <h4>Back-end & APIs</h4>
-              <p>NestJS (Node.js + TypeScript), TypeORM, autenticação segura com JWT e contêineres Docker.</p>
+            <div className="tech-item">
+              <div className="tech-icon"><Database className="text-emerald" size={24} /></div>
+              <h4>Bancos de Dados</h4>
+              <p>PostgreSQL 15+ com extensão espacial PostGIS e Oracle Database corporativo legado.</p>
             </div>
-
-            <div className="stack-item-card">
-              <div className="item-icon-box bg-emerald-subtle">
-                <Database className="text-emerald" size={24} />
-              </div>
-              <h4>Gestão de Dados</h4>
-              <p>PostgreSQL com extensões espaciais PostGIS para rotas/coordenadas, e Oracle como base central legada.</p>
+            <div className="tech-item">
+              <div className="tech-icon"><Server className="text-indigo" size={24} /></div>
+              <h4>Back-End</h4>
+              <p>Node.js, TypeScript e NestJS em microsserviços organizados estritamente em 3 camadas com Docker.</p>
             </div>
-
-            <div className="stack-item-card">
-              <div className="item-icon-box bg-amber-subtle">
-                <Cpu className="text-amber" size={24} />
-              </div>
-              <h4>Processamento & BI</h4>
-              <p>Python para automações e pipelines de dados, Java para sistemas legados e Qlik para painéis analíticos.</p>
+            <div className="tech-item">
+              <div className="tech-icon"><Layout className="text-cyan" size={24} /></div>
+              <h4>Front-End</h4>
+              <p>React 18, Vite, TypeScript rígido (sem `any`), arquitetura em 5 camadas e Capacitor para mobile.</p>
             </div>
-          </div>
-
-          <h3>Sistemas Principais da Secretaria</h3>
-          <div className="table-wrapper">
-            <table className="info-table">
-              <thead>
-                <tr>
-                  <th>Sistema</th>
-                  <th>Finalidade & Descrição</th>
-                  <th>Tecnologias Envolvidas</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><strong>SISMOB</strong></td>
-                  <td>Sistema Integrado de Mobilidade. É o nosso portal unificador e o principal foco de desenvolvimento da SUTINF, integrando todos os fluxos da casa.</td>
-                  <td>NestJS, React, PostgreSQL</td>
-                </tr>
-                <tr>
-                  <td><strong>INFOMOB</strong></td>
-                  <td>Desdobramento do SISMOB voltado para o cidadão e controle social, com visualização simplificada de linhas, itinerários e dados abertos.</td>
-                  <td>React, Vite, APIs Abertas</td>
-                </tr>
-                <tr>
-                  <td><strong>QLIK</strong></td>
-                  <td>Plataforma de Business Intelligence (BI) utilizada para transformar grandes massas de dados de bilhetagem e GPS em insights estratégicos para diretores e secretários.</td>
-                  <td>Qlik Sense, Data Warehouse</td>
-                </tr>
-              </tbody>
-            </table>
           </div>
 
           <div className="step-actions">
-            <button onClick={() => setActiveTab(2)} className="btn-primary">
-              Avançar para Etapa 2: Git & Versionamento <ArrowRight size={16} />
+            <div></div>
+            <button onClick={() => handleTabChange(2)} className="btn-primary">
+              Avançar para Etapa 2: Git & GitLab Flow <ArrowRight size={16} />
             </button>
           </div>
         </section>
       )}
 
-      {/* TAB 2: GIT & GITLAB FLOW */}
+      {/* =====================================================================
+          TAB 2: GIT & GITLAB FLOW
+          ===================================================================== */}
       {activeTab === 2 && (
         <section className="track-content-card">
           <div className="card-section-tag">ETAPA 02</div>
@@ -228,29 +221,34 @@ export const IntegrationTrackScreen: React.FC<IntegrationTrackScreenProps> = ({ 
             <div className="callout-icon"><GitBranch size={28} className="text-sky" /></div>
             <div className="callout-body">
               <h4>Aprofunde-se no Manual Oficial do Git</h4>
-              <p>Consulte a mecânica completa das 4 zonas do Git, comandos essenciais, commits semânticos e resolução de conflitos complexos de merge.</p>
-              <button onClick={() => onNavigate('modulo-git')} className="btn-secondary btn-sm">
-                Abrir Manual do Git <ArrowRight size={14} />
+              <p>Consulte a mecânica completa das 4 zonas do Git, comandos essenciais, commits semânticos, cenários práticos e resolução cirúrgica de conflitos.</p>
+              <button onClick={() => navigateAndScroll('modulo-git')} className="btn-primary btn-sm">
+                <BookOpen size={14} />
+                <span>Abrir Manual Completo do Git</span>
               </button>
             </div>
           </div>
 
           <div className="step-actions">
-            <button onClick={() => setActiveTab(1)} className="btn-secondary">Voltar</button>
-            <button onClick={() => setActiveTab(3)} className="btn-primary">
-              Avançar para Etapa 3: Bancos de Dados & SQL <ArrowRight size={16} />
+            <button onClick={() => handleTabChange(1)} className="btn-secondary">
+              <ArrowLeft size={16} /> Voltar
+            </button>
+            <button onClick={() => handleTabChange(3)} className="btn-primary">
+              Avançar para Etapa 3: Bancos de Dados SEMOB <ArrowRight size={16} />
             </button>
           </div>
         </section>
       )}
 
-      {/* TAB 3: BANCOS DE DADOS & SQL */}
+      {/* =====================================================================
+          TAB 3: BANCOS DE DADOS SEMOB (NOVA ETAPA PRÉVIA DE FUNDAMENTOS)
+          ===================================================================== */}
       {activeTab === 3 && (
         <section className="track-content-card">
           <div className="card-section-tag">ETAPA 03</div>
-          <h2>3. Nossos Bancos de Dados e Mão na Massa (SQL)</h2>
+          <h2>3. Nossos Bancos de Dados: Arquitetura & Ecossistema</h2>
           <p>
-            Na SUTINF, a regra de ouro é: <strong>nunca testamos no escuro e respeitamos o banco de produção</strong>.
+            Na SUTINF, a regra de ouro é: <strong>nunca testamos no escuro e respeitamos o banco de produção</strong>. Lidamos com dois ambientes e dois motores principais com finalidades distintas:
           </p>
 
           <div className="environments-comparison">
@@ -269,8 +267,61 @@ export const IntegrationTrackScreen: React.FC<IntegrationTrackScreenProps> = ({ 
             </div>
           </div>
 
-          <h3>Perguntas Dinâmicas de Revisão SQL (Pense Mentalmente)</h3>
-          <p className="text-muted">Clique em cada pergunta para conferir o raciocínio correto do roteiro:</p>
+          <h3>PostgreSQL vs. Oracle: Quando usamos cada um?</h3>
+          <div className="deep-dive-grid">
+            <div className="deep-card">
+              <div className="deep-icon"><Database className="text-emerald" size={24} /></div>
+              <h4>PostgreSQL + PostGIS</h4>
+              <p>
+                Utilizado para o novo ecossistema SISMOB e microsserviços. Os esquemas são otimizados para velocidade de leitura, telemetria em tempo real e cálculos espaciais de traçado geográfico de rotas com PostGIS.
+              </p>
+            </div>
+
+            <div className="deep-card">
+              <div className="deep-icon"><Database className="text-amber" size={24} /></div>
+              <h4>Oracle Database</h4>
+              <p>
+                Utilizado para o legado corporativo e auditoria jurídica. Modelo altamente normalizado para controle rigoroso de contratos de permissão, decretos, bacias e empresas operadoras.
+              </p>
+            </div>
+          </div>
+
+          <div className="callout-card">
+            <div className="callout-icon"><Database size={28} className="text-emerald" /></div>
+            <div className="callout-body">
+              <h4>Manual de Engenharia de Dados & Tutorial SQL</h4>
+              <p>Aprenda a modelagem das tabelas reais (<code>tab_linha</code>, <code>tab_itinerario</code>, <code>tab_horario</code>, <code>tab_operadora_linha</code>), funções espaciais do PostGIS e sintaxe SQL recomendada.</p>
+              <button onClick={() => navigateAndScroll('modulo-sql')} className="btn-primary btn-sm">
+                <BookOpen size={14} />
+                <span>Estudar Manual de Banco de Dados</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="step-actions">
+            <button onClick={() => handleTabChange(2)} className="btn-secondary">
+              <ArrowLeft size={16} /> Voltar
+            </button>
+            <button onClick={() => handleTabChange(4)} className="btn-primary">
+              Avançar para Etapa 4: Desafio Prático SQL <ArrowRight size={16} />
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* =====================================================================
+          TAB 4: DESAFIOS PRÁTICOS SQL (25 CONSULTAS ANALÍTICAS)
+          ===================================================================== */}
+      {activeTab === 4 && (
+        <section className="track-content-card">
+          <div className="card-section-tag">ETAPA 04</div>
+          <h2>4. Mão na Massa: As 25 Consultas Analíticas em SQL</h2>
+          <p>
+            Com os conceitos de banco e modelo mental dominados, agora você aplicará SQL contra dados reais de transporte público do DF.
+          </p>
+
+          <h3>Perguntas Rápidas de Aquecimento (Pense Mentalmente)</h3>
+          <p className="text-muted">Clique em cada pergunta para conferir o raciocínio correto antes do desafio:</p>
 
           <div className="interactive-qa-list">
             <div className="qa-item">
@@ -281,31 +332,31 @@ export const IntegrationTrackScreen: React.FC<IntegrationTrackScreenProps> = ({ 
               {revealedQuestions['qa1'] && (
                 <div className="qa-answer">
                   <strong>Resposta:</strong> O caractere asterisco (<code>*</code>). Exemplo: <code>SELECT * FROM linhas_onibus;</code>. 
-                  <em>(Dica profissional: em produção, evite o asterisco e traga sempre apenas as colunas que você realmente precisa!)</em>
+                  <em>(Dica profissional: em APIs backend, evite o asterisco e projete sempre as colunas necessárias para economizar rede!)</em>
                 </div>
               )}
             </div>
 
             <div className="qa-item">
               <div className="qa-question" onClick={() => toggleReveal('qa2')}>
-                <span>2. Para achar uma linha específica, usamos <code>WHERE numero_linha = '0.111'</code>. E se você quisesse buscar qualquer linha que contenha a palavra "Gama" no nome?</span>
+                <span>2. Para achar uma linha específica, usamos <code>WHERE cd_linha = '0.111'</code>. E se você quisesse buscar qualquer linha que contenha a palavra "Gama" no nome?</span>
                 {revealedQuestions['qa2'] ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
               </div>
               {revealedQuestions['qa2'] && (
                 <div className="qa-answer">
-                  <strong>Resposta:</strong> Usa-se o operador <code>LIKE</code> (ou <code>ILIKE</code> no Postgres para ignorar maiúsculas/minúsculas) acompanhado do símbolo de porcentagem (<code>%</code>). Exemplo: <code>WHERE nome_linha ILIKE '%Gama%';</code>.
+                  <strong>Resposta:</strong> Usa-se o operador <code>LIKE</code> (ou <code>ILIKE</code> no Postgres para ignorar maiúsculas/minúsculas) acompanhado do símbolo <code>%</code>: <code>WHERE tx_linha ILIKE '%Gama%';</code>.
                 </div>
               )}
             </div>
 
             <div className="qa-item">
               <div className="qa-question" onClick={() => toggleReveal('qa3')}>
-                <span>3. Se a diretoria pedir "qual a linha com a maior extensão do DF?", qual função você usaria na coluna de extensão (MAX ou MIN) e como você ordenaria o resultado (ASC ou DESC)?</span>
+                <span>3. Se a diretoria pedir "qual a linha com a maior extensão do DF?", qual função você usaria na coluna de extensão (MAX ou MIN) e como ordenaria?</span>
                 {revealedQuestions['qa3'] ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
               </div>
               {revealedQuestions['qa3'] && (
                 <div className="qa-answer">
-                  <strong>Resposta:</strong> Usaria a função <code>MAX(extensao)</code> ou ordenaria com <code>ORDER BY extensao DESC LIMIT 1;</code>.
+                  <strong>Resposta:</strong> Usaria a função <code>MAX(lin_extensao)</code> ou ordenaria com <code>ORDER BY lin_extensao DESC LIMIT 1;</code>.
                 </div>
               )}
             </div>
@@ -324,36 +375,102 @@ export const IntegrationTrackScreen: React.FC<IntegrationTrackScreenProps> = ({ 
           </div>
 
           <div className="desafio-banner">
-            <h3>⚡ O Desafio Prático SQL (25 Questões)</h3>
+            <h3>⚡ O Desafio Oficial das 25 Consultas Analíticas</h3>
             <p>
-              Preparamos um desafio completo com 25 consultas reais divididas em 3 partes: Investigando a Linha 0.111, Compreendendo os Sentidos na Linha 0.170 e Cruzamentos Estratégicos.
+              Desenvolva as 25 queries divididas nas 3 fases da operação: Investigando a Linha 0.111, Compreendendo os Sentidos na Linha 0.170 e Cruzamentos Gerais de Bacias e Frotas.
             </p>
             <div className="desafio-btns">
-              <button onClick={() => onNavigate('desafio-sql')} className="btn-primary">
-                Abrir Desafio SQL das 25 Questões <ArrowRight size={16} />
+              <button onClick={() => navigateAndScroll('desafio-sql')} className="btn-primary">
+                <Code2 size={16} />
+                <span>Abrir Desafio SQL das 25 Questões</span>
               </button>
-              <button onClick={() => onNavigate('modulo-gabarito')} className="btn-secondary">
-                Ver Gabarito Oficial Comentado <ExternalLink size={16} />
+              <button onClick={() => navigateAndScroll('modulo-gabarito')} className="btn-secondary">
+                <BookOpen size={16} />
+                <span>Consultar Gabarito Oficial Comentado</span>
               </button>
             </div>
           </div>
 
           <div className="step-actions">
-            <button onClick={() => setActiveTab(2)} className="btn-secondary">Voltar</button>
-            <button onClick={() => setActiveTab(4)} className="btn-primary">
-              Avançar para Etapa 4: Back-end NestJS <ArrowRight size={16} />
+            <button onClick={() => handleTabChange(3)} className="btn-secondary">
+              <ArrowLeft size={16} /> Voltar
+            </button>
+            <button onClick={() => handleTabChange(5)} className="btn-primary">
+              Avançar para Etapa 5: Back-end SUTINF <ArrowRight size={16} />
             </button>
           </div>
         </section>
       )}
 
-      {/* TAB 4: BACK-END SISMOB BOILERPLATE */}
-      {activeTab === 4 && (
+      {/* =====================================================================
+          TAB 5: BACK-END SUTINF (NOVA ETAPA PRÉVIA DE FUNDAMENTOS)
+          ===================================================================== */}
+      {activeTab === 5 && (
         <section className="track-content-card">
-          <div className="card-section-tag">ETAPA 04</div>
-          <h2>4. Repositório SEMOB e o Padrão Backend (SISMOB Boilerplate)</h2>
+          <div className="card-section-tag">ETAPA 05</div>
+          <h2>5. Padrão de Engenharia Back-end: NestJS & 3 Camadas</h2>
           <p>
-            O <strong>SISMOB Boilerplate</strong> é o nosso projeto base padronizado para criação de APIs REST em microsserviços de transporte. Ele reúne as principais tecnologias da nossa stack:
+            Todas as APIs e serviços do ecossistema de transporte da SEMOB são desenvolvidos sobre a arquitetura de microsserviços em 3 camadas, garantindo baixo acoplamento e alta testabilidade.
+          </p>
+
+          <h3>A Arquitetura em 3 Camadas da SUTINF</h3>
+          <div className="layers-visual">
+            <div className="layer-block controller">
+              <strong>1. Controller</strong>
+              <span>Recebe a requisição HTTP (REST), valida o DTO e delega para o Service. <em>NUNCA acessa o banco diretamente.</em></span>
+            </div>
+            <div className="layer-arrow">↓</div>
+            <div className="layer-block service">
+              <strong>2. Service</strong>
+              <span>Contém as regras de negócio, validações de transporte e cálculos.</span>
+            </div>
+            <div className="layer-arrow">↓</div>
+            <div className="layer-block repository">
+              <strong>3. Repository</strong>
+              <span>Executa queries SQL seguras no PostgreSQL com TypeORM e consultas parametrizadas.</span>
+            </div>
+          </div>
+
+          <div className="rule-card">
+            <h4>⭐ Regra de Ouro: Entity vs. SQL Nativo Parametrizado</h4>
+            <ul>
+              <li><strong>Use Entities (TypeORM):</strong> Para operações simples de CRUD em uma única tabela (ex: cadastro de usuários, criação de registros). Traz agilidade e tipagem estrita.</li>
+              <li><strong>Use SQL Nativo Parametrizado ($1, $2):</strong> Para relatórios analíticos complexos, consultas espaciais PostGIS ou múltiplos JOINs. O Repository usa queries parametrizadas nativas, que é a blindagem definitiva contra SQL Injection.</li>
+            </ul>
+          </div>
+
+          <div className="callout-card">
+            <div className="callout-icon"><Server size={28} className="text-indigo" /></div>
+            <div className="callout-body">
+              <h4>Manual de Desenvolvimento Back-end</h4>
+              <p>Consulte o guia completo com a estrutura de pastas do NestJS, injeção de dependência, criação de DTOs com <code>class-validator</code>, guards JWT e documentação OpenAPI Swagger.</p>
+              <button onClick={() => navigateAndScroll('modulo-backend')} className="btn-primary btn-sm">
+                <BookOpen size={14} />
+                <span>Estudar Manual de Back-end</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="step-actions">
+            <button onClick={() => handleTabChange(4)} className="btn-secondary">
+              <ArrowLeft size={16} /> Voltar
+            </button>
+            <button onClick={() => handleTabChange(6)} className="btn-primary">
+              Avançar para Etapa 6: Desafio Back-end <ArrowRight size={16} />
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* =====================================================================
+          TAB 6: DESAFIO BACK-END (SISMOB BOILERPLATE)
+          ===================================================================== */}
+      {activeTab === 6 && (
+        <section className="track-content-card">
+          <div className="card-section-tag">ETAPA 06</div>
+          <h2>6. Desafio Prático Back-end: SISMOB Boilerplate</h2>
+          <p>
+            O <strong>SISMOB Boilerplate</strong> é o projeto base institucional padronizado para criação de novos endpoints e microsserviços.
           </p>
 
           <div className="command-box">
@@ -385,34 +502,8 @@ export const IntegrationTrackScreen: React.FC<IntegrationTrackScreenProps> = ({ 
             </div>
           </div>
 
-          <h3>Arquitetura em 3 Camadas</h3>
-          <div className="layers-visual">
-            <div className="layer-block controller">
-              <strong>1. Controller</strong>
-              <span>Recebe a requisição HTTP e repassa para o Service. <em>NUNCA acessa o banco diretamente.</em></span>
-            </div>
-            <div className="layer-arrow">↓</div>
-            <div className="layer-block service">
-              <strong>2. Service</strong>
-              <span>Contém toda a lógica e regra de negócio da aplicação.</span>
-            </div>
-            <div className="layer-arrow">↓</div>
-            <div className="layer-block repository">
-              <strong>3. Repository</strong>
-              <span>Executa as queries SQL no banco de dados de forma segura.</span>
-            </div>
-          </div>
-
-          <div className="rule-card">
-            <h4>⭐ Regra de Ouro da Arquitetura: Entity vs. SQL Nativo</h4>
-            <ul>
-              <li><strong>Use Entities (ORM TypeORM):</strong> Para operações simples de CRUD em uma única tabela. Traz agilidade e validação.</li>
-              <li><strong>Use SQL Nativo Parametrizado ($1, $2):</strong> Para relatórios analíticos complexos, consultas espaciais ou múltiplos JOINs. O Repository usa queries parametrizadas nativas, que é a blindagem definitiva contra SQL Injection.</li>
-            </ul>
-          </div>
-
           <h3>O Desafio das 7 Etapas do Back-end</h3>
-          <p>Para consolidar a prática, você desenvolverá um novo recurso (ex: <code>Veículos</code>) passando pelas 7 etapas:</p>
+          <p>Para consolidar a prática, você desenvolverá o módulo <code>Veículos</code> passando pelas 7 etapas:</p>
           <ol className="ordered-steps-list">
             <li><strong>Passo 1:</strong> Criar a Entity (<code>src/entity/veiculo.entity.ts</code>)</li>
             <li><strong>Passo 2:</strong> Criar o DTO (<code>src/dto/create-veiculo.dto.ts</code>) com validações <code>class-validator</code></li>
@@ -423,28 +514,38 @@ export const IntegrationTrackScreen: React.FC<IntegrationTrackScreenProps> = ({ 
             <li><strong>Passo 7:</strong> Registrar no <code>AppModule</code> (<code>src/app.module.ts</code>)</li>
           </ol>
 
-          <div className="step-actions">
-            <button onClick={() => setActiveTab(3)} className="btn-secondary">Voltar</button>
-            <button onClick={() => onNavigate('desafio-backend')} className="btn-primary">
-              Abrir Tutorial do Desafio Back-end <ArrowRight size={16} />
+          <div className="desafio-banner">
+            <h3>🚀 Tutorial Guiado do Desafio Back-end</h3>
+            <p>Acesse o roteiro passo a passo com trechos de código prontos para implementar cada uma das 7 etapas no seu ambiente local.</p>
+            <button onClick={() => navigateAndScroll('desafio-backend')} className="btn-primary mt-2">
+              <Code2 size={16} />
+              <span>Abrir Tutorial do Desafio Back-end</span>
             </button>
-            <button onClick={() => setActiveTab(5)} className="btn-secondary">
-              Avançar para Etapa 5: Front-end <ArrowRight size={16} />
+          </div>
+
+          <div className="step-actions">
+            <button onClick={() => handleTabChange(5)} className="btn-secondary">
+              <ArrowLeft size={16} /> Voltar
+            </button>
+            <button onClick={() => handleTabChange(7)} className="btn-primary">
+              Avançar para Etapa 7: Front-end SUTINF <ArrowRight size={16} />
             </button>
           </div>
         </section>
       )}
 
-      {/* TAB 5: FRONT-END & DESAFIO INFOÔNIBUS */}
-      {activeTab === 5 && (
+      {/* =====================================================================
+          TAB 7: FRONT-END SUTINF (NOVA ETAPA PRÉVIA DE FUNDAMENTOS)
+          ===================================================================== */}
+      {activeTab === 7 && (
         <section className="track-content-card">
-          <div className="card-section-tag">ETAPA 05</div>
-          <h2>5. Front-End (React), Arquitetura SUTINF e o Desafio InfoÔnibus</h2>
+          <div className="card-section-tag">ETAPA 07</div>
+          <h2>7. Padrão de Engenharia Front-end: React 18 & 5 Camadas</h2>
           <p>
-            Nossos projetos front-end são concebidos para funcionar com a mesma base de código tanto na <strong>Web quanto no Mobile</strong> através do Capacitor. Nossa stack utiliza React 18 e Vite.
+            Nossos projetos front-end são desenvolvidos com <strong>React 18, Vite e TypeScript rígido</strong>. Toda a arquitetura foi desenhada para funcionar na Web e em dispositivos móveis (Android/iOS) via Capacitor.
           </p>
 
-          <h3>A Arquitetura em 5 Camadas</h3>
+          <h3>A Arquitetura em 5 Camadas da SUTINF</h3>
           <div className="table-wrapper">
             <table className="info-table">
               <thead>
@@ -462,8 +563,8 @@ export const IntegrationTrackScreen: React.FC<IntegrationTrackScreenProps> = ({ 
                 </tr>
                 <tr>
                   <td><code>/hooks</code></td>
-                  <td>Concentra a lógica de negócio e controle de estados.</td>
-                  <td><strong>Regra das 50 Linhas:</strong> Se passar de 50 linhas focadas em lógica, extrair para um Hook customizado.</td>
+                  <td>Concentra a lógica de negócio e controle de estados reativos.</td>
+                  <td><strong>Regra das 50 Linhas:</strong> Se passar de 50 linhas de lógica, extrair para um Hook customizado.</td>
                 </tr>
                 <tr>
                   <td><code>/services</code></td>
@@ -491,10 +592,44 @@ export const IntegrationTrackScreen: React.FC<IntegrationTrackScreenProps> = ({ 
             </p>
           </div>
 
+          <div className="callout-card">
+            <div className="callout-icon"><Layout size={28} className="text-cyan" /></div>
+            <div className="callout-body">
+              <h4>Manual Prático de Arquitetura Front-end</h4>
+              <p>Consulte a especificação das 5 camadas, padrões de hooks, boas práticas de acessibilidade e empacotamento móvel.</p>
+              <button onClick={() => navigateAndScroll('modulo-frontend')} className="btn-primary btn-sm">
+                <BookOpen size={14} />
+                <span>Estudar Manual de Front-end</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="step-actions">
+            <button onClick={() => handleTabChange(6)} className="btn-secondary">
+              <ArrowLeft size={16} /> Voltar
+            </button>
+            <button onClick={() => handleTabChange(8)} className="btn-primary">
+              Avançar para Etapa 8: Desafio Front-end <ArrowRight size={16} />
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* =====================================================================
+          TAB 8: DESAFIO FRONT-END (INFOÔNIBUS)
+          ===================================================================== */}
+      {activeTab === 8 && (
+        <section className="track-content-card">
+          <div className="card-section-tag">ETAPA 08</div>
+          <h2>8. Desafio Prático Front-end: O Novo "InfoÔnibus"</h2>
+          <p>
+            O desafio culminante é criar uma interface moderna baseada no portal oficial do <strong>InfoÔnibus</strong>, consumindo os endpoints da API desenvolvida nas etapas anteriores.
+          </p>
+
           <div className="desafio-banner">
-            <h3>🚌 O Desafio Prático: O Novo "InfoÔnibus"</h3>
+            <h3>🚌 Funcionalidades a Implementar</h3>
             <p>
-              O desafio culminante é criar uma interface baseada no portal oficial do InfoÔnibus consumindo serviços de uma API real de mobilidade:
+              Você desenvolverá o painel de consulta de passageiros do DF aplicando o padrão das 5 camadas:
             </p>
             <ul>
               <li>Campo de pesquisa dinâmico de linhas integrado à API;</li>
@@ -503,25 +638,30 @@ export const IntegrationTrackScreen: React.FC<IntegrationTrackScreenProps> = ({ 
               <li>Apresentação do traçado espacial (itinerário) no mapa;</li>
               <li>Painel descritivo completo com filtros interativos.</li>
             </ul>
-            <button onClick={() => onNavigate('desafio-frontend')} className="btn-primary mt-2">
-              Explorar Desafio do InfoÔnibus <ArrowRight size={16} />
+            <button onClick={() => navigateAndScroll('desafio-frontend')} className="btn-primary mt-2">
+              <Code2 size={16} />
+              <span>Abrir Roteiro do Desafio InfoÔnibus</span>
             </button>
           </div>
 
           <div className="step-actions">
-            <button onClick={() => setActiveTab(4)} className="btn-secondary">Voltar</button>
-            <button onClick={() => setActiveTab(6)} className="btn-primary">
-              Avançar para Etapa 6: Trilha de Aprofundamento <ArrowRight size={16} />
+            <button onClick={() => handleTabChange(7)} className="btn-secondary">
+              <ArrowLeft size={16} /> Voltar
+            </button>
+            <button onClick={() => handleTabChange(9)} className="btn-primary">
+              Avançar para Etapa 9: Trilha & Certificado <ArrowRight size={16} />
             </button>
           </div>
         </section>
       )}
 
-      {/* TAB 6: TRILHA DO ZERO A JÚNIOR */}
-      {activeTab === 6 && (
+      {/* =====================================================================
+          TAB 9: TRILHA DO ZERO A JÚNIOR & CERTIFICADO
+          ===================================================================== */}
+      {activeTab === 9 && (
         <section className="track-content-card">
-          <div className="card-section-tag">ETAPA 06</div>
-          <h2>6. Trilha de Aprofundamento: Do Zero ao Desenvolvedor Júnior</h2>
+          <div className="card-section-tag">ETAPA 09</div>
+          <h2>9. Trilha de Aprofundamento: Do Zero ao Desenvolvedor Júnior</h2>
           <p>
             A tecnologia evolui rápido, e a <strong>proatividade na busca por conhecimento</strong> é a característica mais valorizada em nossa equipe. Para que você cresça profissionalmente, compilamos os tópicos essenciais de pesquisa autônoma:
           </p>
@@ -560,22 +700,27 @@ export const IntegrationTrackScreen: React.FC<IntegrationTrackScreenProps> = ({ 
           </div>
 
           <div className="final-step-card">
-            <h3>Pronto para testar seus conhecimentos?</h3>
+            <h3>Pronto para testar seus conhecimentos e emitir seu Certificado?</h3>
             <p>
-              Agora que você compreendeu toda a trilha pedagógica, avance para a nossa Central de Quizzes para validar o aprendizado de cada bloco e desbloquear o seu Certificado de Formação!
+              Agora que você compreendeu toda a trilha pedagógica, avance para a nossa Central de Quizzes para validar o aprendizado de cada bloco e desbloquear o seu Certificado Oficial da SEMOB!
             </p>
             <div className="final-btns">
-              <button onClick={() => onNavigate('quizzes')} className="btn-primary">
-                Acessar Central de Quizzes <ArrowRight size={16} />
+              <button onClick={() => navigateAndScroll('quizzes')} className="btn-primary">
+                <Sparkles size={16} />
+                <span>Acessar Central de Quizzes</span>
               </button>
-              <button onClick={() => onNavigate('certificado')} className="btn-secondary">
-                Ver Requisitos do Certificado <ArrowRight size={16} />
+              <button onClick={() => navigateAndScroll('certificado')} className="btn-secondary">
+                <CheckCircle2 size={16} />
+                <span>Ver Requisitos do Certificado</span>
               </button>
             </div>
           </div>
 
           <div className="step-actions">
-            <button onClick={() => setActiveTab(5)} className="btn-secondary">Voltar</button>
+            <button onClick={() => handleTabChange(8)} className="btn-secondary">
+              <ArrowLeft size={16} /> Voltar para Etapa 8
+            </button>
+            <div></div>
           </div>
         </section>
       )}

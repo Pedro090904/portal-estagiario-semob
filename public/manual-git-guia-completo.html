@@ -520,37 +520,94 @@
     .scenario-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.25rem;
-      margin-bottom: 1rem;
-      transition: transform 0.15s, border-color 0.15s;
+      border-radius: 12px;
+      padding: 1.5rem 1.6rem;
+      margin-bottom: 1.5rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .scenario-card:hover {
       border-color: var(--primary);
       transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(56, 189, 248, 0.12);
     }
+
+    .scenario-card.border-safe { border-left: 5px solid var(--success); }
+    .scenario-card.border-warning { border-left: 5px solid var(--warning); }
+    .scenario-card.border-danger { border-left: 5px solid var(--danger); }
+    .scenario-card.border-info { border-left: 5px solid var(--primary); }
+    .scenario-card.border-purple { border-left: 5px solid #a855f7; }
 
     .scenario-header {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
       gap: 1rem;
-      margin-bottom: 0.6rem;
+      margin-bottom: 0.85rem;
+      flex-wrap: wrap;
+    }
+
+    .scenario-header h4 {
+      font-size: 1.12rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .scenario-badge {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 700;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
       text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
-    .badge-danger { background: var(--danger-dim); color: var(--danger); }
-    .badge-warning { background: var(--warning-dim); color: var(--warning); }
-    .badge-info { background: var(--primary-dim); color: var(--primary); }
-    .badge-success { background: var(--success-dim); color: var(--success); }
+    .badge-danger { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-warning { background: var(--warning-dim); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-info { background: var(--primary-dim); color: var(--primary); border: 1px solid rgba(56, 189, 248, 0.3); }
+    .badge-success { background: var(--success-dim); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-purple { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+
+    .scenario-desc {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 0.85rem;
+    }
+
+    .scenario-steps {
+      margin: 0.5rem 0 1rem;
+      padding-left: 1.25rem;
+      font-size: 0.88rem;
+      color: var(--text);
+    }
+
+    .scenario-steps li {
+      margin-bottom: 0.35rem;
+    }
+
+    .scenario-tip {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      background: rgba(2, 132, 199, 0.08);
+      border: 1px dashed var(--primary-hover);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin-top: 1rem;
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .scenario-tip strong {
+      color: var(--primary);
+    }
 
     /* Print Styles */
     @media print {
@@ -1210,80 +1267,226 @@ git push origin --delete v1.2.0-rc.1</code></pre>
 
       <div id="scenarioList">
         
-        <div class="scenario-card">
+        <!-- Cenário 1 -->
+        <div class="scenario-card border-safe">
           <div class="scenario-header">
-            <h4>1. Errei a mensagem do último commit que fiz e AINDA NÃO enviei para a nuvem.</h4>
-            <span class="scenario-badge badge-info">Fácil / Seguro</span>
+            <h4><span>✏️</span> 1. Errei a mensagem do último commit que fiz (e ainda NÃO dei push)</h4>
+            <span class="scenario-badge badge-success">Fácil / Seguro</span>
           </div>
-          <p>Basta usar o modificador <code>--amend</code> para corrigir a mensagem imediatamente:</p>
-          <code>git commit --amend -m "feat(auth): mensagem correta agora"</code>
+          <p class="scenario-desc">
+            Você comitou com um erro de digitação ou esqueceu de seguir o padrão Conventional Commits (ex: colocou "ajuste" em vez de "fix(rotas): corrige cálculo de tarifa").
+          </p>
+          <div class="code-container">
+            <div class="code-header">
+              <span class="code-lang">BASH / TERMINAL</span>
+              <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+            </div>
+            <pre><code># Altera a mensagem do último commit sem duplicar no histórico
+git commit --amend -m "fix(rotas): corrige cálculo de tarifa no itinerário"</code></pre>
+          </div>
+          <div class="scenario-tip">
+            <span>💡</span>
+            <div><strong>Dica do Supervisor:</strong> Enquanto o commit for puramente local e não tiver sido enviado com <code>git push</code>, o <code>--amend</code> é 100% inofensivo e limpa o seu histórico antes do Code Review.</div>
+          </div>
         </div>
 
-        <div class="scenario-card">
+        <!-- Cenário 2 -->
+        <div class="scenario-card border-safe">
           <div class="scenario-header">
-            <h4>2. Fiz um commit mas esqueci de incluir um arquivo nele.</h4>
-            <span class="scenario-badge badge-info">Fácil / Seguro</span>
+            <h4><span>📦</span> 2. Fiz o commit, mas esqueci de incluir um arquivo importante nele</h4>
+            <span class="scenario-badge badge-success">Fácil / Seguro</span>
           </div>
-          <p>Adicione o arquivo esquecido ao palco e agrupe no commit anterior sem criar um commit novo:</p>
-          <code>git add arquivo-esquecido.ts</code><br>
-          <code>git commit --amend --no-edit</code>
+          <p class="scenario-desc">
+            Você salvou o commit e percebeu que um arquivo de teste, migration ou rota ficou de fora do <code>git add</code>. Não precisa criar um commit novo "esqueci arquivo"!
+          </p>
+          <div class="code-container">
+            <div class="code-header">
+              <span class="code-lang">BASH / TERMINAL</span>
+              <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+            </div>
+            <pre><code># 1. Adicione o arquivo que ficou para trás
+git add src/modules/linha/linha.service.spec.ts
+
+# 2. Incorpore silenciosamente no commit anterior mantendo a mesma mensagem
+git commit --amend --no-edit</code></pre>
+          </div>
+          <div class="scenario-tip">
+            <span>💡</span>
+            <div><strong>Dica do Supervisor:</strong> A flag <code>--no-edit</code> instrui o Git a reaproveitar a mensagem exata do commit anterior sem abrir o editor de texto interativo no terminal.</div>
+          </div>
         </div>
 
-        <div class="scenario-card">
+        <!-- Cenário 3 -->
+        <div class="scenario-card border-warning">
           <div class="scenario-header">
-            <h4>3. Comecei a programar na branch 'main' por engano e ainda não comitei nada!</h4>
+            <h4><span>🌿</span> 3. Comecei a codificar na branch 'main' por engano (mas ainda NÃO comitei nada)</h4>
             <span class="scenario-badge badge-warning">Atenção</span>
           </div>
-          <p>Não se desespere. O Git permite mover seu trabalho não salvo diretamente para uma branch nova:</p>
-          <code>git switch -c feature/minha-tarefa-correta</code><br>
-          <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.4rem;">Todas as alterações não comitadas migrarão com você para a nova branch intactas.</p>
-        </div>
+          <p class="scenario-desc">
+            Você abriu o VS Code, escreveu várias linhas de código e quando rodou <code>git status</code> percebeu que está na branch <code>main</code>! Como migrar todo esse código para a branch correta sem perder nada?
+          </p>
+          <div class="code-container">
+            <div class="code-header">
+              <span class="code-lang">BASH / TERMINAL</span>
+              <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+            </div>
+            <pre><code># Cria a branch da sua tarefa e migra todas as alterações pendentes intactas
+git switch -c feature/SUTINF-1204-painel-monitoramento
 
-        <div class="scenario-card">
-          <div class="scenario-header">
-            <h4>4. Preciso trocar de branch agora para ajudar um colega, mas meu código atual está incompleto e quebrado.</h4>
-            <span class="scenario-badge badge-info">Uso Diário</span>
+# Agora sim, adicione e comite na branch correta
+git add .
+git commit -m "feat(painel): implementa grid de monitoramento de frotas"</code></pre>
           </div>
-          <p>Use o "esconderijo" temporário do Git (Stash):</p>
-          <code>git stash              # Guarda suas alterações em uma gaveta limpa</code><br>
-          <code>git switch outra-branch  # Faz o que precisa na outra branch</code><br>
-          <code>git switch minha-branch # Volta para a sua branch</code><br>
-          <code>git stash pop          # Recupera suas alterações exatamente de onde parou</code>
+          <div class="scenario-tip">
+            <span>💡</span>
+            <div><strong>Dica do Supervisor:</strong> Como as alterações estavam apenas na sua <em>Working Tree</em> (não salvas em commit), o Git preserva o seu trabalho e o transporta automaticamente para a nova branch criada.</div>
+          </div>
         </div>
 
-        <div class="scenario-card">
+        <!-- Cenário 4 -->
+        <div class="scenario-card border-info">
           <div class="scenario-header">
-            <h4>5. Enviei um commit com BUG para a nuvem/produção e preciso anular IMEDIATAMENTE.</h4>
+            <h4><span>⚡</span> 4. Preciso trocar de branch agora para ajudar um colega, mas meu código está incompleto e quebrado</h4>
+            <span class="scenario-badge badge-info">Uso Diário / Produtividade</span>
+          </div>
+          <p class="scenario-desc">
+            Você está no meio de um raciocínio complexo, com erros de TypeScript na tela, e o Tech Lead pede para você testar uma branch de homologação. Como não perder seu rascunho sem criar commits sujos?
+          </p>
+          <div class="code-container">
+            <div class="code-header">
+              <span class="code-lang">BASH / TERMINAL</span>
+              <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+            </div>
+            <pre><code># 1. Guarda tudo em uma gaveta segura e limpa a área de trabalho
+git stash save "rascunho: filtros do mapa em andamento"
+
+# 2. Navegue até a outra branch e faça o teste solicitado
+git switch homologacao-semob
+git pull origin homologacao-semob
+
+# 3. Terminou? Volte para sua branch de desenvolvimento
+git switch feature/minha-tarefa
+
+# 4. Abra a gaveta e restaure suas alterações exatamente de onde parou
+git stash pop</code></pre>
+          </div>
+          <div class="scenario-tip">
+            <span>💡</span>
+            <div><strong>Dica do Supervisor:</strong> O <code>git stash pop</code> reaplica suas mudanças e remove o item da gaveta. Para verificar seus stashes acumulados, use <code>git stash list</code>.</div>
+          </div>
+        </div>
+
+        <!-- Cenário 5 -->
+        <div class="scenario-card border-danger">
+          <div class="scenario-header">
+            <h4><span>🚨</span> 5. Enviei um commit com BUG para o GitLab / Produção e preciso anular IMEDIATAMENTE</h4>
             <span class="scenario-badge badge-danger">Crítico / Produção</span>
           </div>
-          <p>Nunca use <code>reset</code> em produção. Crie um commit reverso que desfaz as alterações com segurança:</p>
-          <code>git log --oneline -n 3           # Localize o hash do commit com bug (ex: 8b3d4f1)</code><br>
-          <code>git revert 8b3d4f1                # Cria o commit desfazendo</code><br>
-          <code>git push origin main               # Envia a correção para produção</code>
+          <p class="scenario-desc">
+            Seu Merge Request foi aprovado e integrado, mas gerou instabilidade no servidor. <strong>NUNCA use <code>git reset</code> ou <code>push -f</code> em branches públicas!</strong> Crie um commit reverso de anulação cirúrgica.
+          </p>
+          <div class="code-container">
+            <div class="code-header">
+              <span class="code-lang">BASH / TERMINAL</span>
+              <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+            </div>
+            <pre><code># 1. Localize o hash do commit problemático
+git log --oneline -n 3
+# Exemplo de saída: 4f8a1bc fix(auth): altera validacao de token jwt
+
+# 2. Crie um commit que desfaz exatamente as linhas daquele commit
+git revert 4f8a1bc --no-edit
+
+# 3. Envie a reversão para o repositório remoto com segurança
+git push origin main</code></pre>
+          </div>
+          <div class="scenario-tip">
+            <span>💡</span>
+            <div><strong>Dica do Supervisor:</strong> O <code>git revert</code> é a prática recomendada em engenharia corporativa porque preserva a rastreabilidade e auditoria de incidentes, sem corromper a cópia dos demais desenvolvedores.</div>
+          </div>
         </div>
 
-        <div class="scenario-card">
+        <!-- Cenário 6 -->
+        <div class="scenario-card border-warning">
           <div class="scenario-header">
-            <h4>6. Deu Conflito de Merge (CONFLICT). O que fazer?</h4>
+            <h4><span>⚔️</span> 6. Deu Conflito de Merge (CONFLICT). Como resolver sem pânico?</h4>
             <span class="scenario-badge badge-warning">Resolução de Conflito</span>
           </div>
-          <p>O conflito acontece quando duas pessoas alteraram as mesmas linhas do mesmo arquivo. Passos:</p>
-          <ol style="font-size: 0.9rem; margin-top: 0.4rem;">
-            <li>Abra o arquivo no VS Code: ele mostrará em verde e azul o que é seu código e o que veio da branch de destino.</li>
-            <li>Escolha a versão correta (Accept Current, Accept Incoming ou edite manualmente).</li>
-            <li>Salve o arquivo e rode:</li>
+          <p class="scenario-desc">
+            O conflito ocorre quando você e outro desenvolvedor alteraram as mesmas linhas do mesmo arquivo em momentos diferentes. O Git não sabe qual linha deve prevalecer e solicita a intervenção humana.
+          </p>
+          <ol class="scenario-steps">
+            <li>Abra o VS Code: ele destacará os blocos conflitantes entre <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> (seu código) e <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt; branch</code> (código remoto).</li>
+            <li>Use os botões de atalho no topo do editor: <strong>Accept Current Change</strong>, <strong>Accept Incoming Change</strong> ou edite manualmente combinando as duas lógicas.</li>
+            <li>Remova todos os marcadores de conflito, salve o arquivo e execute:</li>
           </ol>
-          <code>git add arquivo-resolvido.ts</code><br>
-          <code>git commit -m "chore: resolve conflito de merge com a main"</code>
+          <div class="code-container">
+            <div class="code-header">
+              <span class="code-lang">BASH / TERMINAL</span>
+              <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+            </div>
+            <pre><code># Marca os arquivos conflitantes como resolvidos
+git add src/services/itinerario.service.ts
+
+# Conclui a operação de merge
+git commit -m "chore: resolve conflito de merge com a branch main"</code></pre>
+          </div>
+          <div class="scenario-tip">
+            <span>💡</span>
+            <div><strong>Dica do Supervisor:</strong> Para evitar conflitos assustadores, atualize sua branch frequentemente trazendo as novidades da <code>main</code> no início de todo turno de trabalho.</div>
+          </div>
         </div>
 
-        <div class="scenario-card">
+        <!-- Cenário 7 -->
+        <div class="scenario-card border-purple">
           <div class="scenario-header">
-            <h4>7. Quero pegar apenas UM commit específico de outra branch sem mesclar ela inteira.</h4>
-            <span class="scenario-badge badge-info">Avançado</span>
+            <h4><span>🍒</span> 7. Quero pegar apenas UM commit específico de outra branch sem mesclar ela inteira</h4>
+            <span class="scenario-badge badge-purple">Avançado / Cirúrgico</span>
           </div>
-          <p>Use o comando <strong>Cherry-Pick</strong>:</p>
-          <code>git cherry-pick &lt;hash-do-commit-desejado&gt;</code>
+          <p class="scenario-desc">
+            Um colega consertou uma função utilitária na branch dele, mas a branch dele ainda contém outros recursos inacabados. Você quer puxar exclusivamente aquele conserto para a sua branch.
+          </p>
+          <div class="code-container">
+            <div class="code-header">
+              <span class="code-lang">BASH / TERMINAL</span>
+              <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+            </div>
+            <pre><code># 1. Certifique-se de estar na SUA branch
+git switch feature/minha-tela
+
+# 2. Aplique cirurgicamente o commit desejado pelo hash
+git cherry-pick 9c3e21a</code></pre>
+          </div>
+          <div class="scenario-tip">
+            <span>💡</span>
+            <div><strong>Dica do Supervisor:</strong> O <code>cherry-pick</code> replica o diff exato daquele commit criando um novo hash na sua branch. Use com moderação para não fragmentar o fluxo do Git.</div>
+          </div>
+        </div>
+
+        <!-- Cenário 8 -->
+        <div class="scenario-card border-safe">
+          <div class="scenario-header">
+            <h4><span>🧹</span> 8. Modifiquei um arquivo localmente, fiz besteira e quero voltar ao original</h4>
+            <span class="scenario-badge badge-success">Fácil / Seguro</span>
+          </div>
+          <p class="scenario-desc">
+            Você fez testes em um arquivo local, bagunçou a estrutura e quer descartar todas as alterações não comitadas daquele arquivo específico, voltando ao estado limpo.
+          </p>
+          <div class="code-container">
+            <div class="code-header">
+              <span class="code-lang">BASH / TERMINAL</span>
+              <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+            </div>
+            <pre><code># Restaura um arquivo específico para a versão do último commit
+git restore src/app.controller.ts
+
+# Ou restaura TODOS os arquivos alterados da pasta inteira
+git restore .</code></pre>
+          </div>
+          <div class="scenario-tip">
+            <span>💡</span>
+            <div><strong>Dica do Supervisor:</strong> O <code>git restore</code> é o substituto moderno e seguro do antigo <code>git checkout -- arquivo</code>, tornando a intenção clara no terminal.</div>
+          </div>
         </div>
 
       </div>
