@@ -52,7 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <>
-      <header className="site-header">
+      <header className="site-header no-print">
         <div className="header-container">
           {/* Brand / Logo */}
           <div className="header-brand" onClick={() => handleNav('home')}>
@@ -237,7 +237,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile Fullscreen / Drawer Overlay */}
       {mobileMenuOpen && (
-        <div className="mobile-drawer-overlay" onClick={() => setMobileMenuOpen(false)}>
+        <div className="mobile-drawer-overlay no-print" onClick={() => setMobileMenuOpen(false)}>
           <div className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
             <div className="drawer-header-row">
               <div className="drawer-brand-wrap">
@@ -309,7 +309,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       )}
 
       {/* Docked Mobile Bottom Navigation Bar (Thumb Friendly) */}
-      <nav className="mobile-bottom-dock">
+      <nav className="mobile-bottom-dock no-print">
         <button 
           onClick={() => handleNav('home')} 
           className={`dock-tab ${currentScreen === 'home' ? 'active' : ''}`}

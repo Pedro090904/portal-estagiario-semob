@@ -682,7 +682,7 @@ button {
   display: none;
 }
 
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
   .mobile-bottom-dock {
     display: flex;
     position: fixed;
@@ -5414,10 +5414,22 @@ body:has(.is-zen-mode) footer {
     font-size: 10pt !important;
   }
 
+  /* Supressão Total de Qualquer Elemento de Navegação e Interface */
+  header,
+  footer,
+  nav,
+  aside,
+  canvas,
   .navbar,
-  .portal-footer,
   .site-header,
   .site-footer,
+  .portal-footer,
+  .mobile-bottom-dock,
+  .dock-tab,
+  .mobile-drawer-overlay,
+  .mobile-drawer,
+  .mobile-toc-overlay,
+  .mobile-toc-drawer,
   .no-print,
   .cert-page-header,
   .cert-status-card,
@@ -5430,6 +5442,17 @@ body:has(.is-zen-mode) footer {
   .btn-scroll-top,
   .btn-back-track {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
   }
 
   .app-layout,

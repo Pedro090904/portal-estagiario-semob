@@ -8,7 +8,7 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   return (
-    <footer className="site-footer">
+    <footer className="site-footer no-print">
       <div className="footer-container">
         <div className="footer-col brand-col">
           <div className="footer-brand">
