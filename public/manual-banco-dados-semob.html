@@ -1097,117 +1097,64 @@ WHERE lin_extensao = (
       </div>
     </section>
 
-    <!-- MÓDULO 6 -->
+    <!-- MÓDULO 6: REDIRECIONADOR INTERATIVO -->
     <section id="modulo-6">
-      <h2>6. O Desafio Prático da SEMOB (Roteiro de Perguntas sem Respostas)</h2>
+      <h2>6. Desafio Prático SQL SEMOB & Guia de Perguntas</h2>
+      
       <p>
-        Este é o roteiro oficial extraído do plano de integração de estagiários da SEMOB-DF. Utilize as diretrizes conceituais abaixo para formular as suas próprias consultas no banco <code>dados_mobilidade</code>. As respostas e o raciocínio completo estão disponíveis no documento separado <strong>Gabarito Oficial</strong>.
+        Para evitar redundâncias e proporcionar uma experiência prática e interativa de fixação técnica, todas as <strong>25 questões analíticas oficiais</strong> do banco de dados <code>dados_mobilidade</code> foram migradas para o <strong>Simulador Interativo de Desafios SQL</strong> do Portal, com suporte a anotações em tempo real, validação de gabarito e acompanhamento de progresso.
       </p>
 
-      <h3>Parte I: Investigando a Linha 0.111</h3>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">a. Liste as linhas de ônibus disponíveis, trazendo apenas o nome e o número da linha.</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Envolve apenas a tabela principal de linhas (<code>tab_linha</code>). Use projeção de colunas com apelidos (<code>AS</code>).</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">b. Apresente o nome, código e extensão especificamente da linha 0.111.</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Exige relacionar <code>tab_linha</code> e <code>tab_itinerario</code> através da chave <code>id_linha</code> na cláusula <code>WHERE</code>.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">c. Qual é a extensão total da linha 0.111?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Como a linha possui mais de um sentido cadastrado, utilize o agregador <code>SUM()</code> agrupado pelo código da linha.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">d. Qual o traçado espacial (geometria) da linha 0.111?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> A coluna geométrica é binária. Utilize a função PostGIS <code>ST_AsText()</code> para torná-la legível em texto WKT.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">e. Qual é o itinerário em formato de texto descritivo da linha 0.111?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Navegue de <code>tab_linha</code> até <code>tab_itinerario</code> e desta até <code>tab_itinerario_descritivo</code> usando <code>WHERE</code>, ordenando pela coluna de sequência.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">f. Qual o valor atual da tarifa da linha 0.111?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> No PostgreSQL, essa informação reside diretamente na tabela <code>tab_linha</code> na coluna <code>vl_tarifa</code>.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">g. Quais são os horários de operação da linha 0.111, detalhados por dia da semana e ordem de partida?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Envolve a relação entre <code>tab_linha</code>, a tabela associativa <code>tab_operadora_linha</code> e <code>tab_horario</code>.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">h. Qual empresa permissionária opera a linha 0.111?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Conecte a linha à operadora passando pela tabela associativa intermediária via <code>WHERE</code>.</div>
+      <!-- Hub de Redirecionamento em Grid -->
+      <div class="sql-hub-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin: 2rem 0;">
+        
+        <!-- Card 1: Simulador Prático Interativo -->
+        <div style="background: var(--surface); border: 2px solid var(--primary); border-radius: 12px; padding: 1.75rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.15);">
+          <div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+              <span style="font-size: 1.75rem;">⚡</span>
+              <span style="background: var(--primary-dim); color: var(--primary); font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 20px; text-transform: uppercase;">Prática Interativa</span>
+            </div>
+            <h3 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 1.2rem; color: var(--text);">Simulador Oficial de Desafio SQL</h3>
+            <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.25rem;">
+              Ambiente interativo com as 25 consultas divididas em 3 níveis (Básico, Intermediário e Avançado com PostGIS). Escreva seus scripts SQL, marque tarefas concluídas e registre anotações por questão.
+            </p>
+          </div>
+          <a href="/desafio-sql" data-app-navigate="desafio-sql" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background: var(--primary); color: #ffffff; text-decoration: none; font-weight: 700; font-size: 0.9rem; padding: 0.75rem 1.25rem; border-radius: 8px; transition: 0.2s; text-align: center;">
+            <span>Acessar Simulador de Desafios SQL</span>
+            <span>→</span>
+          </a>
+        </div>
+
+        <!-- Card 2: Gabarito Oficial e Resoluções -->
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.75rem; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+              <span style="font-size: 1.75rem;">📖</span>
+              <span style="background: var(--success-dim); color: var(--success); font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 20px; text-transform: uppercase;">Gabarito Comentado</span>
+            </div>
+            <h3 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 1.2rem; color: var(--text);">Manual de Gabarito & Resoluções Explicadas</h3>
+            <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.25rem;">
+              Consulte a sintaxe exata das 25 resoluções comentadas linha a linha, com explicações didáticas de <code>ST_AsText()</code>, <code>GROUP BY</code>, <code>HAVING</code> e subconsultas de performance.
+            </p>
+          </div>
+          <a href="/modulo-gabarito" data-app-navigate="modulo-gabarito" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background: var(--surface-elevated); color: var(--text); border: 1px solid var(--border); text-decoration: none; font-weight: 600; font-size: 0.9rem; padding: 0.75rem 1.25rem; border-radius: 8px; transition: 0.2s; text-align: center;">
+            <span>Consultar Gabarito Oficial</span>
+            <span>→</span>
+          </a>
+        </div>
+
       </div>
 
-      <h3>Parte II: Compreendendo os Sentidos (Linha 0.170)</h3>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">i. Apresente o nome, código e extensão da linha 0.170.</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Semelhante ao exercício 'b', mas focado no prefixo <code>0.170</code>.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">j. Qual a extensão da linha 0.170, separada por sentido (ida/volta)?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Projete a coluna <code>lin_sentido</code> ao lado da extensão sem aplicar funções de soma agregada.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">k. Qual o traçado espacial da linha 0.170, segmentado por sentido?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Aplique <code>ST_AsText()</code> projetando o sentido de deslocamento.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">l. Qual o itinerário em formato de texto da linha 0.170, por sentido?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Vincule a descrição de vias ordenando pelo sentido e pela sequência das paradas.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">m. Qual o valor da tarifa da linha 0.170?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Consulta direta na tabela de linhas aplicando o filtro no código correspondente.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">n. Quais são os horários (por dia da semana e ordem de partida) da linha 0.170, agrupados por sentido?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Ordene os resultados por <code>sentido ASC, hr_prevista ASC</code>.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">o. Qual empresa opera a linha 0.170?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Vinculação de 3 tabelas no <code>WHERE</code> filtrando por <code>cd_linha = '0.170'</code>.</div>
-      </div>
-
-      <h3>Parte III: Análise de Dados Gerais e Cruzamentos Estratégicos</h3>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">p. Quais linhas do sistema possuem uma extensão superior a 70 km?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Use a condição <code>i.lin_extensao > 70.00</code> no <code>WHERE</code> combinada com <code>DISTINCT</code>.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">q. Qual é a linha de ônibus mais curta de todo o sistema?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Pode ser resolvida com uma subconsulta usando <code>MIN(lin_extensao)</code> ou com <code>ORDER BY lin_extensao ASC LIMIT 1</code>.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">r. Qual é a linha de ônibus mais longa do sistema?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Estrutura similar à anterior, utilizando <code>MAX()</code> ou ordenação decrescente com <code>LIMIT 1</code>.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">s. Quantas linhas no total operam no formato "circular"?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Combine <code>COUNT(DISTINCT ...)</code> com a condição de sentido circular (<code>lin_sentido = 'C'</code>).</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">t. Dentre as linhas de sentido circular, qual possui a maior extensão?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Filtre apenas circulares, ordene pela extensão de forma decrescente e limite ao primeiro registro.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">u. Quais linhas possuem a tarifa exata de R$ 5,50?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Filtro direto na coluna <code>vl_tarifa = 5.50</code>.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">v. Quais linhas são operadas especificamente pela empresa "Piracicabana"?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Utilize <code>nm_operadora ILIKE '%PIRACICABANA%'</code> conectando as 3 tabelas operacionais.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">w. Quais linhas contêm a palavra "Gama" em sua nomenclatura?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Aplique busca textual com curingas na coluna <code>tx_linha ILIKE '%GAMA%'</code>.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">x. Quais linhas do sistema possuem operação compartilhada (mais de uma empresa operando)?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Agrupe por linha e use o <code>HAVING COUNT(DISTINCT id_operadora) > 1</code>.</div>
-      </div>
-      <div class="challenge-preview-box">
-        <div class="challenge-header">y. Quais linhas compõem o sistema noturno e operam de madrugada (com partidas entre 00h00 e 04h00)?</div>
-        <div class="challenge-hint">💡 <em>Dica conceitual:</em> Filtre a faixa horária numérica com <code>hr_prevista BETWEEN 0 AND 40000</code>.</div>
+      <!-- Resumo Estrutural das 3 Fases do Desafio -->
+      <div class="callout callout-info">
+        <div class="callout-header">📋 Estrutura Curricular das 25 Questões Práticas</div>
+        <p style="margin-bottom: 0.75rem;">Para guiar seu aprendizado de forma progressiva, os exercícios estão organizados em três fases didáticas:</p>
+        <ul style="margin-bottom: 0; font-size: 0.92rem;">
+          <li><strong>Parte I (Questões a - h):</strong> Investigação da Linha 0.111 — Projeção básica, junções com <code>tab_itinerario</code>, agregador <code>SUM()</code>, função PostGIS <code>ST_AsText()</code> e vinculação com operadoras.</li>
+          <li><strong>Parte II (Questões i - o):</strong> Compreensão de Sentidos (Linha 0.170) — Segmentação por sentido de deslocamento (ida/volta/circular), itinerários detalhados e cruzamento de horários operacionais.</li>
+          <li><strong>Parte III (Questões p - y):</strong> Análise de Dados e Cruzamentos Estratégicos — Identificação de linhas longas/curtas, cálculos com <code>DISTINCT</code>, linhas de madrugada e agrupamentos complexos com <code>HAVING</code>.</li>
+        </ul>
       </div>
     </section>
 

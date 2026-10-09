@@ -7,6 +7,7 @@ import {
   CheckCircle2, 
   ArrowLeft, 
   ArrowRight, 
+  ArrowUp,
   Sparkles, 
   BookOpen, 
   List, 
@@ -15,10 +16,9 @@ import {
   ExternalLink,
   FileText,
   Columns,
-  Maximize2,
-  Minimize2,
   Clock,
-  Edit3
+  Edit3,
+  Compass
 } from 'lucide-react';
 
 interface TocItem {
@@ -71,10 +71,10 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
   const [mobileTocOpen, setMobileTocOpen] = useState<boolean>(false);
   const [readingProgress, setReadingProgress] = useState<number>(0);
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'xlarge'>('normal');
+  const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
 
-  // Novos modos de visualização inspirados no player avançado
+  // Modos de leitura: 'read' (tela cheia), 'notes' (caderno) ou 'split' (lado a lado)
   const [viewerMode, setViewerMode] = useState<'read' | 'notes' | 'split'>('read');
-  const [zenMode, setZenMode] = useState<boolean>(false);
 
   const contentRef = useRef<HTMLDivElement>(null);
   const quizSectionRef = useRef<HTMLDivElement>(null);
@@ -85,7 +85,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
   const estimatedRemainingMinutes = Math.max(1, Math.round(durationNumber * (1 - readingProgress / 100)));
   const hasUserNotes = Boolean(userNotes && userNotes.trim().length > 0);
 
-  // Carregamento e higienização robusta do HTML para dispositivos móveis
+  // Carregamento e sanitização do manual HTML
   useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
@@ -93,6 +93,9 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
     setContentHtml('');
     setTocItems([]);
     setActiveTocId('');
+
+    // Garante que a tela sempre inicie no topo ao trocar de manual
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
 
     fetch(`/${module.htmlFile}`)
       .then((res) => {
@@ -107,7 +110,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
 
         const mainEl = doc.querySelector('main.container') || doc.body;
 
-        // 1. Remover elementos redundantes e botões legados da página original
+        // 1. Remover elementos redundantes e botões legados
         mainEl.querySelectorAll('.top-toolbar, .print-btn, header, .copy-btn, .code-header button').forEach((el) => el.remove());
 
         // 2. Extrair headings para o Sumário com IDs seguros
@@ -132,7 +135,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
           });
         });
 
-        // 3. Blindagem Mobile para Tabelas: adicionar dica de scroll e container
+        // 3. Blindagem Mobile para Tabelas
         mainEl.querySelectorAll('table').forEach((table) => {
           if (!table.parentElement?.classList.contains('table-wrapper')) {
             const wrapper = doc.createElement('div');
@@ -169,7 +172,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
     };
   }, [module.htmlFile]);
 
-  // Code Highlighting, Mermaid e Copiar Código
+  // Code Highlighting, Mermaid, Cópia de Código e Interceptação de Links Internos
   useEffect(() => {
     if (!contentRef.current || isLoading) return;
 
@@ -220,18 +223,34 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
         scrollToSection(targetId);
       });
     });
+
+    // Interceptar botões de navegação customizados inseridos nos manuais
+    const navButtons = contentRef.current.querySelectorAll('[data-app-navigate]');
+    navButtons.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetScreen = btn.getAttribute('data-app-navigate') as ScreenType;
+        if (targetScreen) {
+          onNavigate(targetScreen);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+    });
   }, [contentHtml, isLoading, viewerMode]);
 
-  // ScrollSpy e Progresso de Leitura
+  // ScrollSpy, Progresso e Botão de Voltar ao Topo
   const handleScroll = useCallback(() => {
+    const scrollY = window.scrollY;
+    setShowScrollTop(scrollY > 350);
+
     const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
     if (totalHeight > 0) {
-      const current = Math.min(Math.max((window.scrollY / totalHeight) * 100, 0), 100);
+      const current = Math.min(Math.max((scrollY / totalHeight) * 100, 0), 100);
       setReadingProgress(Math.round(current));
     }
 
     if (tocItems.length === 0) return;
-    const scrollPos = window.scrollY + 120;
+    const scrollPos = scrollY + 100;
 
     for (let i = tocItems.length - 1; i >= 0; i--) {
       const el = document.getElementById(tocItems[i].id);
@@ -251,7 +270,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
     setMobileTocOpen(false);
     const element = document.getElementById(id);
     if (element) {
-      const offset = 80;
+      const offset = 65;
       const bodyRect = document.body.getBoundingClientRect().top;
       const elementRect = element.getBoundingClientRect().top;
       const elementPosition = elementRect - bodyRect;
@@ -283,26 +302,33 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
   };
 
   return (
-    <div className={`native-manual-page font-size-${fontSize} ${zenMode ? 'is-zen-mode' : ''}`}>
+    <div className={`native-manual-page font-size-${fontSize} is-zen-mode`}>
       {/* Barra de Progresso de Leitura Fixa no Topo */}
       <div className="reading-progress-track">
         <div className="reading-progress-bar" style={{ width: `${readingProgress}%` }}></div>
       </div>
 
-      {/* Toolbar Superior do Manual */}
+      {/* Toolbar Superior do Manual (Colada em top: 0, modo foco nativo) */}
       <header className="manual-top-toolbar">
         <div className="toolbar-left">
-          <div className="manual-breadcrumbs">
-            <span onClick={() => onNavigate('home')} className="crumb-link">Início</span>
-            <span className="crumb-sep">/</span>
-            <span className="crumb-cat">{module.category}</span>
-            <span className="crumb-sep">/</span>
-            <span className="crumb-current">{module.shortTitle}</span>
-          </div>
+          {/* Botão de Retorno Direto ao Roteiro de Integração */}
+          <button
+            type="button"
+            onClick={() => {
+              onNavigate('roteiro');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="btn-back-track"
+            title="Voltar ao Roteiro Oficial de Integração"
+          >
+            <ArrowLeft size={16} />
+            <span>Voltar ao Roteiro</span>
+          </button>
+
           <div className="toolbar-title-row">
             <h1 className="manual-toolbar-title">{module.shortTitle}</h1>
             {viewerMode === 'read' && (
-              <span className="reading-time-badge" title="Tempo restante estimado com base no progresso de rolagem">
+              <span className="reading-time-badge" title="Tempo restante estimado com base na rolagem">
                 <Clock size={12} className="text-primary" />
                 <span>~{estimatedRemainingMinutes} min restantes</span>
               </span>
@@ -316,7 +342,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
             type="button"
             onClick={() => setViewerMode('read')}
             className={`mode-btn ${viewerMode === 'read' ? 'active' : ''}`}
-            title="Exibir apenas o conteúdo oficial do manual"
+            title="Exibir conteúdo oficial do manual em tela cheia"
           >
             <BookOpen size={14} />
             <span>Leitura</span>
@@ -326,18 +352,18 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
             type="button"
             onClick={() => setViewerMode('notes')}
             className={`mode-btn ${viewerMode === 'notes' ? 'active' : ''}`}
-            title="Abrir caderno de notas técnicas pessoais"
+            title="Abrir caderno de anotações técnicas deste módulo"
           >
             <FileText size={14} />
             <span>Anotações</span>
-            {hasUserNotes && <span className="notes-has-content-dot" title="Você tem anotações neste módulo" />}
+            {hasUserNotes && <span className="notes-has-content-dot" title="Você tem anotações salvas neste módulo" />}
           </button>
 
           <button
             type="button"
             onClick={() => setViewerMode('split')}
             className={`mode-btn split-screen-btn ${viewerMode === 'split' ? 'active' : ''}`}
-            title="Exibir manual e caderno de anotações lado a lado (recomendado para desktop)"
+            title="Exibir manual à esquerda e caderno de anotações à direita"
           >
             <Columns size={14} />
             <span>Lado a Lado</span>
@@ -357,7 +383,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
             </button>
           )}
 
-          {/* Ajuste de Fonte */}
+          {/* Ajuste de Tamanho de Fonte */}
           {viewerMode !== 'notes' && (
             <button
               onClick={cycleFontSize}
@@ -368,17 +394,6 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
               <span className="font-current-tag">{fontSize === 'normal' ? '100%' : fontSize === 'large' ? '115%' : '130%'}</span>
             </button>
           )}
-
-          {/* Modo Foco / Zen */}
-          <button
-            type="button"
-            onClick={() => setZenMode(!zenMode)}
-            className={`btn-secondary btn-sm zen-toggle-btn ${zenMode ? 'active' : ''}`}
-            title={zenMode ? 'Sair do Modo Foco' : 'Ativar Modo Foco (oculta distrações da tela)'}
-          >
-            {zenMode ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-            <span className="zen-btn-label">{zenMode ? 'Normal' : 'Foco'}</span>
-          </button>
 
           {quizData && (
             <button onClick={scrollToQuiz} className="btn-secondary btn-sm btn-quiz-jump">
@@ -398,7 +413,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
       </header>
 
       {/* =====================================================================
-          MODO 1: APENAS ANOTAÇÕES (Tela cheia para anotações)
+          MODO 1: APENAS ANOTAÇÕES (TELA CHEIA)
           ===================================================================== */}
       {viewerMode === 'notes' && (
         <main className="manual-notes-view-mode">
@@ -428,11 +443,11 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
       )}
 
       {/* =====================================================================
-          MODO 2: TELA DIVIDIDA (Manual à esquerda + Anotações à direita)
+          MODO 2: TELA DIVIDIDA (MANUAL À ESQUERDA + CADERNO FIXO À DIREITA)
           ===================================================================== */}
       {viewerMode === 'split' && (
         <div className="manual-split-view-grid">
-          {/* Coluna da Esquerda: Conteúdo do Manual com scroll autônomo */}
+          {/* Coluna da Esquerda: Conteúdo do Manual com scroll natural */}
           <div className="split-column-manual">
             {isLoading && (
               <div className="manual-loading-state">
@@ -467,7 +482,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
             )}
           </div>
 
-          {/* Coluna da Direita: Caderno de Anotações Fixo */}
+          {/* Coluna da Direita: Caderno de Anotações Acompanhando o Usuário */}
           <div className="split-column-notes">
             <div className="split-notes-sticky-wrap">
               <ModuleNotesPanel
@@ -482,7 +497,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
       )}
 
       {/* =====================================================================
-          MODO 3: LEITURA PADRÃO (Artigo centralizado + Sumário lateral)
+          MODO 3: LEITURA PADRÃO (ARTIGO + SUMÁRIO LATERAL)
           ===================================================================== */}
       {viewerMode === 'read' && (
         <div className="manual-layout-grid">
@@ -518,7 +533,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
               />
             )}
 
-            {/* Callout de Anotações: Convite didático para registrar notas */}
+            {/* Callout Card: Convite para o Caderno de Anotações */}
             <div className="notes-callout-card">
               <div className="notes-callout-content">
                 <div className="notes-callout-icon">
@@ -529,7 +544,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
                   <p className="notes-callout-desc">
                     {hasUserNotes
                       ? 'Você já possui notas salvas para este manual. Acesse para revisar ou atualizar seus comandos.'
-                      : 'Precisa fixar comandos de terminal, conexões de banco ou dúvidas para o supervisor? Salve no seu caderno de anotações.'}
+                      : 'Precisa fixar comandos de terminal, tabelas de banco ou dúvidas para o supervisor? Salve no seu caderno de anotações.'}
                   </p>
                 </div>
               </div>
@@ -571,25 +586,18 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
               </section>
             )}
 
-            {/* Navegação Entre Módulos */}
+            {/* Navegação Entre Módulos e Retorno ao Roteiro */}
             <nav className="manual-bottom-nav">
-              {prevModule ? (
-                <button
-                  onClick={() => {
-                    onNavigate(prevModule.screenKey);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  className="nav-page-btn prev"
-                >
-                  <span className="nav-dir-label"><ArrowLeft size={14} /> Módulo Anterior</span>
-                  <span className="nav-title-label">{prevModule.shortTitle}</span>
-                </button>
-              ) : (
-                <button onClick={() => onNavigate('roteiro')} className="nav-page-btn prev">
-                  <span className="nav-dir-label"><ArrowLeft size={14} /> Início</span>
-                  <span className="nav-title-label">Roteiro de Integração</span>
-                </button>
-              )}
+              <button 
+                onClick={() => {
+                  onNavigate('roteiro');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }} 
+                className="nav-page-btn prev"
+              >
+                <span className="nav-dir-label"><ArrowLeft size={14} /> Roteiro Geral</span>
+                <span className="nav-title-label">Voltar ao Roteiro</span>
+              </button>
 
               <button
                 onClick={() => onToggleComplete(module.id)}
@@ -611,7 +619,13 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
                   <span className="nav-title-label">{nextModule.shortTitle}</span>
                 </button>
               ) : (
-                <button onClick={() => onNavigate('quizzes')} className="nav-page-btn next">
+                <button 
+                  onClick={() => {
+                    onNavigate('quizzes');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }} 
+                  className="nav-page-btn next"
+                >
                   <span className="nav-dir-label">Avançar <ArrowRight size={14} /></span>
                   <span className="nav-title-label">Central de Quizzes</span>
                 </button>
@@ -619,12 +633,12 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
             </nav>
           </article>
 
-          {/* Sidebar Direita de Sumário (Desktop) */}
+          {/* Sidebar Direita de Sumário (Funcional & Sticky) */}
           <aside className="manual-toc-sidebar">
             <div className="toc-sidebar-inner">
               <div className="toc-sidebar-header">
                 <BookOpen size={16} className="text-primary" />
-                <span>Neste Manual</span>
+                <span>Sumário do Documento</span>
               </div>
 
               <nav className="toc-links-list">
@@ -652,7 +666,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
 
               <div className="toc-sidebar-progress">
                 <div className="progress-label">
-                  <span>Progresso</span>
+                  <span>Progresso de Leitura</span>
                   <strong>{readingProgress}%</strong>
                 </div>
                 <div className="progress-track">
@@ -660,16 +674,28 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
                 </div>
               </div>
 
-              {/* Acesso rápido às anotações na sidebar */}
-              <div className="toc-sidebar-notes-shortcut">
+              {/* Atalhos Rápidos na Sidebar */}
+              <div className="toc-sidebar-shortcuts">
                 <button
                   type="button"
                   onClick={() => setViewerMode('notes')}
-                  className="sidebar-notes-btn"
+                  className="sidebar-action-btn"
                 >
                   <FileText size={14} />
                   <span>Caderno de Notas</span>
                   {hasUserNotes && <span className="notes-badge-count">Ativo</span>}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    onNavigate('roteiro');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="sidebar-action-btn"
+                >
+                  <Compass size={14} />
+                  <span>Voltar ao Roteiro</span>
                 </button>
               </div>
             </div>
@@ -731,14 +757,40 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
                   setMobileTocOpen(false);
                   setViewerMode('notes');
                 }}
-                className="btn-secondary w-full"
+                className="btn-secondary w-full mb-2"
               >
                 <FileText size={15} />
                 <span>Abrir Caderno de Notas</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileTocOpen(false);
+                  onNavigate('roteiro');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="btn-secondary w-full"
+              >
+                <ArrowLeft size={15} />
+                <span>Voltar ao Roteiro Geral</span>
+              </button>
             </div>
           </div>
         </div>
+      )}
+
+      {/* Botão Flutuante de Voltar ao Topo */}
+      {showScrollTop && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="btn-scroll-top"
+          title="Voltar ao topo da página"
+          aria-label="Voltar ao topo"
+        >
+          <ArrowUp size={18} />
+        </button>
       )}
     </div>
   );
