@@ -66,6 +66,66 @@
       padding: 0;
     }
 
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Sumário / Table of Contents */
+    .toc-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 1.75rem;
+      margin-bottom: 3.5rem;
+    }
+
+    [data-theme="light"] .toc-card {
+      background: var(--card-bg);
+      border-color: var(--card-border);
+    }
+
+    .toc-card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .toc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 0.75rem 1.5rem;
+      list-style: none;
+      padding: 0;
+    }
+
+    .toc-grid li {
+      margin-bottom: 0;
+    }
+
+    .toc-grid li a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.92rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: color 0.2s, transform 0.2s;
+    }
+
+    .toc-grid li a:hover {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+
+    .toc-grid li a::before {
+      content: "→";
+      color: var(--primary);
+      font-weight: bold;
+    }
+
     body {
       font-family: var(--font-sans);
       background-color: var(--bg);
@@ -596,49 +656,21 @@
       </div>
     </section>
 
-    <!-- Conteúdo Markdown Renderizado -->
-    <article id="manual-content">
-      <h1>🏛️ Guia Prático de Arquitetura Front-end — SISMOB / SEMOB-DF</h1>
-      <blockquote>
-        <p><strong>Classificação:</strong> Documento Didático de Engenharia de Software &amp; Padronização Front-end<br>
-        <strong>Público-Alvo:</strong> Estagiários, Desenvolvedores Júnior e Novos Membros do Time<br>
-        <strong>Ecossistema:</strong> Padrão Universal para Aplicações Front-end (SEMOB-DF / SISMOB)<br>
-        <strong>Versão:</strong> 1.0.0 — Outubro/2026</p>
-      </blockquote>
-      <hr>
+    <!-- Sumário -->
+    <nav class="toc-card">
+      <h3>📑 Sumário de Conteúdos</h3>
+      <ul class="toc-grid">
+        <li><a href="#modulo-1">1. Filosofia & Modelo Mental da Arquitetura</a></li>
+        <li><a href="#modulo-2">2. Estrutura de Pastas e Responsabilidades</a></li>
+        <li><a href="#modulo-3">3. As 4 Regras de Ouro (Anti-patterns)</a></li>
+        <li><a href="#modulo-4">4. Tutorial Prático: Do Zero à Tela Completa</a></li>
+        <li><a href="#modulo-5">5. Dicionário Rápido & Guia de Bolso</a></li>
+        <li><a href="#modulo-6">6. Checklist de Qualidade de Código (DoD)</a></li>
+      </ul>
+    </nav>
 
-      <h2>📑 Sumário</h2>
-      <ol>
-        <li><a href="#1-a-filosofia-e-o-modelo-mental-da-arquitetura">A Filosofia e o Modelo Mental da Arquitetura</a>
-          <ul>
-            <li><a href="#11-a-separacao-em-5-camadas">1.1 A Separação em 5 Camadas</a></li>
-            <li><a href="#12-diagrama-de-fluxo-unidirecional-de-dados">1.2 Diagrama de Fluxo Unidirecional de Dados</a></li>
-            <li><a href="#13-a-analogia-didatica-do-restaurante">1.3 A Analogia Didática do Restaurante</a></li>
-            <li><a href="#14-ciclo-de-vida-de-uma-acao-do-usuario">1.4 Ciclo de Vida de uma Ação do Usuário (Interaction Lifecycle)</a></li>
-          </ul>
-        </li>
-        <li><a href="#2-estrutura-de-pastas-e-responsabilidades">Estrutura de Pastas e Responsabilidades</a>
-          <ul>
-            <li><a href="#21-mapeamento-canonico-de-uma-feature">2.1 Mapeamento Canônico de uma Feature</a></li>
-            <li><a href="#22-matriz-de-responsabilidades-o-que-fazer-vs-o-que-nunca-fazer">2.2 Matriz de Responsabilidades (O Que Fazer vs. O Que NUNCA Fazer)</a></li>
-          </ul>
-        </li>
-        <li><a href="#3-as-4-regras-de-ouro-anti-patterns-e-erros-criticos">As 4 Regras de Ouro (Anti-patterns e Erros Críticos)</a></li>
-        <li><a href="#4-tutorial-pratico-para-estagiarios-do-zero-a-tela-completa">Tutorial Prático para Estagiários: Do Zero à Tela Completa</a>
-          <ul>
-            <li><a href="#41-passo-1-modelagem-e-contratos-de-tipagem">4.1 Passo 1: Modelagem e Contratos de Tipagem (types/tarefa.ts)</a></li>
-            <li><a href="#42-passo-2-camada-de-comunicacao-http">4.2 Passo 2: Camada de Comunicação HTTP (services/tarefasService.ts)</a></li>
-            <li><a href="#43-passo-3-o-cerebro-da-tela-custom-hook">4.3 Passo 3: O Cérebro da Tela — Custom Hook (hooks/useTarefas.ts)</a></li>
-            <li><a href="#44-passo-4-componentes-visuais-burros-dumb-components">4.4 Passo 4: Componentes Visuais Burros — Dumb Components (components/)</a></li>
-            <li><a href="#45-passo-5-o-maestro-da-tela-smart-component">4.5 Passo 5: O Maestro da Tela — Smart Component (TarefasIndex.tsx)</a></li>
-            <li><a href="#46-passo-6-registro-da-rota-e-lazy-loading-na-aplicacao">4.6 Passo 6: Registro da Rota e Lazy Loading na Aplicação</a></li>
-          </ul>
-        </li>
-        <li><a href="#5-dicionario-rapido--guia-de-bolso">Dicionário Rápido &amp; Guia de Bolso</a></li>
-        <li><a href="#6-checklist-final-de-qualidade-de-codigo-dod">Checklist Final de Qualidade de Código (DoD)</a></li>
-      </ol>
-      <hr>
-
+    <!-- MÓDULO 1 -->
+    <section id="modulo-1">
       <h2 id="1-a-filosofia-e-o-modelo-mental-da-arquitetura">1. A Filosofia e o Modelo Mental da Arquitetura</h2>
       <p>No desenvolvimento front-end moderno, o erro mais frequente de quem está iniciando é colocar todo o código no mesmo arquivo: requisições de API, estados locais do formulário, validações de texto, formatação de datas, JSX e estilos CSS. Quando esse arquivo atinge centenas de linhas, qualquer pequena alteração quebra a tela inteira.</p>
       
@@ -750,8 +782,10 @@ sequenceDiagram
         Hook-->>User: Exibe alerta amigável com a falha 🚨
     end
       </div>
-      <hr>
+    </section>
 
+    <!-- MÓDULO 2 -->
+    <section id="modulo-2">
       <h2 id="2-estrutura-de-pastas-e-responsabilidades">2. Estrutura de Pastas e Responsabilidades</h2>
       <h3 id="21-mapeamento-canonico-de-uma-feature">2.1 Mapeamento Canônico de uma Feature</h3>
       <p>Toda nova funcionalidade dentro do ecossistema front-end (ex: <code>Tarefas</code>, <code>Notícias</code>, <code>Veículos</code>) deve habitar um diretório dedicado contendo a seguinte estrutura padronizada:</p>
@@ -806,8 +840,10 @@ sequenceDiagram
           </tr>
         </tbody>
       </table>
-      <hr>
+    </section>
 
+    <!-- MÓDULO 3 -->
+    <section id="modulo-3">
       <h2 id="3-as-4-regras-de-ouro-anti-patterns-e-erros-criticos">3. As 4 Regras de Ouro (Anti-patterns e Erros Críticos)</h2>
       
       <div class="callout callout-caution">
@@ -837,8 +873,10 @@ sequenceDiagram
           <p>Nunca capture um erro em bloco <code>try/catch</code> sem apresentar feedback para o usuário e registrar no console. Falhas silenciosas fazem o usuário clicar compulsivamente achando que a aplicação travou.</p>
         </div>
       </div>
-      <hr>
+    </section>
 
+    <!-- MÓDULO 4 -->
+    <section id="modulo-4">
       <h2 id="4-tutorial-pratico-para-estagiarios-do-zero-a-tela-completa">4. Tutorial Prático para Estagiários: Do Zero à Tela Completa</h2>
       <p>Nesta seção, você acompanhará o desenvolvimento prático de uma tela completa de <strong>Gestão de Tarefas</strong>, contendo listagem via API, loading spinner, formulário de cadastro com validação, alternância de status, exclusão com confirmação e registro de rotas.</p>
 
@@ -1298,8 +1336,10 @@ export const routes = [
     title: 'Gestão de Tarefas'
   }
 ];</code></pre>
-      <hr>
+    </section>
 
+    <!-- MÓDULO 5 -->
+    <section id="modulo-5">
       <h2 id="5-dicionario-rapido--guia-de-bolso">5. Dicionário Rápido &amp; Guia de Bolso</h2>
       <table>
         <thead>
@@ -1342,8 +1382,10 @@ export const routes = [
           </tr>
         </tbody>
       </table>
-      <hr>
+    </section>
 
+    <!-- MÓDULO 6 -->
+    <section id="modulo-6">
       <h2 id="6-checklist-final-de-qualidade-de-codigo-dod">6. Checklist Final de Qualidade de Código (DoD)</h2>
       <p>Antes de solicitar a aprovação de um Pull Request / Merge Request, certifique-se de que todos os itens abaixo foram cumpridos:</p>
       <ul>
@@ -1356,6 +1398,7 @@ export const routes = [
         <li><input type="checkbox"> A rota foi registrada com carregamento assíncrono (<code>lazy</code>);</li>
         <li><input type="checkbox"> O comando <code>npm run typecheck</code> valida com 100% de sucesso sem erros de compilação.</li>
       </ul>
+    </section>
       <hr>
 
       <p><em>Manual elaborado pela Arquitetura de Software e Engenharia de Frontend — SEMOB-DF / SISMOB.</em><br>

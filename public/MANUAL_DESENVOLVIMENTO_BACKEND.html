@@ -66,6 +66,66 @@
       padding: 0;
     }
 
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Sumário / Table of Contents */
+    .toc-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 1.75rem;
+      margin-bottom: 3.5rem;
+    }
+
+    [data-theme="light"] .toc-card {
+      background: var(--card-bg);
+      border-color: var(--card-border);
+    }
+
+    .toc-card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .toc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 0.75rem 1.5rem;
+      list-style: none;
+      padding: 0;
+    }
+
+    .toc-grid li {
+      margin-bottom: 0;
+    }
+
+    .toc-grid li a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.92rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: color 0.2s, transform 0.2s;
+    }
+
+    .toc-grid li a:hover {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+
+    .toc-grid li a::before {
+      content: "→";
+      color: var(--primary);
+      font-weight: bold;
+    }
+
     body {
       font-family: var(--font-sans);
       background-color: var(--bg);
@@ -571,64 +631,23 @@
       </div>
     </section>
 
-    <!-- Conteúdo Markdown Renderizado -->
-    <article id="manual-content">
-      <h1>🏛️ Manual Oficial de Desenvolvimento Back-end — SISMOB / SEMOB-DF</h1>
-<blockquote>
-<p><strong>Classificação:</strong> Documento Técnico de Engenharia &amp; Padronização Arquitetural<br><strong>Público-Alvo:</strong> Desenvolvedores Backend, Tech Leads, Arquitetos, Engenheiros de Software, Desenvolvedores Júnior e Estagiários<br><strong>Ecossistema:</strong> SISMOB (Sistema de Mobilidade Urbana) — SEMOB-DF<br><strong>Versão:</strong> 1.0.0 — Outubro/2026  </p>
-</blockquote>
-<hr>
-<h2>📑 Sumário</h2>
-<ol>
-<li><a href="#1-vis%C3%A3o-geral-da-arquitetura-e-stack-tecnol%C3%B3gico">Visão Geral da Arquitetura e Stack Tecnológico</a><ul>
-<li><a href="#11-stack-tecnol%C3%B3gico">1.1 Stack Tecnológico</a></li>
-<li><a href="#12-padr%C3%A3o-arquitetural-adotado">1.2 Padrão Arquitetural Adotado</a></li>
-<li><a href="#13-ciclo-de-vida-de-uma-requisi%C3%A7%C3%A3o-request-lifecycle">1.3 Ciclo de Vida de uma Requisição (Request Lifecycle)</a></li>
-</ul>
-</li>
-<li><a href="#2-estrutura-de-pastas-e-responsabilidades">Estrutura de Pastas e Responsabilidades</a><ul>
-<li><a href="#21-mapeamento-completo-de-diret%C3%B3rios">2.1 Mapeamento Completo de Diretórios</a></li>
-<li><a href="#22-matriz-de-responsabilidades-o-que-fazer-vs-o-que-nunca-fazer">2.2 Matriz de Responsabilidades (O Que Fazer vs. O Que NUNCA Fazer)</a></li>
-</ul>
-</li>
-<li><a href="#3-padr%C3%B5es-de-c%C3%B3digo-e-contratos-code-style">Padrões de Código e Contratos (Code Style)</a><ul>
-<li><a href="#31-conven%C3%A7%C3%B5es-de-nomenclatura">3.1 Convenções de Nomenclatura</a></li>
-<li><a href="#32-uso-de-dtos-e-valida%C3%A7%C3%A3o-de-entrada">3.2 Uso de DTOs e Validação de Entrada</a></li>
-<li><a href="#33-padroniza%C3%A7%C3%A3o-de-respostas-e-status-codes-http">3.3 Padronização de Respostas e Status Codes HTTP</a></li>
-</ul>
-</li>
-<li><a href="#4-tratamento-de-erros-e-middlewares">Tratamento de Erros e Middlewares</a><ul>
-<li><a href="#41-filtro-global-de-exce%C3%A7%C3%B5es-allexceptionsfilter">4.1 Filtro Global de Exceções (<code>AllExceptionsFilter</code>)</a></li>
-<li><a href="#42-hierarquia-de-exce%C3%A7%C3%B5es-de-dom%C3%ADnio">4.2 Hierarquia de Exceções de Domínio</a></li>
-<li><a href="#43-middlewares-pipes-e-guards-de-seguran%C3%A7a">4.3 Middlewares, Pipes e Guards de Segurança</a></li>
-</ul>
-</li>
-<li><a href="#5-acesso-a-dados-banco-de-dados">Acesso a Dados (Banco de Dados)</a><ul>
-<li><a href="#51-decis%C3%A3o-arquitetural-orm-entity-vs-sql-nativo-parametrizado">5.1 Decisão Arquitetural: ORM (Entity) vs. SQL Nativo Parametrizado</a></li>
-<li><a href="#52-blindagem-r%C3%ADgida-contra-sql-injection">5.2 Blindagem Rígida Contra SQL Injection</a></li>
-<li><a href="#53-modelagem-de-entidades-e-estrat%C3%A9gia-de-migrationsseeds">5.3 Modelagem de Entidades e Estratégia de Migrations/Seeds</a></li>
-</ul>
-</li>
-<li><a href="#6-tutorial-pr%C3%A1tico-para-estagi%C3%A1rios-do-zero-ao-endpoint-completo">Tutorial Prático para Estagiários: Do Zero ao Endpoint Completo</a><ul>
-<li><a href="#61-passo-1-cria%C3%A7%C3%A3o-da-entidade-de-banco">6.1 Passo 1: Criação da Entidade de Banco</a></li>
-<li><a href="#62-passo-2-defini%C3%A7%C3%A3o-dos-dtos-de-entrada-e-valida%C3%A7%C3%A3o">6.2 Passo 2: Definição dos DTOs de Entrada e Validação</a></li>
-<li><a href="#63-passo-3-cria%C3%A7%C3%A3o-do-reposit%C3%B3rio-especializado">6.3 Passo 3: Criação do Repositório Especializado</a></li>
-<li><a href="#64-passo-4-implementa%C3%A7%C3%A3o-do-service-com-regras-de-neg%C3%B3cio">6.4 Passo 4: Implementação do Service com Regras de Negócio</a></li>
-<li><a href="#65-passo-5-cria%C3%A7%C3%A3o-do-controller-e-documenta%C3%A7%C3%A3o-openapi">6.5 Passo 5: Criação do Controller e Documentação OpenAPI</a></li>
-<li><a href="#66-passo-6-cria%C3%A7%C3%A3o-do-m%C3%B3dulo-e-registro-no-appmodule">6.6 Passo 6: Criação do Módulo e Registro no <code>AppModule</code></a></li>
-<li><a href="#67-valida%C3%A7%C3%A3o-e-teste-do-novo-recurso-via-swagger">6.7 Validação e Teste do Novo Recurso via Swagger</a></li>
-</ul>
-</li>
-<li><a href="#7-scripts-%C3%BAteis-setup-e-testes-automatizados">Scripts Úteis, Setup e Testes Automatizados</a><ul>
-<li><a href="#71-setup-do-ambiente-local-docker-vs-nativo">7.1 Setup do Ambiente Local (Docker vs. Nativo)</a></li>
-<li><a href="#72-guia-de-comandos-npm">7.2 Guia de Comandos NPM</a></li>
-<li><a href="#73-como-escrever-testes-unit%C3%A1rios-e-e2e">7.3 Como Escrever Testes Unitários e E2E</a></li>
-<li><a href="#74-checklist-final-de-qualidade-de-c%C3%B3digo-dod">7.4 Checklist Final de Qualidade de Código (DoD)</a></li>
-</ul>
-</li>
-</ol>
-<hr>
-<h2>1. Visão Geral da Arquitetura e Stack Tecnológico</h2>
+    <!-- Sumário -->
+    <nav class="toc-card">
+      <h3>📑 Sumário de Conteúdos</h3>
+      <ul class="toc-grid">
+        <li><a href="#modulo-1">1. Visão Geral da Arquitetura & Stack</a></li>
+        <li><a href="#modulo-2">2. Estrutura de Pastas e Responsabilidades</a></li>
+        <li><a href="#modulo-3">3. Padrões de Código e Contratos (Code Style)</a></li>
+        <li><a href="#modulo-4">4. Tratamento de Erros e Middlewares</a></li>
+        <li><a href="#modulo-5">5. Acesso a Dados (Banco de Dados)</a></li>
+        <li><a href="#modulo-6">6. Tutorial Prático: Do Zero ao Endpoint</a></li>
+        <li><a href="#modulo-7">7. Scripts Úteis, Setup e Testes</a></li>
+      </ul>
+    </nav>
+
+    <!-- MÓDULO 1 -->
+    <section id="modulo-1">
+      <h2 id="1-visao-geral-da-arquitetura-e-stack-tecnologico">1. Visão Geral da Arquitetura e Stack Tecnológico</h2>
 <p>O backend do ecossistema <strong>SISMOB</strong> foi concebido para atender a operações de transporte público e mobilidade urbana com alta confiabilidade, concorrência massiva, blindagem de segurança contra injeção de código e estrita aderência a contratos de API RESTful.</p>
 <h3>1.1 Stack Tecnológico</h3>
 <table>
@@ -755,8 +774,11 @@
         end
     end
 </div>
-<hr>
-<h2>2. Estrutura de Pastas e Responsabilidades</h2>
+    </section>
+
+    <!-- MÓDULO 2 -->
+    <section id="modulo-2">
+      <h2 id="2-estrutura-de-pastas-e-responsabilidades">2. Estrutura de Pastas e Responsabilidades</h2>
 <h3>2.1 Mapeamento Completo de Diretórios</h3>
 <p>O diretório <code>src/</code> está organizado da seguinte forma:</p>
 <pre><code>SISMOB-BOILERPLATE/
@@ -854,8 +876,11 @@
 <td>• <strong>NUNCA</strong> engula erros silenciosamente sem gerar log no console.</td>
 </tr>
 </tbody></table>
-<hr>
-<h2>3. Padrões de Código e Contratos (Code Style)</h2>
+    </section>
+
+    <!-- MÓDULO 3 -->
+    <section id="modulo-3">
+      <h2 id="3-padroes-de-codigo-e-contratos-code-style">3. Padrões de Código e Contratos (Code Style)</h2>
 <h3>3.1 Convenções de Nomenclatura</h3>
 <p>Para manter consistência em todo o ecossistema SISMOB, utilize rigorosamente o padrão abaixo:</p>
 <table>
@@ -1049,8 +1074,11 @@ export class FilterLinhaDto {
 <td>JSON de erro padronizado com <code>statusCode: 500</code></td>
 </tr>
 </tbody></table>
-<hr>
-<h2>4. Tratamento de Erros e Middlewares</h2>
+    </section>
+
+    <!-- MÓDULO 4 -->
+    <section id="modulo-4">
+      <h2 id="4-tratamento-de-erros-e-middlewares">4. Tratamento de Erros e Middlewares</h2>
 <h3>4.1 Filtro Global de Exceções (<code>AllExceptionsFilter</code>)</h3>
 <p>Nenhuma exceção não tratada deve vazar para o cliente como stack trace de Node.js. O projeto conta com o <code>AllExceptionsFilter</code> (<code>src/filters/all-exceptions.filter.ts</code>), ativado globalmente no <code>main.ts</code>.</p>
 <h4>Contrato Único de Resposta de Erro:</h4>
@@ -1159,8 +1187,11 @@ export class RecursoController { ... }
 <p>Previne <code>mass-assignment vulnerabilities</code> rejeitando parâmetros fora do schema especificado no DTO.</p>
 <h4>3. <code>CORS</code> (Cross-Origin Resource Sharing)</h4>
 <p>Ativado globalmente no bootstrap para possibilitar consumo seguro pelos clientes web e mobile do SISMOB.</p>
-<hr>
-<h2>5. Acesso a Dados (Banco de Dados)</h2>
+    </section>
+
+    <!-- MÓDULO 5 -->
+    <section id="modulo-5">
+      <h2 id="5-acesso-a-dados-banco-de-dados">5. Acesso a Dados (Banco de Dados)</h2>
 <h3>5.1 Decisão Arquitetural: ORM (Entity) vs. SQL Nativo Parametrizado</h3>
 <p>Para suportar a alta demanda de transações e relatórios da SEMOB-DF mantendo produtividade no dia a dia, adotamos a seguinte regra:</p>
 <pre><code>                                 Qual é o tipo de operação?
@@ -1231,15 +1262,18 @@ const sql = `SELECT * FROM tab_linha WHERE cd_linha = &#39;` + codigo + `&#39;`;
 <li><strong>Ambientes de Homologação e Produção:</strong> <code>DB_SYNCHRONIZE=false</code> é <strong>obrigatório</strong>. Modificações de schema devem ser aplicadas via scripts SQL versionados ou migrations controladas.</li>
 <li><strong>Seeds Automatizados (<code>SeedService</code>):</strong> O <code>SeedService</code> (<code>src/service/Seed.ts</code>) executa arquivos SQL declarativos no evento <code>onApplicationBootstrap()</code> apenas se a tabela correspondente estiver vazia, garantindo idempotência.</li>
 </ul>
-<hr>
-<h2>6. Tutorial Prático para Estagiários: Do Zero ao Endpoint Completo</h2>
+    </section>
+
+    <!-- MÓDULO 6 -->
+    <section id="modulo-6">
+      <h2 id="6-tutorial-pratico-para-estagiarios-do-zero-ao-endpoint-completo">6. Tutorial Prático para Estagiários: Do Zero ao Endpoint Completo</h2>
 <p>Nesta seção, você aprenderá o passo a passo exato para criar uma nova funcionalidade do zero. Vamos implementar o módulo completo de <strong>Veículos</strong> (<code>Veiculo</code>), com CRUD e busca avançada.</p>
 <h3>Ordem Oficial de Desenvolvimento:</h3>
 <pre><code>1. Entidade ──► 2. DTOs ──► 3. Repository ──► 4. Service ──► 5. Controller ──► 6. Module ──► 7. AppModule
 </code></pre>
 <hr>
 <h3>6.1 Passo 1: Criação da Entidade de Banco</h3>
-<p>Crie o arquivo <a href="file:///c:/Users/01009368425/Desktop/Nova%20pasta/01009368425/Padr%C3%A3o_back/SISMOB-BOILERPLATE/src/entity/Veiculo.ts">src/entity/Veiculo.ts</a>:</p>
+<p>Crie o arquivo <code>src/entity/Veiculo.ts</code>:</p>
 <pre><code class="language-typescript">import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from &#39;typeorm&#39;;
 
 @Entity({ name: &#39;tab_veiculo&#39;, schema: &#39;dados_mobilidade&#39; })
@@ -1482,8 +1516,11 @@ export class AppModule {}
 <li><strong>Autorize no Swagger:</strong><br>Copie o <code>access_token</code>, clique em <strong>Authorize</strong> (topo direito do Swagger) e cole o token.</li>
 <li><strong>Execute as Requisições:</strong><br>Os endpoints de <code>Veículos</code> estarão prontos para receber cadastros e consultas em tempo real!</li>
 </ol>
-<hr>
-<h2>7. Scripts Úteis, Setup e Testes Automatizados</h2>
+    </section>
+
+    <!-- MÓDULO 7 -->
+    <section id="modulo-7">
+      <h2 id="7-scripts-uteis-setup-e-testes-automatizados">7. Scripts Úteis, Setup e Testes Automatizados</h2>
 <h3>7.1 Setup do Ambiente Local (Docker vs. Nativo)</h3>
 <h4>Opção A: Execução com Docker Compose (Recomendado)</h4>
 <p>Sobe o banco PostgreSQL, a extensão PostGIS e o pgAdmin automaticamente:</p>
@@ -1615,6 +1652,7 @@ describe(&#39;VeiculoService&#39;, () =&gt; {
 <li><input disabled="" type="checkbox"> O comando <code>npm run lint</code> executa sem nenhum erro ou aviso;</li>
 <li><input disabled="" type="checkbox"> Todos os testes unitários (<code>npm test</code>) passam com 100% de sucesso.</li>
 </ul>
+    </section>
 <hr>
 <p><em>Manual elaborado pela Arquitetura de Software e Engenharia de Backend — SEMOB-DF / SISMOB.</em><br><em>Dúvidas, sugestões ou melhorias arquiteturais devem ser submetidas via Merge Request.</em></p>
 

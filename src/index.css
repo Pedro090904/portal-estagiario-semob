@@ -2408,6 +2408,12 @@ button {
   transition: all var(--transition-fast);
 }
 
+.native-manual-content .toc-card a::before {
+  content: "→";
+  color: var(--primary);
+  font-weight: bold;
+}
+
 .native-manual-content .toc-card a:hover {
   color: var(--primary);
   background: var(--surface-hover);
