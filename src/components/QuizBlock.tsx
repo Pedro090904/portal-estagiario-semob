@@ -30,7 +30,7 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({
   // Carregar tentativa anterior se houver
   useEffect(() => {
     if (existingAttempt) {
-      setSelectedAnswers(existingAttempt.selectedAnswers);
+      setSelectedAnswers(existingAttempt.selectedAnswers || {});
       setIsSubmitted(true);
     } else {
       setSelectedAnswers({});
@@ -66,9 +66,11 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({
     const passed = score >= quiz.passingScore;
 
     const attempt: QuizAttempt = {
+      moduleId: quiz.moduleId || quiz.id,
       quizId: quiz.id,
       selectedAnswers,
-      score,
+      score: correctCount,
+      percentage: score,
       correctCount,
       totalQuestions: quiz.questions.length,
       completedAt: new Date().toISOString(),
@@ -97,7 +99,7 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({
     setValidationError(null);
   };
 
-  const currentScore = existingAttempt?.score ?? (
+  const currentScore = existingAttempt?.percentage ?? existingAttempt?.score ?? (
     isSubmitted
       ? Math.round((quiz.questions.filter(q => selectedAnswers[q.id] === q.correctOptionId).length / quiz.questions.length) * 100)
       : null
@@ -201,9 +203,13 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({
 
               {/* Opções */}
               <div className="quiz-options-group">
-                {question.options.map((opt) => {
-                  const isSelected = userAnswer === opt.id;
-                  const isThisOptionCorrect = opt.id === question.correctOptionId;
+                {question.options.map((opt, optIndex) => {
+                  const optId = typeof opt === 'string' ? String(optIndex) : opt.id;
+                  const optText = typeof opt === 'string' ? opt : opt.text;
+                  const isSelected = userAnswer === optId;
+                  const isThisOptionCorrect =
+                    optId === question.correctOptionId ||
+                    (question.correctOptionIndex !== undefined && optIndex === question.correctOptionIndex);
 
                   let optionClass = 'quiz-option-card';
                   if (isSelected) optionClass += ' selected';
@@ -218,21 +224,21 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({
 
                   return (
                     <label 
-                      key={opt.id} 
+                      key={optId} 
                       className={optionClass}
-                      onClick={() => handleSelectOption(question.id, opt.id)}
+                      onClick={() => handleSelectOption(question.id, optId)}
                     >
                       <input
                         type="radio"
                         name={`quiz_${quiz.id}_${question.id}`}
-                        value={opt.id}
+                        value={optId}
                         checked={isSelected}
                         disabled={isSubmitted}
                         onChange={() => {}}
                         className="quiz-radio"
                       />
-                      <span className="opt-letter">{opt.id.toUpperCase()}</span>
-                      <span className="opt-text">{opt.text}</span>
+                      <span className="opt-letter">{optId.toUpperCase()}</span>
+                      <span className="opt-text">{optText}</span>
                       {isSubmitted && isThisOptionCorrect && (
                         <CheckCircle size={18} className="opt-feedback-icon icon-green" />
                       )}

@@ -1,4 +1,5 @@
 import { ModuleMetadata, QuizBlockData, SqlQuestion } from '../types';
+export const getModules = (): ModuleMetadata[] => MODULES;
 
 export const MODULES: ModuleMetadata[] = [
   {

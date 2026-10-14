@@ -1,94 +1,95 @@
-import { useState, useCallback } from 'react';
-import { StudentProgress, QuizAttempt } from '../types';
+import { useState, useCallback, useMemo } from 'react';
+import { QuizAttempt, StudentProgress } from '../types';
 import { storageService } from '../services/storageService';
-import { MODULES, QUIZZES, SQL_CHALLENGE_QUESTIONS } from '../services/dataService';
+import { getModules } from '../services/dataService';
+import { calculateOverallProgress } from '../services/progressEngine';
 
 export function useStudentProgress() {
-  const [progress, setProgress] = useState<StudentProgress>(() => storageService.getProgress());
+  const [progress, setProgress] = useState<StudentProgress>(() =>
+    storageService.getProgress()
+  );
 
-  const updateStudentName = useCallback((name: string) => {
-    const updated = storageService.setStudentName(name);
-    setProgress(updated);
+  const totalModules = useMemo(() => getModules().length, []);
+
+  const updateName = useCallback((name: string) => {
+    setProgress(storageService.updateStudentName(name));
   }, []);
 
   const toggleModule = useCallback((moduleId: string) => {
-    const updated = storageService.toggleModuleCompleted(moduleId);
-    setProgress(updated);
+    setProgress(storageService.toggleModuleCompletion(moduleId));
+  }, []);
+
+  const toggleChecklist = useCallback((moduleId: string, itemKey: string) => {
+    setProgress(storageService.toggleChecklistItem(moduleId, itemKey));
+  }, []);
+
+  const recordQuiz = useCallback((attempt: QuizAttempt) => {
+    setProgress(storageService.saveQuizAttempt(attempt));
+  }, []);
+
+  const saveNote = useCallback((moduleId: string, note: string) => {
+    setProgress(storageService.saveModuleNote(moduleId, note));
+  }, []);
+
+  const generateCertificate = useCallback(() => {
+    setProgress(storageService.issueCertificate());
+  }, []);
+
+  const resetAll = useCallback(() => {
+    setProgress(storageService.resetProgress());
   }, []);
 
   const toggleChallenge = useCallback((challengeId: string) => {
-    const updated = storageService.toggleChallengeCompleted(challengeId);
-    setProgress(updated);
+    setProgress(storageService.toggleChallengeCompleted(challengeId));
   }, []);
 
-  const recordQuizAttempt = useCallback((attempt: QuizAttempt) => {
-    const updated = storageService.saveQuizAttempt(attempt);
-    setProgress(updated);
-  }, []);
-
-  const recordNote = useCallback((key: string, note: string) => {
-    const updated = storageService.saveNote(key, note);
-    setProgress(updated);
-  }, []);
-
-  const resetProgress = useCallback(() => {
-    const updated = storageService.resetAllProgress();
-    setProgress(updated);
-  }, []);
-
-  // Métricas computadas
-  const totalModules = MODULES.length;
-  const completedModulesCount = progress.completedModules.length;
-
-  const totalQuizzes = QUIZZES.length;
-  const passedQuizzesCount = QUIZZES.filter((q) => {
-    const attempt = progress.quizAttempts[q.id];
-    return attempt && attempt.passed;
-  }).length;
-
-  const totalChallenges = SQL_CHALLENGE_QUESTIONS.length + 2; // 25 SQL + Backend + Frontend
-  const completedChallengesCount = progress.completedChallenges.length;
-
-  // Média ponderada de conclusão global da formação
-  const modulesWeight = 0.35;
-  const quizzesWeight = 0.45;
-  const challengesWeight = 0.20;
-
-  const modulesRatio = totalModules > 0 ? completedModulesCount / totalModules : 0;
-  const quizzesRatio = totalQuizzes > 0 ? passedQuizzesCount / totalQuizzes : 0;
-  const challengesRatio = totalChallenges > 0 ? Math.min(completedChallengesCount / totalChallenges, 1) : 0;
-
-  const overallPercentage = Math.round(
-    (modulesRatio * modulesWeight + quizzesRatio * quizzesWeight + challengesRatio * challengesWeight) * 100
+  const metrics = useMemo(
+    () => calculateOverallProgress(progress, totalModules),
+    [progress, totalModules]
   );
 
-  const averageQuizScore = (() => {
-    const attempts = Object.values(progress.quizAttempts);
-    if (attempts.length === 0) return 0;
-    const sum = attempts.reduce((acc, a) => acc + a.score, 0);
-    return Math.round(sum / attempts.length);
-  })();
+  const legacyMetrics = useMemo(() => {
+    const completedChallengesCount = (progress.completedChallenges || []).length;
+    const totalChallenges = 27;
+    const attempts = Object.values(progress.quizScores || {});
+    const averageQuizScore =
+      attempts.length > 0
+        ? Math.round(
+            attempts.reduce((acc, a) => acc + (a.percentage ?? a.score ?? 0), 0) /
+              attempts.length
+          )
+        : 0;
 
-  const isCertificateUnlocked = passedQuizzesCount >= 4 && completedModulesCount >= 3;
+    return {
+      ...metrics,
+      totalModules,
+      completedModulesCount: metrics.completedCount,
+      totalQuizzes: totalModules,
+      completedChallengesCount,
+      totalChallenges,
+      overallPercentage: metrics.completionPercentage,
+      averageQuizScore,
+    };
+  }, [metrics, progress, totalModules]);
 
   return {
     progress,
-    updateStudentName,
+    totalModules,
+    ...metrics,
+    updateName,
     toggleModule,
+    toggleChecklist,
+    recordQuiz,
+    saveNote,
+    generateCertificate,
+    resetAll,
+
+    // Compatibilidade com telas atuais
+    updateStudentName: updateName,
     toggleChallenge,
-    recordQuizAttempt,
-    recordNote,
-    resetProgress,
-    metrics: {
-      totalModules,
-      completedModulesCount,
-      totalQuizzes,
-      passedQuizzesCount,
-      totalChallenges,
-      completedChallengesCount,
-      overallPercentage,
-      averageQuizScore,
-      isCertificateUnlocked,
-    },
+    recordQuizAttempt: recordQuiz,
+    recordNote: saveNote,
+    resetProgress: resetAll,
+    metrics: legacyMetrics,
   };
 }

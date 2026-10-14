@@ -16,18 +16,22 @@ export type ScreenType =
 
 export type ThemeMode = 'dark' | 'light';
 
+export interface QuizOption {
+  id: string;
+  text: string;
+}
+
 export interface QuizQuestion {
   id: string;
   question: string;
   codeSnippet?: string;
   language?: string;
-  options: {
-    id: string;
-    text: string;
-  }[];
-  correctOptionId: string;
+  options: (QuizOption | string)[];
+  correctOptionId?: string;
+  correctOptionIndex?: number;
   explanation: string;
-  category: string;
+  category?: string;
+  moduleId?: string;
 }
 
 export interface QuizBlockData {
@@ -42,13 +46,47 @@ export interface QuizBlockData {
 }
 
 export interface QuizAttempt {
-  quizId: string;
-  selectedAnswers: Record<string, string>; // questionId -> optionId
-  score: number; // porcentagem (0 a 100)
-  correctCount: number;
+  moduleId: string;
+  score: number;
   totalQuestions: number;
-  completedAt: string;
+  percentage: number;
   passed: boolean;
+  completedAt: string;
+  attemptNumber?: number;
+
+  // Propriedades para compatibilidade com a UI existente
+  quizId?: string;
+  selectedAnswers?: Record<string, any>;
+  correctCount?: number;
+}
+
+export interface ChallengeSubmission {
+  challengeId: string;
+  repositoryUrl?: string;
+  checklistCompleted: boolean;
+  completedAt: string;
+}
+
+export interface StudentProgress {
+  schemaVersion?: number;
+  studentName: string;
+  completedModules: string[];
+  completedChecklists: Record<string, string[]>;
+  /** Mantém a melhor tentativa ou a mais recente para compatibilidade imediata com a UI */
+  quizScores: Record<string, QuizAttempt>;
+  /** NOVO: Histórico completo de todas as tentativas por módulo (Fase 4) */
+  quizHistory: Record<string, QuizAttempt[]>;
+  /** NOVO: Submissões estruturadas de desafios práticos */
+  challengeSubmissions?: Record<string, ChallengeSubmission>;
+  moduleNotes: Record<string, string>;
+  startedAt: string;
+  completedAt?: string;
+  certificateCode?: string;
+
+  // Aliases sincronizados para 100% de compatibilidade com as telas atuais
+  quizAttempts: Record<string, QuizAttempt>;
+  completedChallenges: string[];
+  notes: Record<string, string>;
 }
 
 export interface SqlQuestion {
@@ -76,13 +114,4 @@ export interface ModuleMetadata {
   iconName: string;
   quizId: string;
   topics: string[];
-}
-
-export interface StudentProgress {
-  studentName: string;
-  startedAt: string;
-  completedModules: string[]; // module ids
-  completedChallenges: string[]; // challenge ids
-  quizAttempts: Record<string, QuizAttempt>; // quizId -> attempt
-  notes: Record<string, string>; // notes by question or challenge
 }
