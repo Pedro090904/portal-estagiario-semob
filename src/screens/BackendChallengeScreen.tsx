@@ -1,397 +1,374 @@
 import React, { useState } from 'react';
-import { ScreenType } from '../types';
-import { 
-  Server, 
-  CheckCircle2, 
-  Copy, 
-  Check, 
-  Terminal, 
-  Code, 
-  ShieldCheck, 
-  ExternalLink,
-  BookOpen
+import {
+  Server,
+  Layers,
+  CheckCircle2,
+  Circle,
+  Code2,
+  ArrowRight,
+  BookOpen,
+  Terminal,
 } from 'lucide-react';
+import { ChallengeSubmissionPanel } from '../components/ChallengeSubmissionPanel';
 
 interface BackendChallengeScreenProps {
-  isCompleted: boolean;
-  onToggleComplete: () => void;
-  onNavigate: (screen: ScreenType) => void;
+  completedItems: string[];
+  onToggleItem: (itemKey: string) => void;
+  onOpenModule: (moduleId: string) => void;
 }
 
-export const BackendChallengeScreen: React.FC<BackendChallengeScreenProps> = ({
-  isCompleted,
-  onToggleComplete,
-  onNavigate,
-}) => {
-  const [activeStep, setActiveStep] = useState<number>(1);
-  const [copiedCode, setCopiedCode] = useState<string | null>(null);
-  const [simulatedLoginDone, setSimulatedLoginDone] = useState(false);
-  const [simulatedToken, setSimulatedToken] = useState('');
-
-  const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedCode(id);
-    setTimeout(() => setCopiedCode(null), 2000);
-  };
-
-  const handleSimulateLogin = () => {
-    setSimulatedToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGVzIjpbIkFETUlOX1NFVE9SIl19.mock_token_sismob_semob_2026');
-    setSimulatedLoginDone(true);
-  };
-
-  const steps = [
-    {
-      step: 1,
-      title: 'Passo 1: Criar a Entity',
-      path: 'src/entity/veiculo.entity.ts',
-      desc: 'Mapeia a tabela no PostgreSQL utilizando os decorators do TypeORM.',
-      code: `import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-
-@Entity('veiculos')
-export class VeiculoEntity {
-  @PrimaryGeneratedColumn('uuid')
+interface ArchLayer {
   id: string;
+  name: string;
+  folder: string;
+  role: string;
+  mustDo: string[];
+  mustNotDo: string[];
+  codeSample: string;
+}
 
-  @Column({ name: 'numero_ordem', length: 10, unique: true })
-  numeroOrdem: string;
+const ARCH_LAYERS: ArchLayer[] = [
+  {
+    id: 'controller',
+    name: '1. Controller',
+    folder: 'src/controllers/LinhaController.ts',
+    role: 'Porta de entrada HTTP. Recebe req/res, extrai parâmetros, chama o Service e devolve o status HTTP adequado.',
+    mustDo: [
+      'Extrair req.params, req.query e req.body',
+      'Chamar o método correspondente no LinhaService',
+      'Retornar status HTTP corretos (200, 201, 204, 400, 404)',
+    ],
+    mustNotDo: [
+      'NUNCA escrever SQL ou acessar o pool do banco diretamente',
+      'NUNCA concentrar cálculos de negócio complexos no controller',
+    ],
+    codeSample: `export class LinhaController {
+  constructor(private readonly service = new LinhaService()) {}
 
-  @Column({ name: 'placa', length: 8, unique: true })
-  placa: string;
-
-  @Column({ name: 'modelo', length: 50 })
-  modelo: string;
-
-  @Column({ name: 'ano_fabricacao', type: 'int' })
-  anoFabricacao: number;
-
-  @Column({ name: 'ativo', type: 'boolean', default: true })
-  ativo: boolean;
-
-  @CreateDateColumn({ name: 'criado_em' })
-  criadoEm: Date;
-
-  @UpdateDateColumn({ name: 'atualizado_em' })
-  atualizadoEm: Date;
+  listar = async (req: Request, res: Response) => {
+    const { ativa, sentido } = req.query;
+    const linhas = await this.service.listarLinhas({
+      ativa: ativa ? ativa === 'true' : undefined,
+      sentido: sentido as string | undefined,
+    });
+    return res.status(200).json(linhas);
+  };
 }`,
-    },
-    {
-      step: 2,
-      title: 'Passo 2: Criar o DTO com Validadores',
-      path: 'src/dto/create-veiculo.dto.ts',
-      desc: 'Blindagem de entrada: usa class-validator e ApiProperty para o Swagger.',
-      code: `import { IsString, IsNotEmpty, IsInt, Min, Max, Length, Matches } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+  },
+  {
+    id: 'service',
+    name: '2. Service',
+    folder: 'src/services/LinhaService.ts',
+    role: 'Coração das regras de negócio. Valida se a tarifa é positiva, se o código da linha já existe e orquestra chamadas ao Repository.',
+    mustDo: [
+      'Validar regras de domínio (ex: tarifa > 0, código único)',
+      'Lançar erros semânticos (AppError 400 ou 404) quando algo falhar',
+      'Formatar ou agregar dados para o resumo executivo',
+    ],
+    mustNotDo: [
+      'NUNCA manipular objetos Request ou Response do Express',
+      'NUNCA executar queries SQL cruas diretamente',
+    ],
+    codeSample: `export class LinhaService {
+  constructor(private readonly repo = new LinhaRepository()) {}
 
-export class CreateVeiculoDto {
-  @ApiProperty({ description: 'Número de ordem operacional do veículo', example: '11025' })
-  @IsString()
-  @IsNotEmpty({ message: 'O número de ordem é obrigatório' })
-  @Length(3, 10)
-  numeroOrdem: string;
-
-  @ApiProperty({ description: 'Placa no padrão Mercosul ou antigo', example: 'BRA2E19' })
-  @IsString()
-  @IsNotEmpty({ message: 'A placa é obrigatória' })
-  @Matches(/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/, { message: 'Formato de placa inválido' })
-  placa: string;
-
-  @ApiProperty({ description: 'Modelo do chassi/carroceria', example: 'Caio Millennium BRT' })
-  @IsString()
-  @IsNotEmpty()
-  modelo: string;
-
-  @ApiProperty({ description: 'Ano de fabricação', example: 2024 })
-  @IsInt()
-  @Min(2010, { message: 'O veículo deve ter no máximo 15 anos de fabricação' })
-  @Max(new Date().getFullYear() + 1)
-  anoFabricacao: number;
+  async buscarPorCodigo(cd_linha: string) {
+    const linha = await this.repo.findByCodigo(cd_linha);
+    if (!linha) {
+      throw new AppError('Linha não encontrada para o código informado', 404);
+    }
+    return linha;
+  }
 }`,
-    },
-    {
-      step: 3,
-      title: 'Passo 3: Criar o Repository com SQL Parametrizado',
-      path: 'src/repository/veiculo.repository.ts',
-      desc: 'Executa queries com placeholders ($1, $2) para evitar SQL Injection.',
-      code: `import { Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
-import { VeiculoEntity } from '../entity/veiculo.entity';
-
-@Injectable()
-export class VeiculoRepository {
-  constructor(private readonly dataSource: DataSource) {}
-
-  // Consulta analítica com SQL nativo parametrizado
-  async buscarComTelemetria(numeroOrdem: string): Promise<any> {
+  },
+  {
+    id: 'repository',
+    name: '3. Repository',
+    folder: 'src/repositories/LinhaRepository.ts',
+    role: 'Camada exclusiva de persistência e consultas SQL parametrizadas (sempre com cláusula WHERE).',
+    mustDo: [
+      'Isolar todas as queries SQL ou chamadas ao banco/dados',
+      'Usar parâmetros ($1, $2) e cláusula WHERE explícita em buscas, updates e deletes',
+      'Retornar entidades tipadas para o Service',
+    ],
+    mustNotDo: [
+      'NUNCA concatenar strings em SQL (risco de SQL Injection)',
+      'NUNCA executar UPDATE ou DELETE sem cláusula WHERE',
+    ],
+    codeSample: `export class LinhaRepository {
+  async findByCodigo(cd_linha: string): Promise<Linha | null> {
     const sql = \`
-      SELECT 
-        v.id,
-        v.numero_ordem,
-        v.placa,
-        v.modelo,
-        COALESCE(t.velocidade_kmh, 0) AS velocidade_atual,
-        ST_AsText(t.posicao_gps) AS posicao_wkt
-      FROM veiculos v
-      LEFT JOIN telemetria_tempo_real t ON t.numero_ordem = v.numero_ordem
-      WHERE v.numero_ordem = $1
-      ORDER BY t.data_hora DESC
-      LIMIT 1;
+      SELECT id_linha, cd_linha, nm_linha, vl_tarifa, sentido, st_ativa
+      FROM semob.linhas
+      WHERE cd_linha = $1 AND st_ativa = true;
     \`;
-
-    const resultado = await this.dataSource.query(sql, [numeroOrdem]);
-    return resultado[0] || null;
+    // Execução parametrizada segura com WHERE
+    return db.queryOne(sql, [cd_linha]);
   }
 }`,
-    },
-    {
-      step: 4,
-      title: 'Passo 4: Criar o Service com Regras de Negócio',
-      path: 'src/service/veiculo.service.ts',
-      desc: 'Contém a lógica de negócio, validações de duplicidade e regras operacionais.',
-      code: `import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { VeiculoEntity } from '../entity/veiculo.entity';
-import { VeiculoRepository } from '../repository/veiculo.repository';
-import { CreateVeiculoDto } from '../dto/create-veiculo.dto';
+  },
+  {
+    id: 'model',
+    name: '4. Model / Types',
+    folder: 'src/models/Linha.ts',
+    role: 'Contratos TypeScript e DTOs que garantem tipagem forte em todas as camadas.',
+    mustDo: [
+      'Definir a interface Linha e os DTOs CreateLinhaDTO / UpdateLinhaDTO',
+      'Tipar os filtros permitidos na listagem',
+    ],
+    mustNotDo: ['NUNCA usar o tipo "any" para contornar erros de compilação'],
+    codeSample: `export type SentidoLinha = 'IDA' | 'VOLTA' | 'CIRCULAR';
 
-@Injectable()
-export class VeiculoService {
-  constructor(
-    @InjectRepository(VeiculoEntity)
-    private readonly entityRepo: Repository<VeiculoEntity>,
-    private readonly customRepo: VeiculoRepository,
-  ) {}
-
-  async criar(dto: CreateVeiculoDto): Promise<VeiculoEntity> {
-    const existePlaca = await this.entityRepo.findOne({ where: { placa: dto.placa } });
-    if (existePlaca) {
-      throw new ConflictException(\`Já existe um veículo com a placa \${dto.placa}\`);
-    }
-
-    const novo = this.entityRepo.create(dto);
-    return await this.entityRepo.save(novo);
-  }
-
-  async buscarPorOrdem(numeroOrdem: string) {
-    const veiculo = await this.customRepo.buscarComTelemetria(numeroOrdem);
-    if (!veiculo) {
-      throw new NotFoundException(\`Veículo \${numeroOrdem} não encontrado\`);
-    }
-    return veiculo;
-  }
+export interface Linha {
+  id_linha: number;
+  cd_linha: string;
+  nm_linha: string;
+  vl_tarifa: number;
+  sentido: SentidoLinha;
+  st_ativa: boolean;
+  horarios: string[];
 }`,
-    },
-    {
-      step: 5,
-      title: 'Passo 5: Criar o Controller Protegido com @UseGuards',
-      path: 'src/controller/veiculo.controller.ts',
-      desc: 'Mapeia rotas HTTP, documenta com Swagger e protege com JWT Bearer Token.',
-      code: `import { Controller, Post, Get, Body, Param, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { VeiculoService } from '../service/veiculo.service';
-import { CreateVeiculoDto } from '../dto/create-veiculo.dto';
+  },
+];
 
-@ApiTags('Veículos')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
-@Controller('api/veiculos')
-export class VeiculoController {
-  constructor(private readonly veiculoService: VeiculoService) {}
+const FILE_SEQUENCE_STEPS = [
+  {
+    key: 'back-step-1',
+    order: '1º Passo',
+    file: 'src/models/Linha.ts',
+    title: 'Definir Contratos e Interfaces (Model & DTOs)',
+    desc: 'Comece sempre pelos tipos: defina a entidade Linha, os filtros de busca e os DTOs de criação/atualização.',
+  },
+  {
+    key: 'back-step-2',
+    order: '2º Passo',
+    file: 'src/repositories/LinhaRepository.ts',
+    title: 'Implementar o Acesso a Dados (Repository)',
+    desc: 'Implemente findAll, findByCodigo, create, update e delete garantindo filtro WHERE explícito por código ou ID.',
+  },
+  {
+    key: 'back-step-3',
+    order: '3º Passo',
+    file: 'src/services/LinhaService.ts',
+    title: 'Codificar as Regras de Negócio (Service)',
+    desc: 'Valide se a linha já existe antes de cadastrar, verifique tarifa > 0 e implemente o cálculo da rota /linhas/resumo.',
+  },
+  {
+    key: 'back-step-4',
+    order: '4º Passo',
+    file: 'src/controllers/LinhaController.ts',
+    title: 'Expor os Handlers HTTP (Controller)',
+    desc: 'Conecte os 6 endpoints recebendo os dados da requisição, chamando o Service e retornando os status HTTP corretos.',
+  },
+  {
+    key: 'back-step-5',
+    order: '5º Passo',
+    file: 'src/routes/linha.routes.ts & src/app.ts',
+    title: 'Registar as Rotas e Middleware Global de Erros',
+    desc: 'Atenção à ordem das rotas: registe GET /linhas/resumo ANTES de GET /linhas/:cd_linha para evitar conflito de parâmetros.',
+  },
+];
 
-  @Post()
-  @ApiOperation({ summary: 'Cadastrar novo veículo de transporte' })
-  async criar(@Body() dto: CreateVeiculoDto) {
-    return await this.veiculoService.criar(dto);
-  }
+const API_ENDPOINTS = [
+  { method: 'GET', path: '/linhas', status: '200 OK', desc: 'Lista linhas com filtros opcionais (?ativa=true&sentido=IDA&busca=UnB)' },
+  { method: 'GET', path: '/linhas/resumo', status: '200 OK', desc: 'Retorna total de linhas, ativas, inativas e tarifa média' },
+  { method: 'GET', path: '/linhas/:cd_linha', status: '200 / 404', desc: 'Busca detalhes de uma linha específica pelo código (ex: 0.110)' },
+  { method: 'POST', path: '/linhas', status: '201 / 400', desc: 'Cadastra uma nova linha validando campos obrigatórios e duplicidade' },
+  { method: 'PUT', path: '/linhas/:cd_linha', status: '200 / 404', desc: 'Atualiza dados de uma linha existente filtrando pelo código no WHERE' },
+  { method: 'DELETE', path: '/linhas/:cd_linha', status: '204 / 404', desc: 'Remove ou inativa uma linha específica de forma segura' },
+];
 
-  @Get(':numeroOrdem')
-  @ApiOperation({ summary: 'Buscar veículo e telemetria por número de ordem' })
-  async buscarPorOrdem(@Param('numeroOrdem') numeroOrdem: string) {
-    return await this.veiculoService.buscarPorOrdem(numeroOrdem);
-  }
-}`,
-    },
-    {
-      step: 6,
-      title: 'Passo 6: Criar o Module',
-      path: 'src/module/veiculo.module.ts',
-      desc: 'Encapsula o recurso registrando entidades, controllers, services e repositórios.',
-      code: `import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { VeiculoEntity } from '../entity/veiculo.entity';
-import { VeiculoController } from '../controller/veiculo.controller';
-import { VeiculoService } from '../service/veiculo.service';
-import { VeiculoRepository } from '../repository/veiculo.repository';
-
-@Module({
-  imports: [TypeOrmModule.forFeature([VeiculoEntity])],
-  controllers: [VeiculoController],
-  providers: [VeiculoService, VeiculoRepository],
-  exports: [VeiculoService],
-})
-export class VeiculoModule {}`,
-    },
-    {
-      step: 7,
-      title: 'Passo 7: Registrar no AppModule',
-      path: 'src/app.module.ts',
-      desc: 'Importa o VeiculoModule no módulo raiz da aplicação.',
-      code: `import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthModule } from './auth/auth.module';
-import { LinhasModule } from './linhas/linhas.module';
-import { VeiculoModule } from './module/veiculo.module';
-
-@Module({
-  imports: [
-    TypeOrmModule.forRoot(/* Configurações de banco */),
-    AuthModule,
-    LinhasModule,
-    VeiculoModule, // <-- Registrar o novo módulo aqui!
-  ],
-})
-export class AppModule {}`,
-    },
-  ];
-
-  const currentStepData = steps[activeStep - 1];
+export const BackendChallengeScreen: React.FC<BackendChallengeScreenProps> = ({
+  completedItems,
+  onToggleItem,
+  onOpenModule,
+}) => {
+  const [activeLayerId, setActiveLayerId] = useState<string>('controller');
+  const activeLayer = ARCH_LAYERS.find((l) => l.id === activeLayerId) || ARCH_LAYERS[0];
 
   return (
-    <div className="backend-challenge-screen">
-      {/* Header */}
-      <div className="challenge-page-header">
-        <div className="header-badge bg-indigo-pill">
-          <Server size={16} />
-          <span>DESAFIO PRÁTICO BACK-END</span>
-        </div>
-        <h1 className="page-title">SISMOB Boilerplate: Criando o Recurso Veículos</h1>
-        <p className="page-subtitle">
-          Siga o padrão oficial da SUTINF em 7 etapas para adicionar uma nova funcionalidade completa ao backend em NestJS, com TypeORM, consultas nativas parametrizadas e autenticação JWT.
-        </p>
-
-        <div className="challenge-completion-box">
-          <div className="completion-info">
-            <strong>Status do Desafio Back-end:</strong>
-            <span>{isCompleted ? '✓ Concluído e Validado no Swagger' : 'Em andamento'}</span>
-          </div>
-          <button 
-            onClick={onToggleComplete}
-            className={`btn-primary ${isCompleted ? 'btn-green' : ''}`}
-          >
-            <CheckCircle2 size={18} />
-            {isCompleted ? 'Concluído com Sucesso!' : 'Marcar Desafio como Concluído'}
-          </button>
-        </div>
-      </div>
-
-      {/* Simulator Quick Test */}
-      <div className="swagger-simulator-box">
-        <div className="simulator-header">
-          <div className="sim-title">
-            <ShieldCheck size={18} className="text-emerald" />
-            <span>Simulador de Autenticação JWT (Swagger 8097)</span>
-          </div>
-          <span className="sim-badge">POST /api/auth/login</span>
-        </div>
-        <div className="simulator-body">
-          <p>Credenciais de teste do SISMOB Boilerplate: <code>admin</code> / <code>sismob@2026</code></p>
-          {!simulatedLoginDone ? (
-            <button onClick={handleSimulateLogin} className="btn-secondary btn-sm">
-              Simular Geração de Token JWT
+    <div className="screen-container">
+      {/* Hero Banner */}
+      <section className="hero-banner">
+        <div className="hero-content">
+          <span className="hero-badge">
+            <Server size={14} /> Desafio Prático • Engenharia Backend
+          </span>
+          <h1>API RESTful de Linhas de Transporte — Arquitetura em Camadas</h1>
+          <p>
+            Construa a API que alimentará o sistema <strong>InfoÔnibus</strong> aplicando separação
+            estrita de responsabilidades entre <code>Controller</code>, <code>Service</code>,{' '}
+            <code>Repository</code> e <code>Model</code>.
+          </p>
+          <div className="hero-actions">
+            <button className="btn-secondary" onClick={() => onOpenModule('mod-4-backend')}>
+              <BookOpen size={16} /> Revisar Módulo de Arquitetura Backend na Plataforma
             </button>
-          ) : (
-            <div className="token-display">
-              <span className="token-label">Bearer Token JWT Gerado:</span>
-              <code className="token-code">{simulatedToken}</code>
-              <span className="token-success text-emerald">✓ Pronto para testar rotas protegidas com @UseGuards</span>
-            </div>
-          )}
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* 7-Step Navigation Tabs */}
-      <div className="step-tabs-container">
-        {steps.map((s) => (
-          <button
-            key={s.step}
-            onClick={() => setActiveStep(s.step)}
-            className={`step-tab-item ${activeStep === s.step ? 'active' : ''}`}
-          >
-            <span className="tab-circle">{s.step}</span>
-            <span className="tab-name">{s.title.replace('Passo ' + s.step + ': ', '')}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Active Step Content */}
-      <div className="step-content-card">
-        <div className="step-header">
+      {/* Fluxo Interativo da Arquitetura em Camadas */}
+      <section className="section-card">
+        <div className="section-header-row">
           <div>
-            <div className="step-badge">ETAPA 0{currentStepData.step} DE 07</div>
-            <h2>{currentStepData.title}</h2>
-            <div className="file-path-tag">
-              <Code size={14} />
-              <span>{currentStepData.path}</span>
+            <h2>
+              <Layers size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
+              Fluxo Interativo das Camadas (Clique para inspecionar)
+            </h2>
+            <p className="text-muted">
+              Entenda exatamente o que entra e o que é proibido em cada camada antes de criar os ficheiros.
+            </p>
+          </div>
+        </div>
+
+        <div className="arch-flow" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', margin: '1.25rem 0' }}>
+          {ARCH_LAYERS.map((layer, index) => (
+            <React.Fragment key={layer.id}>
+              <button
+                type="button"
+                onClick={() => setActiveLayerId(layer.id)}
+                className={`sql-filter-btn ${activeLayerId === layer.id ? 'active' : ''}`}
+                style={{ padding: '0.75rem 1.1rem', fontWeight: 700 }}
+              >
+                {layer.name}
+              </button>
+              {index < ARCH_LAYERS.length - 1 && (
+                <span style={{ display: 'flex', alignItems: 'center', opacity: 0.5 }}>
+                  <ArrowRight size={18} />
+                </span>
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+
+        <div className="glass-card" style={{ padding: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+            <div>
+              <h3 style={{ fontSize: '1.15rem' }}>{activeLayer.name}</h3>
+              <p className="text-muted">{activeLayer.role}</p>
+            </div>
+            <span className="status-pill passed" style={{ fontFamily: 'monospace' }}>
+              {activeLayer.folder}
+            </span>
+          </div>
+
+          <div className="cards-grid two-cols" style={{ marginBottom: '1rem' }}>
+            <div className="glass-card" style={{ borderLeft: '4px solid #10b981' }}>
+              <strong style={{ color: '#10b981', display: 'block', marginBottom: '0.5rem' }}>
+                ✅ O que DEVE fazer:
+              </strong>
+              <ul style={{ paddingLeft: '1.2rem', fontSize: '0.88rem', lineHeight: 1.6 }}>
+                {activeLayer.mustDo.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="glass-card" style={{ borderLeft: '4px solid #ef4444' }}>
+              <strong style={{ color: '#ef4444', display: 'block', marginBottom: '0.5rem' }}>
+                🚫 O que NÃO DEVE fazer:
+              </strong>
+              <ul style={{ paddingLeft: '1.2rem', fontSize: '0.88rem', lineHeight: 1.6 }}>
+                {activeLayer.mustNotDo.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
             </div>
           </div>
-          <button
-            onClick={() => copyToClipboard(currentStepData.code, `step-${currentStepData.step}`)}
-            className="btn-secondary btn-sm"
-          >
-            {copiedCode === `step-${currentStepData.step}` ? (
-              <>
-                <Check size={14} className="text-emerald" />
-                Copiado!
-              </>
-            ) : (
-              <>
-                <Copy size={14} />
-                Copiar Código
-              </>
-            )}
-          </button>
-        </div>
 
-        <p className="step-desc">{currentStepData.desc}</p>
-
-        {/* Code Snippet */}
-        <div className="code-viewer-box">
-          <pre>
-            <code>{currentStepData.code}</code>
+          <pre className="code-block">
+            <code>{activeLayer.codeSample}</code>
           </pre>
         </div>
+      </section>
 
-        {/* Step Navigation Controls */}
-        <div className="step-controls">
-          <button
-            onClick={() => setActiveStep((prev) => Math.max(prev - 1, 1))}
-            disabled={activeStep === 1}
-            className="btn-secondary"
-          >
-            Etapa Anterior
-          </button>
-
-          <span className="step-counter">Etapa {activeStep} de 7</span>
-
-          <button
-            onClick={() => setActiveStep((prev) => Math.min(prev + 1, 7))}
-            disabled={activeStep === 7}
-            className="btn-primary"
-          >
-            Próxima Etapa
-          </button>
+      {/* Sequência Guiada de Ficheiros a serem criados */}
+      <section className="section-card">
+        <div className="section-header-row">
+          <div>
+            <h2>
+              <Code2 size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
+              Sequência Recomendada de Criação dos Ficheiros
+            </h2>
+            <p className="text-muted">
+              Siga esta ordem de baixo para cima (Model → Repository → Service → Controller → Routes)
+              e marque cada etapa concluída.
+            </p>
+          </div>
         </div>
-      </div>
 
-      {/* Reference Footer */}
-      <div className="backend-footer-cta">
-        <p>Precisa de mais detalhes sobre filtros globais de exceção, seeds ou migrations?</p>
-        <button onClick={() => onNavigate('modulo-backend')} className="btn-secondary">
-          <BookOpen size={16} />
-          Consultar Manual Completo de Back-end NestJS
-        </button>
-      </div>
+        <div className="checklist-box" style={{ marginTop: '1rem' }}>
+          {FILE_SEQUENCE_STEPS.map((step) => {
+            const done = completedItems.includes(step.key);
+            return (
+              <div
+                key={step.key}
+                onClick={() => onToggleItem(step.key)}
+                className={`checklist-item ${done ? 'completed' : ''}`}
+                style={{ cursor: 'pointer', alignItems: 'flex-start' }}
+              >
+                <div style={{ marginTop: '0.15rem' }}>
+                  {done ? <CheckCircle2 size={20} color="#10b981" /> : <Circle size={20} />}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <span className="status-pill passed" style={{ fontSize: '0.72rem' }}>
+                      {step.order}
+                    </span>
+                    <strong>{step.title}</strong>
+                    <code style={{ fontSize: '0.78rem', opacity: 0.8 }}>{step.file}</code>
+                  </div>
+                  <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.3rem' }}>
+                    {step.desc}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Contrato das 6 Rotas da API */}
+      <section className="section-card">
+        <h2>
+          <Terminal size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
+          Contrato dos 6 Endpoints Obrigatórios
+        </h2>
+        <div className="cards-grid two-cols" style={{ marginTop: '1rem' }}>
+          {API_ENDPOINTS.map((ep, idx) => (
+            <div key={idx} className="glass-card" style={{ padding: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                <span className="status-pill passed" style={{ fontFamily: 'monospace', fontWeight: 700 }}>
+                  {ep.method} {ep.path}
+                </span>
+                <span className="text-muted" style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>
+                  {ep.status}
+                </span>
+              </div>
+              <p className="text-muted" style={{ fontSize: '0.85rem' }}>
+                {ep.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Submissão Padronizada e Checklist de Pull Request */}
+      <ChallengeSubmissionPanel
+        challengeId="challenge-backend-api"
+        title="Entrega do Repositório & Checklist de Arquitetura Backend"
+        subtitle="Valide a qualidade do seu código e cole o link do seu repositório Git com a API implementada."
+        requireRepoUrl={true}
+        prChecklist={[
+          'Criei os ficheiros seguindo a separação estrita: Model, Repository, Service, Controller e Routes?',
+          'A rota estática GET /linhas/resumo foi declarada antes da rota dinâmica GET /linhas/:cd_linha?',
+          'O Controller não possui nenhuma lógica de banco de dados nem regras de cálculo direto?',
+          'Todas as buscas, atualizações e remoções no Repository utilizam cláusula WHERE segura?',
+          'Adicionei validação de entrada (tarifa positiva, campos obrigatórios) retornando HTTP 400 quando inválido?',
+        ]}
+      />
     </div>
   );
 };
+export default BackendChallengeScreen;

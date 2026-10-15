@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ScreenType } from '../types';
+import { brandConfig } from '../config/brand';
 import confetti from 'canvas-confetti';
 import { 
   Award, 
@@ -228,7 +229,7 @@ export const CertificateScreen: React.FC<CertificateScreenProps> = ({
   const hexHash = Math.abs(rawHash).toString(16).toUpperCase().padStart(8, '0');
   const verificationCRC = `${hexHash.substring(0, 4)}-${hexHash.substring(4, 8)}`;
   const certSequential = (Math.abs(rawHash) % 9000 + 1000).toString();
-  const certificateCode = `GDF-SEMOB-SUTINF-${cleanId}-${new Date().getFullYear()}-${certSequential}`;
+  const certificateCode = `${brandConfig.certificatePrefix}-${cleanId}-${new Date().getFullYear()}-${certSequential}`;
   const validationUrl = `https://portaldodesenvolvedor.semob.df.gov.br/validar?cert=${certificateCode}&crc=${verificationCRC}`;
   
   const emissionDate = new Date().toLocaleDateString('pt-BR', {
@@ -245,9 +246,9 @@ export const CertificateScreen: React.FC<CertificateScreenProps> = ({
           <Award size={16} />
           <span>CERTIFICAÇÃO OFICIAL DE CAPACITAÇÃO TÉCNICA</span>
         </div>
-        <h1 className="page-title">Certificado de Capacitação Técnica — SUTINF</h1>
+        <h1 className="page-title">Certificado de Capacitação Técnica — {brandConfig.shortName}</h1>
         <p className="page-subtitle">
-          Documento oficial comprobatório de integração institucional, fluxo colaborativo e conformidade com as diretrizes arquiteturais da Secretaria de Estado de Transporte e Mobilidade do Distrito Federal.
+          {brandConfig.footerDisclaimer}
         </p>
       </div>
 
@@ -350,25 +351,37 @@ export const CertificateScreen: React.FC<CertificateScreenProps> = ({
         <div className="certificate-sheet">
           {/* Moldura Clássica de Certidão Oficial */}
           <div className="cert-border-inner">
-            {/* Cabeçalho Governamental com Brasão */}
-            <div className="cert-header">
-              <div className="cert-gdf-emblem">
-                <BrasaoDistritoFederal size={74} />
+            {/* Cabeçalho do Documento de Certificado */}
+            {brandConfig.id === 'azimute' ? (
+              <div className="certificate-header text-center mb-6">
+                <span className="text-xs font-mono uppercase tracking-widest text-slate-400">
+                  {brandConfig.organizationName}
+                </span>
+                <h2 className="text-3xl font-extrabold mt-1 text-slate-900 dark:text-white">
+                  Certificado de Capacitação Técnica
+                </h2>
+                <p className="text-sm text-slate-500 mt-1">{brandConfig.productName}</p>
               </div>
-              <div className="cert-gov-badge">
-                <div className="gov-titles">
-                  <h2>GOVERNO DO DISTRITO FEDERAL</h2>
-                  <h3>SECRETARIA DE ESTADO DE TRANSPORTE E MOBILIDADE</h3>
-                  <h4>Subsecretaria de Tecnologia da Informação — SUTINF</h4>
-                  <h5>Coordenação de Desenvolvimento de Sistemas e Inovação</h5>
+            ) : (
+              <div className="cert-header">
+                <div className="cert-gdf-emblem">
+                  <BrasaoDistritoFederal size={74} />
+                </div>
+                <div className="cert-gov-badge">
+                  <div className="gov-titles">
+                    <h2>GOVERNO DO DISTRITO FEDERAL</h2>
+                    <h3>SECRETARIA DE ESTADO DE TRANSPORTE E MOBILIDADE</h3>
+                    <h4>Subsecretaria de Tecnologia da Informação — SUTINF</h4>
+                    <h5>Coordenação de Desenvolvimento de Sistemas e Inovação</h5>
+                  </div>
+                </div>
+                <div className="cert-seal">
+                  <ShieldCheck size={38} className="text-sky" />
+                  <span className="seal-text">DOCUMENTO OFICIAL</span>
+                  <span className="seal-sub">PADRÃO SEI-GDF</span>
                 </div>
               </div>
-              <div className="cert-seal">
-                <ShieldCheck size={38} className="text-sky" />
-                <span className="seal-text">DOCUMENTO OFICIAL</span>
-                <span className="seal-sub">PADRÃO SEI-GDF</span>
-              </div>
-            </div>
+            )}
 
             {/* Título Oficial */}
             <div className="cert-title-section">
@@ -474,6 +487,16 @@ export const CertificateScreen: React.FC<CertificateScreenProps> = ({
               <span>
                 Documento emitido eletronicamente conforme diretrizes do Decreto Distrital nº 36.756/2015 e Lei Federal nº 11.788/2008 (Lei do Estágio). A conferência de veracidade e comprovação de horas acadêmicas pode ser instruída mediante apresentação deste atestado de formação ao setor de Recursos Humanos e Coordenação Curricular.
               </span>
+            </div>
+
+            {/* Rodapé do Certificado */}
+            <div className="certificate-footer mt-8 pt-4 border-t border-slate-200 dark:border-slate-700 text-center text-xs text-slate-400">
+              <p>
+                Código de Autenticação Local: <strong className="font-mono text-slate-700 dark:text-slate-200">{certificateCode}</strong>
+              </p>
+              <p className="mt-0.5">
+                Trilha de capacitação emitida através do motor educacional {brandConfig.productName}.
+              </p>
             </div>
           </div>
         </div>

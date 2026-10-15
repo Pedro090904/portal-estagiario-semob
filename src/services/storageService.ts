@@ -1,4 +1,5 @@
-import { QuizAttempt, StudentProgress } from '../types';
+import { QuizAttempt, StudentProgress, ChallengeSubmission } from '../types';
+import { brandConfig } from '../config/brand';
 import {
   CURRENT_SCHEMA_VERSION,
   recordQuizAttemptInProgress,
@@ -196,6 +197,46 @@ export const storageService = {
     return updated;
   },
 
+  saveChallengeSubmission(
+    challengeId: string,
+    data: Partial<ChallengeSubmission>
+  ): StudentProgress {
+    const current = this.getProgress();
+    const existing = current.challengeSubmissions?.[challengeId] || {
+      challengeId,
+      checkedPrItems: [],
+      checklistCompleted: false,
+      sqlQueries: {},
+    };
+
+    const updatedSubmission: ChallengeSubmission = {
+      ...existing,
+      ...data,
+      sqlQueries: {
+        ...(existing.sqlQueries || {}),
+        ...(data.sqlQueries || {}),
+      },
+      completedAt: new Date().toISOString(),
+    };
+
+    const isDone = Boolean(updatedSubmission.checklistCompleted);
+    const existingChallenges = current.completedChallenges || [];
+    const completedChallenges = isDone
+      ? Array.from(new Set([...existingChallenges, challengeId]))
+      : existingChallenges.filter((id) => id !== challengeId);
+
+    const updated: StudentProgress = {
+      ...current,
+      completedChallenges,
+      challengeSubmissions: {
+        ...(current.challengeSubmissions || {}),
+        [challengeId]: updatedSubmission,
+      },
+    };
+    this.saveProgress(updated);
+    return updated;
+  },
+
   issueCertificate(): StudentProgress {
     const current = this.getProgress();
     if (current.certificateCode) return current;
@@ -205,7 +246,7 @@ export const storageService = {
     const updated: StudentProgress = {
       ...current,
       completedAt: new Date().toISOString(),
-      certificateCode: `DEV-${year}-${randomHash}`,
+      certificateCode: `${brandConfig.certificatePrefix}-${year}-${randomHash}`,
     };
     this.saveProgress(updated);
     return updated;
@@ -253,13 +294,17 @@ export const storageService = {
       ? currentChallenges.filter((id) => id !== challengeId)
       : [...currentChallenges, challengeId];
 
+    const existing = current.challengeSubmissions?.[challengeId];
+
     const updated: StudentProgress = {
       ...current,
       completedChallenges: updatedChallenges,
       challengeSubmissions: {
         ...(current.challengeSubmissions || {}),
         [challengeId]: {
+          ...existing,
           challengeId,
+          checkedPrItems: existing?.checkedPrItems || [],
           checklistCompleted: !exists,
           completedAt: new Date().toISOString(),
         },

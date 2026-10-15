@@ -1,797 +1,422 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ModuleMetadata, QuizAttempt, ScreenType } from '../types';
-import { QUIZZES } from '../services/dataService';
+import React, { useState, useEffect } from 'react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  BookOpen,
+  Lightbulb,
+  Copy,
+  Check,
+  Award,
+  History,
+  Layers,
+  ListChecks,
+} from 'lucide-react';
+import { LearningModule, QuizAttempt, QuizBlockData } from '../types';
+import { getQuizByModuleId, QUIZZES } from '../services/dataService';
 import { QuizBlock } from '../components/QuizBlock';
 import { ModuleNotesPanel } from '../components/ModuleNotesPanel';
-import { 
-  CheckCircle2, 
-  ArrowLeft, 
-  ArrowRight, 
-  ArrowUp,
-  Sparkles, 
-  BookOpen, 
-  List, 
-  X, 
-  ChevronRight, 
-  ExternalLink,
-  FileText,
-  Columns,
-  Clock,
-  Edit3,
-  Compass
-} from 'lucide-react';
-
-interface TocItem {
-  id: string;
-  title: string;
-  level: number;
-}
 
 interface ModuleViewerScreenProps {
-  module: ModuleMetadata;
-  onNavigate: (screen: ScreenType) => void;
+  module: LearningModule;
   isCompleted: boolean;
-  onToggleComplete: (moduleId: string) => void;
+  completedChecklist: string[];
   quizAttempt?: QuizAttempt;
-  onSaveQuizAttempt: (attempt: QuizAttempt) => void;
-  nextModule?: ModuleMetadata;
-  prevModule?: ModuleMetadata;
-  userNotes?: string;
-  onSaveNotes?: (notes: string) => void;
-}
-
-declare global {
-  interface Window {
-    hljs?: {
-      highlightElement: (element: HTMLElement) => void;
-    };
-    mermaid?: {
-      run: (options?: { querySelector?: string }) => Promise<void>;
-    };
-  }
+  quizHistory?: QuizAttempt[];
+  moduleNote: string;
+  onBack: () => void;
+  onToggleComplete: (moduleId: string) => void;
+  onToggleChecklist: (moduleId: string, itemKey: string) => void;
+  onSaveQuiz: (attempt: QuizAttempt) => void;
+  onSaveNote: (moduleId: string, note: string) => void;
+  onSelectModule: (moduleId: string) => void;
+  allModules: LearningModule[];
 }
 
 export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
   module,
-  onNavigate,
   isCompleted,
-  onToggleComplete,
+  completedChecklist,
   quizAttempt,
-  onSaveQuizAttempt,
-  nextModule,
-  prevModule,
-  userNotes = '',
-  onSaveNotes,
+  quizHistory = [],
+  moduleNote,
+  onBack,
+  onToggleComplete,
+  onToggleChecklist,
+  onSaveQuiz,
+  onSaveNote,
+  onSelectModule,
+  allModules,
 }) => {
-  const [contentHtml, setContentHtml] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [tocItems, setTocItems] = useState<TocItem[]>([]);
-  const [activeTocId, setActiveTocId] = useState<string>('');
-  const [mobileTocOpen, setMobileTocOpen] = useState<boolean>(false);
-  const [readingProgress, setReadingProgress] = useState<number>(0);
-  const [fontSize, setFontSize] = useState<'normal' | 'large' | 'xlarge'>('normal');
-  const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
+  const [activeSectionIndex, setActiveSectionIndex] = useState(0);
+  const [viewMode, setViewMode] = useState<'step' | 'full'>('step');
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // Modos de leitura: 'read' (tela cheia), 'notes' (caderno) ou 'split' (lado a lado)
-  const [viewerMode, setViewerMode] = useState<'read' | 'notes' | 'split'>('read');
-
-  const contentRef = useRef<HTMLDivElement>(null);
-  const quizSectionRef = useRef<HTMLDivElement>(null);
-  const quizData = QUIZZES.find((q) => q.id === module.quizId);
-
-  // Estimativa de tempo de leitura restante
-  const durationNumber = parseInt(module.duration.replace(/\D/g, ''), 10) || 30;
-  const estimatedRemainingMinutes = Math.max(1, Math.round(durationNumber * (1 - readingProgress / 100)));
-  const hasUserNotes = Boolean(userNotes && userNotes.trim().length > 0);
-
-  // Carregamento e sanitização do manual HTML
-  useEffect(() => {
-    let isMounted = true;
-    setIsLoading(true);
-    setLoadError(null);
-    setContentHtml('');
-    setTocItems([]);
-    setActiveTocId('');
-
-    // Garante que a tela sempre inicie no topo ao trocar de manual
-    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
-
-    fetch(`/${module.htmlFile}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`Falha ao carregar ${module.htmlFile} (HTTP ${res.status})`);
-        return res.text();
-      })
-      .then((htmlText) => {
-        if (!isMounted) return;
-
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlText, 'text/html');
-
-        const mainEl = doc.querySelector('main.container') || doc.body;
-
-        // 1. Remover elementos redundantes e botões legados
-        mainEl.querySelectorAll('.top-toolbar, .print-btn, header, .copy-btn, .code-header button').forEach((el) => el.remove());
-
-        // 2. Extrair headings para o Sumário com IDs seguros
-        const headings = mainEl.querySelectorAll('h2, h3');
-        const items: TocItem[] = [];
-
-        headings.forEach((heading, idx) => {
-          let id = heading.getAttribute('id');
-          if (!id) {
-            const textSlug = heading.textContent
-              ?.toLowerCase()
-              .replace(/[^a-z0-9]+/g, '-')
-              .replace(/^-|-$/g, '') || `secao-${idx + 1}`;
-            id = textSlug;
-            heading.setAttribute('id', id);
-          }
-
-          items.push({
-            id,
-            title: heading.textContent?.trim() || `Seção ${idx + 1}`,
-            level: heading.tagName.toLowerCase() === 'h2' ? 2 : 3,
-          });
-        });
-
-        // 3. Blindagem Mobile para Tabelas
-        mainEl.querySelectorAll('table').forEach((table) => {
-          if (!table.parentElement?.classList.contains('table-wrapper')) {
-            const wrapper = doc.createElement('div');
-            wrapper.className = 'table-wrapper';
-            
-            const hint = doc.createElement('div');
-            hint.className = 'table-scroll-hint';
-            hint.innerHTML = '<span>↔ Arraste horizontalmente para ver todas as colunas</span>';
-            
-            table.parentNode?.insertBefore(wrapper, table);
-            wrapper.appendChild(hint);
-            wrapper.appendChild(table);
-          }
-        });
-
-        // 4. Blindagem contra estouro de imagens e SVGs
-        mainEl.querySelectorAll('img, svg').forEach((media) => {
-          media.setAttribute('style', 'max-width: 100%; height: auto;');
-        });
-
-        setContentHtml(mainEl.innerHTML);
-        setTocItems(items);
-        setIsLoading(false);
-      })
-      .catch((err) => {
-        if (!isMounted) return;
-        console.error('Erro ao carregar manual:', err);
-        setLoadError(err.message || 'Erro ao carregar o conteúdo do manual.');
-        setIsLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [module.htmlFile]);
-
-  // Code Highlighting, Mermaid, Cópia de Código e Interceptação de Links Internos
-  useEffect(() => {
-    if (!contentRef.current || isLoading) return;
-
-    if (window.hljs) {
-      contentRef.current.querySelectorAll('pre code').forEach((block) => {
-        window.hljs?.highlightElement(block as HTMLElement);
-      });
-    }
-
-    contentRef.current.querySelectorAll('pre').forEach((pre) => {
-      if (pre.querySelector('.btn-copy-code')) return;
-
-      const copyBtn = document.createElement('button');
-      copyBtn.className = 'btn-copy-code';
-      copyBtn.innerHTML = '<span>Copiar</span>';
-      copyBtn.title = 'Copiar código';
-      copyBtn.onclick = () => {
-        const codeText = pre.querySelector('code')?.innerText || pre.innerText;
-        navigator.clipboard.writeText(codeText);
-        copyBtn.innerHTML = '<span>✓ Copiado!</span>';
-        copyBtn.classList.add('copied');
-        setTimeout(() => {
-          copyBtn.innerHTML = '<span>Copiar</span>';
-          copyBtn.classList.remove('copied');
-        }, 2000);
-      };
-
-      pre.style.position = 'relative';
-      pre.appendChild(copyBtn);
-    });
-
-    if (window.mermaid) {
-      try {
-        window.mermaid.run({ querySelector: '.native-manual-content .mermaid' });
-      } catch (e) {
-        console.warn('Falha na renderização de diagramas mermaid:', e);
-      }
-    }
-
-    // Interceptar cliques em links internos # para rolagem suave
-    const anchorLinks = contentRef.current.querySelectorAll('a[href^="#"]');
-    anchorLinks.forEach((anchor) => {
-      anchor.addEventListener('click', (e) => {
-        e.preventDefault();
-        const href = anchor.getAttribute('href');
-        if (!href) return;
-        const targetId = href.substring(1);
-        scrollToSection(targetId);
-      });
-    });
-
-    // Interceptar botões de navegação customizados inseridos nos manuais
-    const navButtons = contentRef.current.querySelectorAll('[data-app-navigate]');
-    navButtons.forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const targetScreen = btn.getAttribute('data-app-navigate') as ScreenType;
-        if (targetScreen) {
-          onNavigate(targetScreen);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-      });
-    });
-  }, [contentHtml, isLoading, viewerMode]);
-
-  // ScrollSpy, Progresso e Botão de Voltar ao Topo
-  const handleScroll = useCallback(() => {
-    const scrollY = window.scrollY;
-    setShowScrollTop(scrollY > 350);
-
-    const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
-    if (totalHeight > 0) {
-      const current = Math.min(Math.max((scrollY / totalHeight) * 100, 0), 100);
-      setReadingProgress(Math.round(current));
-    }
-
-    if (tocItems.length === 0) return;
-    const scrollPos = scrollY + 100;
-
-    for (let i = tocItems.length - 1; i >= 0; i--) {
-      const el = document.getElementById(tocItems[i].id);
-      if (el && el.offsetTop <= scrollPos) {
-        setActiveTocId(tocItems[i].id);
-        break;
-      }
-    }
-  }, [tocItems]);
-
-  useEffect(() => {
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
-
-  const scrollToSection = (id: string) => {
-    setMobileTocOpen(false);
-    const element = document.getElementById(id);
-    if (element) {
-      const offset = 65;
-      const bodyRect = document.body.getBoundingClientRect().top;
-      const elementRect = element.getBoundingClientRect().top;
-      const elementPosition = elementRect - bodyRect;
-      const offsetPosition = elementPosition - offset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth',
-      });
-      setActiveTocId(id);
-    }
+  const questions = getQuizByModuleId(module.id);
+  const quizData: QuizBlockData = QUIZZES.find(
+    (q) => q.moduleId === module.id || q.id === module.quizId
+  ) || {
+    id: module.quizId || `quiz-${module.id}`,
+    moduleId: module.id,
+    title: `Quiz: ${module.title}`,
+    subtitle: 'Validação de Conhecimentos',
+    badge: module.category,
+    description: module.description,
+    passingScore: 75,
+    questions,
   };
 
-  const scrollToQuiz = () => {
-    if (viewerMode === 'notes') {
-      setViewerMode('read');
-      setTimeout(() => {
-        quizSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    } else {
-      quizSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
+  // Sempre que mudar de módulo, volta para a primeira lição e para o topo
+  useEffect(() => {
+    setActiveSectionIndex(0);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [module.id]);
+
+  const currentIdxInAll = allModules.findIndex((m) => m.id === module.id);
+  const prevModule = currentIdxInAll > 0 ? allModules[currentIdxInAll - 1] : null;
+  const nextModule =
+    currentIdxInAll < allModules.length - 1 ? allModules[currentIdxInAll + 1] : null;
+
+  const handleCopyCode = (key: string, code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  const cycleFontSize = () => {
-    if (fontSize === 'normal') setFontSize('large');
-    else if (fontSize === 'large') setFontSize('xlarge');
-    else setFontSize('normal');
-  };
+  const sectionsToRender =
+    viewMode === 'step'
+      ? [module.sections[activeSectionIndex]].filter(Boolean)
+      : module.sections;
 
   return (
-    <div className={`native-manual-page font-size-${fontSize} is-zen-mode`}>
-      {/* Barra de Progresso de Leitura Fixa no Topo */}
-      <div className="reading-progress-track">
-        <div className="reading-progress-bar" style={{ width: `${readingProgress}%` }}></div>
-      </div>
+    <div className="screen-container">
+      {/* Barra de Topo e Navegação entre Módulos */}
+      <div
+        className="module-viewer-topbar"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '0.75rem',
+          marginBottom: '1.25rem',
+        }}
+      >
+        <button className="btn-secondary" onClick={onBack}>
+          <ArrowLeft size={16} /> Voltar para a Trilha
+        </button>
 
-      {/* Toolbar Superior do Manual (Colada em top: 0, modo foco nativo) */}
-      <header className="manual-top-toolbar">
-        <div className="toolbar-left">
-          {/* Botão de Retorno Direto ao Roteiro de Integração */}
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <button
             type="button"
-            onClick={() => {
-              onNavigate('roteiro');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className="btn-back-track"
-            title="Voltar ao Roteiro Oficial de Integração"
+            onClick={() => setViewMode(viewMode === 'step' ? 'full' : 'step')}
+            className="btn-secondary"
+            title="Alternar modo de visualização"
           >
-            <ArrowLeft size={16} />
-            <span>Voltar ao Roteiro</span>
+            <Layers size={15} />
+            {viewMode === 'step' ? 'Ver Todas as Lições Juntas' : 'Modo Passo a Passo (Microlearning)'}
           </button>
 
-          <div className="toolbar-title-row">
-            <h1 className="manual-toolbar-title">{module.shortTitle}</h1>
-            {viewerMode === 'read' && (
-              <span className="reading-time-badge" title="Tempo restante estimado com base na rolagem">
-                <Clock size={12} className="text-primary" />
-                <span>~{estimatedRemainingMinutes} min restantes</span>
+          <button
+            className={isCompleted ? 'btn-secondary' : 'btn-primary'}
+            onClick={() => onToggleComplete(module.id)}
+          >
+            <CheckCircle2 size={16} />
+            {isCompleted ? 'Módulo Concluído ✓' : 'Marcar Módulo como Lido'}
+          </button>
+        </div>
+      </div>
+
+      {/* Hero do Módulo */}
+      <section className="hero-banner">
+        <div className="hero-content">
+          <span className="hero-badge">
+            Módulo 0{module.order} • {module.category.toUpperCase()} • <Clock size={13} />{' '}
+            {module.estimatedTime}
+          </span>
+          <h1>{module.title}</h1>
+          <p>{module.description}</p>
+
+          {/* Objetivos de Aprendizagem */}
+          {module.objectives && module.objectives.length > 0 && (
+            <div style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+              {module.objectives.map((obj, idx) => (
+                <span key={idx} className="status-pill passed" style={{ fontSize: '0.75rem' }}>
+                  🎯 {obj}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Navegador de Micro-Lições (Etapas Internas do Módulo) */}
+      {viewMode === 'step' && module.sections.length > 1 && (
+        <section className="section-card" style={{ padding: '1rem 1.25rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '0.75rem',
+            }}
+          >
+            <strong style={{ fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <BookOpen size={16} /> Progresso da Leitura neste Módulo: Lição {activeSectionIndex + 1} de{' '}
+              {module.sections.length}
+            </strong>
+            <span className="text-muted" style={{ fontSize: '0.8rem' }}>
+              {Math.round(((activeSectionIndex + 1) / module.sections.length) * 100)}% do conteúdo teórico
+            </span>
+          </div>
+
+          <div className="sql-filter-buttons" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            {module.sections.map((sec, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setActiveSectionIndex(idx)}
+                className={`sql-filter-btn ${activeSectionIndex === idx ? 'active' : ''}`}
+              >
+                {idx + 1}. {sec.heading}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Renderização das Secções de Conteúdo */}
+      <div className="module-sections-list">
+        {sectionsToRender.map((section, idx) => {
+          const realIndex = viewMode === 'step' ? activeSectionIndex : idx;
+          const codeKey = `${module.id}-sec-${realIndex}`;
+
+          return (
+            <section key={codeKey} className="section-card">
+              <div className="section-header-row">
+                <h2>
+                  <span className="status-pill passed" style={{ marginRight: '0.6rem', fontSize: '0.8rem' }}>
+                    Lição {realIndex + 1}/{module.sections.length}
+                  </span>
+                  {section.heading}
+                </h2>
+              </div>
+
+              <p style={{ lineHeight: 1.75, marginTop: '0.75rem', fontSize: '0.96rem' }}>
+                {section.body}
+              </p>
+
+              {section.bullets && section.bullets.length > 0 && (
+                <ul
+                  className="module-bullet-list"
+                  style={{ marginTop: '1rem', paddingLeft: '1.25rem', lineHeight: 1.7 }}
+                >
+                  {section.bullets.map((item, bIdx) => (
+                    <li key={bIdx} style={{ marginBottom: '0.4rem' }}>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {section.codeExample && (
+                <div style={{ marginTop: '1.25rem' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '0.4rem',
+                    }}
+                  >
+                    <span className="text-muted" style={{ fontSize: '0.78rem', fontFamily: 'monospace' }}>
+                      Exemplo Prático ({section.codeLanguage || 'code'})
+                    </span>
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      style={{ padding: '0.25rem 0.65rem', fontSize: '0.75rem' }}
+                      onClick={() => handleCopyCode(codeKey, section.codeExample!)}
+                    >
+                      {copiedKey === codeKey ? <Check size={13} /> : <Copy size={13} />}
+                      {copiedKey === codeKey ? 'Copiado!' : 'Copiar Código'}
+                    </button>
+                  </div>
+                  <pre className="code-block">
+                    <code>{section.codeExample}</code>
+                  </pre>
+                </div>
+              )}
+
+              {section.tip && (
+                <div className="sql-hint-box" style={{ marginTop: '1.25rem' }}>
+                  <Lightbulb size={18} />
+                  <span>
+                    <strong>Boas Práticas:</strong> {section.tip}
+                  </span>
+                </div>
+              )}
+
+              {/* Botões de Avanço Rápido entre Micro-Lições */}
+              {viewMode === 'step' && (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    marginTop: '1.5rem',
+                    paddingTop: '1rem',
+                    borderTop: '1px solid rgba(148,163,184,0.15)',
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    disabled={activeSectionIndex === 0}
+                    onClick={() => setActiveSectionIndex((prev) => Math.max(0, prev - 1))}
+                    style={{ opacity: activeSectionIndex === 0 ? 0.4 : 1 }}
+                  >
+                    <ArrowLeft size={15} /> Lição Anterior
+                  </button>
+
+                  {activeSectionIndex < module.sections.length - 1 ? (
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={() => setActiveSectionIndex((prev) => prev + 1)}
+                    >
+                      Próxima Lição ({activeSectionIndex + 2}/{module.sections.length}) <ArrowRight size={15} />
+                    </button>
+                  ) : (
+                    <span className="status-pill passed">
+                      🎉 Última lição deste módulo! Realize o checklist e o Quiz abaixo.
+                    </span>
+                  )}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </div>
+
+      {/* Checklist Prático do Módulo */}
+      {module.checklist && module.checklist.length > 0 && (
+        <section className="section-card">
+          <h2>
+            <ListChecks size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
+            Checklist de Verificação Prática
+          </h2>
+          <p className="text-muted" style={{ marginBottom: '1rem' }}>
+            Marque cada atividade à medida que a testar na sua máquina de desenvolvimento:
+          </p>
+          <div className="checklist-box">
+            {module.checklist.map((item, idx) => {
+              const itemKey = `check-${idx}`;
+              const checked = completedChecklist.includes(itemKey);
+              return (
+                <label
+                  key={itemKey}
+                  className={`checklist-item ${checked ? 'completed' : ''}`}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => onToggleChecklist(module.id, itemKey)}
+                  />
+                  <span className="checklist-text">{item}</span>
+                </label>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Bloco de Anotações Pessoais do Estudante */}
+      <ModuleNotesPanel
+        module={module}
+        initialNotes={moduleNote}
+        onSaveNotes={(noteText) => onSaveNote(module.id, noteText)}
+      />
+
+      {/* Histórico de Tentativas do Estudante neste Módulo (Fase 4 da Auditoria) */}
+      {quizHistory.length > 0 && (
+        <section className="section-card">
+          <div className="section-header-row">
+            <div>
+              <h2>
+                <History size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                Histórico de Tentativas neste Módulo
+              </h2>
+              <p className="text-muted">
+                Todas as suas avaliações anteriores ficam preservadas para acompanhamento de evolução.
+              </p>
+            </div>
+            {quizAttempt && (
+              <span className={`status-pill ${quizAttempt.passed ? 'passed' : 'pending'}`}>
+                <Award size={14} style={{ display: 'inline', marginRight: 4 }} />
+                Melhor Nota: {quizAttempt.percentage}%
               </span>
             )}
           </div>
-        </div>
 
-        {/* Seletor de Modos do Player (Leitura / Anotações / Lado a Lado) */}
-        <div className="viewer-mode-selector">
-          <button
-            type="button"
-            onClick={() => setViewerMode('read')}
-            className={`mode-btn ${viewerMode === 'read' ? 'active' : ''}`}
-            title="Exibir conteúdo oficial do manual em tela cheia"
-          >
-            <BookOpen size={14} />
-            <span>Leitura</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setViewerMode('notes')}
-            className={`mode-btn ${viewerMode === 'notes' ? 'active' : ''}`}
-            title="Abrir caderno de anotações técnicas deste módulo"
-          >
-            <FileText size={14} />
-            <span>Anotações</span>
-            {hasUserNotes && <span className="notes-has-content-dot" title="Você tem anotações salvas neste módulo" />}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setViewerMode('split')}
-            className={`mode-btn split-screen-btn ${viewerMode === 'split' ? 'active' : ''}`}
-            title="Exibir manual à esquerda e caderno de anotações à direita"
-          >
-            <Columns size={14} />
-            <span>Lado a Lado</span>
-          </button>
-        </div>
-
-        <div className="toolbar-actions">
-          {/* Botão de Sumário visível no mobile */}
-          {viewerMode !== 'notes' && (
-            <button
-              onClick={() => setMobileTocOpen(true)}
-              className="btn-secondary btn-sm mobile-toc-trigger"
-              title="Abrir Sumário do Documento"
-            >
-              <List size={15} />
-              <span>Índice ({tocItems.length})</span>
-            </button>
-          )}
-
-          {/* Ajuste de Tamanho de Fonte */}
-          {viewerMode !== 'notes' && (
-            <button
-              onClick={cycleFontSize}
-              className="btn-secondary btn-sm font-toggle-btn"
-              title="Alterar tamanho do texto de leitura"
-            >
-              <span className="font-label">Aa</span>
-              <span className="font-current-tag">{fontSize === 'normal' ? '100%' : fontSize === 'large' ? '115%' : '130%'}</span>
-            </button>
-          )}
-
-          {quizData && (
-            <button onClick={scrollToQuiz} className="btn-secondary btn-sm btn-quiz-jump">
-              <Sparkles size={15} className="text-amber" />
-              <span>Quiz</span>
-            </button>
-          )}
-
-          <button
-            onClick={() => onToggleComplete(module.id)}
-            className={`btn-toggle-read ${isCompleted ? 'is-read' : ''}`}
-          >
-            <CheckCircle2 size={15} />
-            <span>{isCompleted ? 'Lido' : 'Concluir'}</span>
-          </button>
-        </div>
-      </header>
-
-      {/* =====================================================================
-          MODO 1: APENAS ANOTAÇÕES (TELA CHEIA)
-          ===================================================================== */}
-      {viewerMode === 'notes' && (
-        <main className="manual-notes-view-mode">
-          <div className="notes-view-container">
-            <div className="notes-view-banner">
-              <div>
-                <h2>Caderno de Anotações: {module.title}</h2>
-                <p>Anote pontos-chave, comandos Git, consultas PostgreSQL ou regras de negócio para consultar mais tarde no seu estágio.</p>
+          <div className="cards-grid three-cols" style={{ marginTop: '1rem' }}>
+            {quizHistory.map((att, i) => (
+              <div key={i} className="glass-card" style={{ padding: '0.9rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <strong>Tentativa #{att.attemptNumber || i + 1}</strong>
+                  <span className={`status-pill ${att.passed ? 'passed' : 'pending'}`}>
+                    {att.percentage}% ({att.score}/{att.totalQuestions})
+                  </span>
+                </div>
+                <p className="text-muted" style={{ fontSize: '0.75rem', marginTop: '0.4rem' }}>
+                  Realizado em: {new Date(att.completedAt).toLocaleString('pt-BR')}
+                </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setViewerMode('read')}
-                className="btn-secondary btn-sm"
-              >
-                <BookOpen size={14} />
-                <span>Voltar ao Manual</span>
-              </button>
-            </div>
-
-            <ModuleNotesPanel
-              module={module}
-              initialNotes={userNotes}
-              onSaveNotes={onSaveNotes || (() => {})}
-            />
+            ))}
           </div>
-        </main>
+        </section>
       )}
 
-      {/* =====================================================================
-          MODO 2: TELA DIVIDIDA (MANUAL À ESQUERDA + CADERNO FIXO À DIREITA)
-          ===================================================================== */}
-      {viewerMode === 'split' && (
-        <div className="manual-split-view-grid">
-          {/* Coluna da Esquerda: Conteúdo do Manual com scroll natural */}
-          <div className="split-column-manual">
-            {isLoading && (
-              <div className="manual-loading-state">
-                <div className="spinner"></div>
-                <p>Carregando conteúdo oficial do manual...</p>
-              </div>
-            )}
-
-            {!isLoading && !loadError && (
-              <div
-                ref={contentRef}
-                className="native-manual-content"
-                dangerouslySetInnerHTML={{ __html: contentHtml }}
-              />
-            )}
-
-            {/* Quiz Nativo no split */}
-            {quizData && (
-              <section className="manual-bottom-quiz-section" ref={quizSectionRef}>
-                <div className="quiz-section-divider">
-                  <span className="divider-line"></span>
-                  <span className="divider-badge">🎯 TESTE SEUS CONHECIMENTOS</span>
-                  <span className="divider-line"></span>
-                </div>
-
-                <QuizBlock
-                  quiz={quizData}
-                  existingAttempt={quizAttempt}
-                  onSaveAttempt={onSaveQuizAttempt}
-                />
-              </section>
-            )}
-          </div>
-
-          {/* Coluna da Direita: Caderno de Anotações Acompanhando o Usuário */}
-          <div className="split-column-notes">
-            <div className="split-notes-sticky-wrap">
-              <ModuleNotesPanel
-                module={module}
-                initialNotes={userNotes}
-                onSaveNotes={onSaveNotes || (() => {})}
-                isSplitView={true}
-              />
-            </div>
-          </div>
-        </div>
+      {/* Quiz de Validação do Módulo */}
+      {questions.length > 0 && (
+        <QuizBlock
+          quiz={quizData}
+          existingAttempt={quizAttempt}
+          onSaveAttempt={onSaveQuiz}
+        />
       )}
 
-      {/* =====================================================================
-          MODO 3: LEITURA PADRÃO (ARTIGO + SUMÁRIO LATERAL)
-          ===================================================================== */}
-      {viewerMode === 'read' && (
-        <div className="manual-layout-grid">
-          <article className="manual-article-column">
-            {isLoading && (
-              <div className="manual-loading-state">
-                <div className="spinner"></div>
-                <p>Carregando conteúdo oficial do manual...</p>
-              </div>
-            )}
+      {/* Navegação Inferior entre Módulos da Trilha */}
+      <section
+        className="section-card"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem',
+        }}
+      >
+        {prevModule ? (
+          <button className="btn-secondary" onClick={() => onSelectModule(prevModule.id)}>
+            <ArrowLeft size={16} /> Anterior: {prevModule.title}
+          </button>
+        ) : (
+          <div />
+        )}
 
-            {loadError && (
-              <div className="manual-error-state">
-                <h3>Não foi possível carregar este manual diretamente</h3>
-                <p>{loadError}</p>
-                <a
-                  href={`/${module.htmlFile}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-primary"
-                >
-                  <ExternalLink size={16} />
-                  Abrir Arquivo em Nova Aba
-                </a>
-              </div>
-            )}
-
-            {!isLoading && !loadError && (
-              <div
-                ref={contentRef}
-                className="native-manual-content"
-                dangerouslySetInnerHTML={{ __html: contentHtml }}
-              />
-            )}
-
-            {/* Callout Card: Convite para o Caderno de Anotações */}
-            <div className="notes-callout-card">
-              <div className="notes-callout-content">
-                <div className="notes-callout-icon">
-                  <FileText size={20} className="text-primary" />
-                </div>
-                <div>
-                  <h4 className="notes-callout-title">Caderno de Anotações deste Módulo</h4>
-                  <p className="notes-callout-desc">
-                    {hasUserNotes
-                      ? 'Você já possui notas salvas para este manual. Acesse para revisar ou atualizar seus comandos.'
-                      : 'Precisa fixar comandos de terminal, tabelas de banco ou dúvidas para o supervisor? Salve no seu caderno de anotações.'}
-                  </p>
-                </div>
-              </div>
-              <div className="notes-callout-btns">
-                <button
-                  type="button"
-                  onClick={() => setViewerMode('notes')}
-                  className="btn-secondary btn-sm"
-                >
-                  <Edit3 size={14} />
-                  <span>{hasUserNotes ? 'Abrir Anotações' : 'Criar Anotações'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewerMode('split')}
-                  className="btn-secondary btn-sm desktop-only"
-                  title="Abrir manual e anotações lado a lado"
-                >
-                  <Columns size={14} />
-                  <span>Ver Lado a Lado</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Quiz Nativo ao Final */}
-            {quizData && (
-              <section className="manual-bottom-quiz-section" ref={quizSectionRef}>
-                <div className="quiz-section-divider">
-                  <span className="divider-line"></span>
-                  <span className="divider-badge">🎯 TESTE SEUS CONHECIMENTOS</span>
-                  <span className="divider-line"></span>
-                </div>
-
-                <QuizBlock
-                  quiz={quizData}
-                  existingAttempt={quizAttempt}
-                  onSaveAttempt={onSaveQuizAttempt}
-                />
-              </section>
-            )}
-
-            {/* Navegação Entre Módulos e Retorno ao Roteiro */}
-            <nav className="manual-bottom-nav">
-              <button 
-                onClick={() => {
-                  onNavigate('roteiro');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }} 
-                className="nav-page-btn prev"
-              >
-                <span className="nav-dir-label"><ArrowLeft size={14} /> Roteiro Geral</span>
-                <span className="nav-title-label">Voltar ao Roteiro</span>
-              </button>
-
-              <button
-                onClick={() => onToggleComplete(module.id)}
-                className={`btn-primary btn-finish-reading ${isCompleted ? 'btn-green' : ''}`}
-              >
-                <CheckCircle2 size={18} />
-                <span>{isCompleted ? '✓ Módulo Finalizado com Sucesso' : 'Finalizar Estudo do Módulo'}</span>
-              </button>
-
-              {nextModule ? (
-                <button
-                  onClick={() => {
-                    onNavigate(nextModule.screenKey);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  className="nav-page-btn next"
-                >
-                  <span className="nav-dir-label">Próximo Módulo <ArrowRight size={14} /></span>
-                  <span className="nav-title-label">{nextModule.shortTitle}</span>
-                </button>
-              ) : (
-                <button 
-                  onClick={() => {
-                    onNavigate('quizzes');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }} 
-                  className="nav-page-btn next"
-                >
-                  <span className="nav-dir-label">Avançar <ArrowRight size={14} /></span>
-                  <span className="nav-title-label">Central de Quizzes</span>
-                </button>
-              )}
-            </nav>
-          </article>
-
-          {/* Sidebar Direita de Sumário (Funcional & Sticky) */}
-          <aside className="manual-toc-sidebar">
-            <div className="toc-sidebar-inner">
-              <div className="toc-sidebar-header">
-                <BookOpen size={16} className="text-primary" />
-                <span>Sumário do Documento</span>
-              </div>
-
-              <nav className="toc-links-list">
-                {tocItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => scrollToSection(item.id)}
-                    className={`toc-link-item level-${item.level} ${activeTocId === item.id ? 'active' : ''}`}
-                  >
-                    <span className="toc-dot"></span>
-                    <span className="toc-text">{item.title}</span>
-                  </button>
-                ))}
-
-                {quizData && (
-                  <button
-                    onClick={scrollToQuiz}
-                    className="toc-link-item toc-quiz-link"
-                  >
-                    <Sparkles size={14} className="text-amber" />
-                    <span>🎯 Teste de Conhecimentos</span>
-                  </button>
-                )}
-              </nav>
-
-              <div className="toc-sidebar-progress">
-                <div className="progress-label">
-                  <span>Progresso de Leitura</span>
-                  <strong>{readingProgress}%</strong>
-                </div>
-                <div className="progress-track">
-                  <div className="progress-fill" style={{ width: `${readingProgress}%` }}></div>
-                </div>
-              </div>
-
-              {/* Atalhos Rápidos na Sidebar */}
-              <div className="toc-sidebar-shortcuts">
-                <button
-                  type="button"
-                  onClick={() => setViewerMode('notes')}
-                  className="sidebar-action-btn"
-                >
-                  <FileText size={14} />
-                  <span>Caderno de Notas</span>
-                  {hasUserNotes && <span className="notes-badge-count">Ativo</span>}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    onNavigate('roteiro');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  className="sidebar-action-btn"
-                >
-                  <Compass size={14} />
-                  <span>Voltar ao Roteiro</span>
-                </button>
-              </div>
-            </div>
-          </aside>
-        </div>
-      )}
-
-      {/* Drawer Off-Canvas para Sumário no Mobile */}
-      {mobileTocOpen && (
-        <div className="mobile-toc-overlay" onClick={() => setMobileTocOpen(false)}>
-          <div className="mobile-toc-drawer" onClick={(e) => e.stopPropagation()}>
-            <div className="mobile-toc-header">
-              <div className="mobile-toc-title">
-                <BookOpen size={18} className="text-primary" />
-                <h3>Sumário do Manual</h3>
-              </div>
-              <button
-                onClick={() => setMobileTocOpen(false)}
-                className="btn-icon-close"
-                aria-label="Fechar índice"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="mobile-toc-body">
-              <nav className="toc-links-list">
-                {tocItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => scrollToSection(item.id)}
-                    className={`toc-link-item level-${item.level} ${activeTocId === item.id ? 'active' : ''}`}
-                  >
-                    <span className="toc-dot"></span>
-                    <span className="toc-text">{item.title}</span>
-                    <ChevronRight size={14} className="toc-arrow" />
-                  </button>
-                ))}
-
-                {quizData && (
-                  <button
-                    onClick={() => {
-                      setMobileTocOpen(false);
-                      scrollToQuiz();
-                    }}
-                    className="toc-link-item toc-quiz-link"
-                  >
-                    <Sparkles size={14} className="text-amber" />
-                    <span>🎯 Teste de Conhecimentos</span>
-                  </button>
-                )}
-              </nav>
-            </div>
-
-            <div className="mobile-toc-footer">
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileTocOpen(false);
-                  setViewerMode('notes');
-                }}
-                className="btn-secondary w-full mb-2"
-              >
-                <FileText size={15} />
-                <span>Abrir Caderno de Notas</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileTocOpen(false);
-                  onNavigate('roteiro');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="btn-secondary w-full"
-              >
-                <ArrowLeft size={15} />
-                <span>Voltar ao Roteiro Geral</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Botão Flutuante de Voltar ao Topo */}
-      {showScrollTop && (
-        <button
-          type="button"
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="btn-scroll-top"
-          title="Voltar ao topo da página"
-          aria-label="Voltar ao topo"
-        >
-          <ArrowUp size={18} />
-        </button>
-      )}
+        {nextModule ? (
+          <button className="btn-primary" onClick={() => onSelectModule(nextModule.id)}>
+            Próximo Módulo: {nextModule.title} <ArrowRight size={16} />
+          </button>
+        ) : (
+          <button className="btn-primary" onClick={onBack}>
+            Concluir Leitura e Voltar à Trilha <CheckCircle2 size={16} />
+          </button>
+        )}
+      </section>
     </div>
   );
 };
+export default ModuleViewerScreen;

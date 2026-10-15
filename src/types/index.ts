@@ -12,6 +12,9 @@ export type ScreenType =
   | 'desafio-sql' 
   | 'desafio-backend' 
   | 'desafio-frontend' 
+  | 'sql-challenge'
+  | 'backend-challenge'
+  | 'frontend-challenge'
   | 'certificado';
 
 export type ThemeMode = 'dark' | 'light';
@@ -63,8 +66,12 @@ export interface QuizAttempt {
 export interface ChallengeSubmission {
   challengeId: string;
   repositoryUrl?: string;
+  deployUrl?: string;
+  checkedPrItems: number[];
   checklistCompleted: boolean;
-  completedAt: string;
+  /** Guarda as queries SQL digitadas pelo aluno em cada uma das 18 questões */
+  sqlQueries?: Record<number, string>;
+  completedAt?: string;
 }
 
 export interface StudentProgress {
@@ -101,17 +108,82 @@ export interface SqlQuestion {
   trapsAndTips: string;
 }
 
-export interface ModuleMetadata {
+export interface ModuleSection {
+  heading: string;
+  body: string;
+  bullets?: string[];
+  codeExample?: string;
+  codeLanguage?: string;
+  tip?: string;
+}
+
+export interface LearningModule {
   id: string;
-  screenKey: ScreenType;
+  order: number;
+  category: string;
+  estimatedTime: string;
   title: string;
+  description: string;
+  objectives?: string[];
+  sections: ModuleSection[];
+  checklist?: string[];
+
+  // Compatibilidade com telas existentes
+  screenKey: ScreenType;
   shortTitle: string;
   subtitle: string;
-  category: 'Fundamental' | 'Dados' | 'Back-end' | 'Front-end' | 'Prática';
   duration: string;
-  htmlFile: string;
-  description: string;
+  htmlFile?: string;
   iconName: string;
   quizId: string;
   topics: string[];
+  externalManualUrl?: string;
+}
+
+export type ModuleMetadata = LearningModule;
+
+export interface IntegrationStep {
+  step: number;
+  title: string;
+  summary: string;
+  content?: string;
+  highlights?: string[];
+  rules?: string[];
+  quickCheck?: { question: string; answer: string }[];
+  stepsToFeature?: string[];
+  dockerSetup?: string;
+  layers?: { folder: string; desc: string }[];
+  requirements?: string[];
+  topics?: string[];
+}
+
+export type ChallengeCategory = 'sql' | 'backend' | 'frontend' | 'arquitetura';
+
+export interface ChallengeTaskItem {
+  id: string;
+  title: string;
+  description: string;
+  codeSnippet?: string;
+  expectedOutputHint?: string;
+}
+
+export interface ChallengeDefinition {
+  id: string;
+  slug: ChallengeCategory;
+  title: string;
+  subtitle: string;
+  badgeText: string;
+  estimatedTime: string;
+  difficulty: 'Iniciante' | 'Intermediário' | 'Avançado';
+  scenarioDescription: string;
+  architectureOrSchemaCode?: {
+    title: string;
+    language: string;
+    code: string;
+  };
+  tasks: ChallengeTaskItem[];
+  /** Checklist de Revisão de PR (Definition of Done) exigido para concluir */
+  prChecklist: string[];
+  referenceGuideUrl?: string;
+  referenceSolutionUrl?: string;
 }

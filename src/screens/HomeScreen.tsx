@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ScreenType } from '../types';
+import { brandConfig } from '../config/brand';
 import { MODULES } from '../services/dataService';
 import { 
   Compass, 
@@ -71,17 +72,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-container">
-          <div className="hero-badge">
+          <div className="hero-badge inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 mb-4">
             <span className="pulse-dot"></span>
-            <span>PROGRAMA OFICIAL DE FORMAÇÃO • SUTINF / SEMOB-DF</span>
+            <span>{brandConfig.heroBadge}</span>
           </div>
 
-          <h1 className="hero-title">
-            Do Zero a Desenvolvedor Júnior na <span className="gradient-text">SEMOB-DF</span>
+          <h1 className="hero-title text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
+            {brandConfig.heroTitle}
           </h1>
 
-          <p className="hero-description">
-            Plataforma interativa unificada com todos os manuais oficiais, diretrizes arquiteturais, desafios práticos de SQL e APIs, e quizzes de validação de conhecimento para a equipe de tecnologia dos transportes de Brasília.
+          <p className="hero-description mt-4 text-lg text-slate-600 dark:text-slate-300 max-w-3xl leading-relaxed">
+            {brandConfig.heroSubtitle}
           </p>
 
           {/* Student Welcome Card */}

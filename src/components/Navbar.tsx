@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { ScreenType, ThemeMode } from '../types';
-import { 
-  Compass, 
-  BookOpen, 
-  CheckSquare, 
-  Terminal, 
-  Award, 
-  Moon, 
-  Sun, 
-  Menu, 
-  X, 
+import { brandConfig } from '../config/brand';
+import {
+  Compass,
+  BookOpen,
+  CheckSquare,
+  Terminal,
+  Award,
+  Moon,
+  Sun,
+  Menu,
+  X,
   ChevronDown,
   Layers,
   Database,
@@ -55,26 +56,30 @@ export const Navbar: React.FC<NavbarProps> = ({
       <header className="site-header no-print">
         <div className="header-container">
           {/* Brand / Logo */}
-          <div className="header-brand" onClick={() => handleNav('home')}>
-            <div className="brand-logo-icon">
-              <Layers className="icon-main" size={20} />
+          <div className="header-brand flex items-center gap-3 cursor-pointer" onClick={() => handleNav('home')}>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white shadow-md font-bold text-lg">
+              🧭
             </div>
-            <div className="brand-texts">
-              <div className="brand-title">SEMOB<span className="brand-dot">.</span>DF</div>
-              <div className="brand-sub">SUTINF • DEV ACADEMY</div>
+            <div>
+              <h1 className="font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+                {brandConfig.productName}
+              </h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                {brandConfig.departmentName}
+              </p>
             </div>
           </div>
 
           {/* Desktop Nav */}
           <nav className="desktop-nav">
-            <button 
+            <button
               className={`nav-btn ${currentScreen === 'home' ? 'active' : ''}`}
               onClick={() => handleNav('home')}
             >
               Início
             </button>
 
-            <button 
+            <button
               className={`nav-btn ${currentScreen === 'roteiro' ? 'active' : ''}`}
               onClick={() => handleNav('roteiro')}
             >
@@ -84,7 +89,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Manuais Dropdown */}
             <div className="nav-dropdown-wrapper">
-              <button 
+              <button
                 className={`nav-btn dropdown-toggle ${isManualActive ? 'active' : ''}`}
                 onClick={() => {
                   setManualsDropdownOpen(!manualsDropdownOpen);
@@ -138,7 +143,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             {/* Central de Quizzes */}
-            <button 
+            <button
               className={`nav-btn ${currentScreen === 'quizzes' ? 'active' : ''}`}
               onClick={() => handleNav('quizzes')}
             >
@@ -148,7 +153,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Desafios Dropdown */}
             <div className="nav-dropdown-wrapper">
-              <button 
+              <button
                 className={`nav-btn dropdown-toggle ${isChallengeActive ? 'active' : ''}`}
                 onClick={() => {
                   setChallengesDropdownOpen(!challengesDropdownOpen);
@@ -188,7 +193,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             {/* Certificado */}
-            <button 
+            <button
               className={`nav-btn ${currentScreen === 'certificado' ? 'active' : ''}`}
               onClick={() => handleNav('certificado')}
             >
@@ -200,8 +205,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Actions (Progress & Theme & Hamburger) */}
           <div className="header-actions">
             {/* Progress pill - adapts on mobile */}
-            <div 
-              className="progress-pill" 
+            <div
+              className="progress-pill"
               title="Seu progresso global na trilha de formação"
               onClick={() => handleNav('certificado')}
             >
@@ -214,9 +219,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             {/* Theme Toggle */}
-            <button 
-              className="theme-btn" 
-              onClick={onToggleTheme} 
+            <button
+              className="theme-btn"
+              onClick={onToggleTheme}
               title={`Alternar para tema ${theme === 'dark' ? 'claro' : 'escuro'}`}
               aria-label="Alternar tema"
             >
@@ -224,8 +229,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             {/* Mobile hamburger */}
-            <button 
-              className="mobile-hamburger" 
+            <button
+              className="mobile-hamburger"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Abrir menu de navegação"
             >
@@ -240,13 +245,13 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="mobile-drawer-overlay no-print" onClick={() => setMobileMenuOpen(false)}>
           <div className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
             <div className="drawer-header-row">
-              <div className="drawer-brand-wrap">
-                <Layers size={18} className="text-sky" />
-                <span className="drawer-brand-name">SEMOB<strong>.DF</strong></span>
+              <div className="drawer-brand-wrap flex items-center gap-2">
+                <span className="text-lg">🧭</span>
+                <span className="drawer-brand-name font-bold">{brandConfig.shortName}</span>
               </div>
-              <button 
-                onClick={() => setMobileMenuOpen(false)} 
-                className="btn-close-drawer" 
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="btn-close-drawer"
                 aria-label="Fechar menu"
               >
                 <X size={20} />
@@ -276,7 +281,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button onClick={() => handleNav('certificado')} className={`drawer-btn ${currentScreen === 'certificado' ? 'active' : ''}`}>
               <Award size={18} className="text-indigo" /> Certificado Oficial
             </button>
-            
+
             <div className="drawer-section-title">Manuais Oficiais SUTINF</div>
             <button onClick={() => handleNav('modulo-git')} className={`drawer-btn ${currentScreen === 'modulo-git' ? 'active' : ''}`}>
               <GitBranch size={16} className="text-sky" /> Git & DevSecOps
@@ -310,40 +315,40 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Docked Mobile Bottom Navigation Bar (Thumb Friendly) */}
       <nav className="mobile-bottom-dock no-print">
-        <button 
-          onClick={() => handleNav('home')} 
+        <button
+          onClick={() => handleNav('home')}
           className={`dock-tab ${currentScreen === 'home' ? 'active' : ''}`}
         >
           <Home size={20} />
           <span>Início</span>
         </button>
 
-        <button 
-          onClick={() => handleNav('roteiro')} 
+        <button
+          onClick={() => handleNav('roteiro')}
           className={`dock-tab ${currentScreen === 'roteiro' ? 'active' : ''}`}
         >
           <Compass size={20} />
           <span>Roteiro</span>
         </button>
 
-        <button 
-          onClick={() => setMobileMenuOpen(true)} 
+        <button
+          onClick={() => setMobileMenuOpen(true)}
           className={`dock-tab ${isManualActive ? 'active' : ''}`}
         >
           <BookOpen size={20} />
           <span>Manuais</span>
         </button>
 
-        <button 
-          onClick={() => handleNav('quizzes')} 
+        <button
+          onClick={() => handleNav('quizzes')}
           className={`dock-tab ${currentScreen === 'quizzes' ? 'active' : ''}`}
         >
           <CheckSquare size={20} />
           <span>Quizzes</span>
         </button>
 
-        <button 
-          onClick={() => handleNav('certificado')} 
+        <button
+          onClick={() => handleNav('certificado')}
           className={`dock-tab ${currentScreen === 'certificado' ? 'active' : ''}`}
         >
           <Award size={20} />

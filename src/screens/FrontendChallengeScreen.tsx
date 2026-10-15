@@ -1,339 +1,361 @@
-import React, { useState } from 'react';
-import { ScreenType } from '../types';
-import { 
-  Layout, 
-  Search, 
-  MapPin, 
-  Navigation, 
-  CheckCircle2, 
-  Bus, 
-  Clock, 
-  Layers, 
-  ExternalLink,
+import React, { useState, useMemo } from 'react';
+import {
+  Layout,
+  Search,
+  Bus,
+  Clock,
+  MapPin,
+  CheckCircle2,
+  Circle,
   BookOpen,
-  SlidersHorizontal,
-  RefreshCw
+  Layers,
+  Sparkles,
+  ArrowRight,
 } from 'lucide-react';
+import { ChallengeSubmissionPanel } from '../components/ChallengeSubmissionPanel';
 
 interface FrontendChallengeScreenProps {
-  isCompleted: boolean;
-  onToggleComplete: () => void;
-  onNavigate: (screen: ScreenType) => void;
+  completedItems: string[];
+  onToggleItem: (itemKey: string) => void;
+  onOpenModule: (moduleId: string) => void;
 }
 
+interface MockBusLine {
+  cd_linha: string;
+  nm_linha: string;
+  vl_tarifa: number;
+  sentido: 'IDA' | 'VOLTA' | 'CIRCULAR';
+  operadora: string;
+  itinerario: string[];
+  horarios: string[];
+}
+
+const INFO_ONIBUS_MOCK_LINES: MockBusLine[] = [
+  {
+    cd_linha: '0.110',
+    nm_linha: 'Rodoviária do Plano Piloto / UnB',
+    vl_tarifa: 2.7,
+    sentido: 'CIRCULAR',
+    operadora: 'Piracicabana',
+    itinerario: ['Plataforma E - Rodoviária', 'Eixo Norte', 'L2 Norte (406/408)', 'Campus UnB - ICC'],
+    horarios: ['06:15', '06:45', '07:15', '07:45', '08:15', '12:00', '18:10'],
+  },
+  {
+    cd_linha: '0.152',
+    nm_linha: 'Taguatinga Sul / Esplanada dos Ministérios',
+    vl_tarifa: 5.5,
+    sentido: 'IDA',
+    operadora: 'Marechal',
+    itinerario: ['Pistão Sul', 'EPIG', 'Parque da Cidade', 'Eixo Monumental', 'Esplanada'],
+    horarios: ['05:40', '06:10', '06:30', '07:00', '07:30'],
+  },
+  {
+    cd_linha: '2204',
+    nm_linha: 'Gama (Terminal BRT) / Rodoviária do Plano Piloto',
+    vl_tarifa: 5.5,
+    sentido: 'IDA',
+    operadora: 'Pioneira',
+    itinerario: ['Terminal Gama', 'Corredor Exclusivo BRT Sul', 'Terminal Park Way', 'Rodoviária'],
+    horarios: ['05:00', '05:15', '05:30', '05:45', '06:00', '06:15'],
+  },
+  {
+    cd_linha: '0.812',
+    nm_linha: 'W3 Norte / Sudoeste / Cruzeiro',
+    vl_tarifa: 3.8,
+    sentido: 'VOLTA',
+    operadora: 'Urbi',
+    itinerario: ['W3 Norte (516)', 'Setor Hospitalar Norte', 'Sudoeste (QMSW 5)', 'Cruzeiro Novo'],
+    horarios: ['16:30', '17:00', '17:30', '18:00', '18:40'],
+  },
+];
+
+const FRONTEND_STEPS = [
+  {
+    key: 'front-step-1',
+    order: '1º Ficheiro',
+    file: 'src/types/linha.ts',
+    title: 'Tipagem das Entidades e Filtros',
+    desc: 'Crie a interface Linha e os tipos de filtro (SentidoFiltro = "TODOS" | "IDA" | "VOLTA" | "CIRCULAR") sem usar any.',
+  },
+  {
+    key: 'front-step-2',
+    order: '2º Ficheiro',
+    file: 'src/services/linhasApi.ts',
+    title: 'Camada de Comunicação HTTP (Service)',
+    desc: 'Isole o fetch/axios que consome a sua API Backend (GET /linhas e GET /linhas/:cd_linha).',
+  },
+  {
+    key: 'front-step-3',
+    order: '3º Ficheiro',
+    file: 'src/hooks/useLinhas.ts',
+    title: 'Custom Hook de Estado (Loading, Error, Data)',
+    desc: 'Gerencie os estados de carregamento, erro de rede, filtro por texto/sentido e linha selecionada.',
+  },
+  {
+    key: 'front-step-4',
+    order: '4º Ficheiro',
+    file: 'src/components/LinhaCard.tsx & LinhaDetalheModal.tsx',
+    title: 'Componentização Visual Desacoplada',
+    desc: 'Construa os cartões de linha e o painel de horários/itinerário recebendo dados via props tipadas.',
+  },
+];
+
 export const FrontendChallengeScreen: React.FC<FrontendChallengeScreenProps> = ({
-  isCompleted,
-  onToggleComplete,
-  onNavigate,
+  completedItems,
+  onToggleItem,
+  onOpenModule,
 }) => {
-  // Simulador interativo do InfoÔnibus
-  const [selectedLine, setSelectedLine] = useState<string>('0.111');
-  const [activeFilterSentido, setActiveFilterSentido] = useState<'IDA' | 'VOLTA'>('IDA');
-  const [isSimulatingLive, setIsSimulatingLive] = useState<boolean>(true);
-  const [busPositionIndex, setBusPositionIndex] = useState<number>(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sentidoFilter, setSentidoFilter] = useState<'TODOS' | 'IDA' | 'VOLTA' | 'CIRCULAR'>('TODOS');
+  const [selectedLine, setSelectedLine] = useState<MockBusLine>(INFO_ONIBUS_MOCK_LINES[0]);
 
-  const mockLines = [
-    {
-      numero: '0.111',
-      nome: 'Terminal Asa Sul / W3 Sul / W3 Norte / Terminal Asa Norte',
-      empresa: 'Piracicabana',
-      tarifa: 'R$ 3,80',
-      sentido: 'IDA',
-      veiculo: '11042',
-      velocidade: '42 km/h',
-      proximaParada: 'Estação 106 Sul',
-      paradas: [
-        'Terminal Asa Sul (Início)',
-        'Hospital Sarah Brasília',
-        'Estação Metrô 106 Sul',
-        'Galeria dos Estados',
-        'Shopping Conjunto Nacional',
-        'Brasília Shopping (W3 Norte)',
-        'Universidade de Brasília (UnB)',
-        'Terminal Asa Norte (Fim)',
-      ],
-    },
-    {
-      numero: '0.170',
-      nome: 'Gama / Eixo Sul / Rodoviária do Plano Piloto',
-      empresa: 'Pioneira',
-      tarifa: 'R$ 5,50',
-      sentido: 'IDA',
-      veiculo: '22190',
-      velocidade: '65 km/h',
-      proximaParada: 'Catetinho (BR-040)',
-      paradas: [
-        'Terminal do Gama (Sul)',
-        'Setor Central do Gama',
-        'Passarela Catetinho',
-        'Trecho EPIA Sul',
-        'Terminal Asa Sul (Integração)',
-        'Rodoviária do Plano Piloto (Plataforma C)',
-      ],
-    },
-  ];
-
-  const currentLineData = mockLines.find((l) => l.numero === selectedLine) || mockLines[0];
-
-  const handleNextPosition = () => {
-    setBusPositionIndex((prev) => (prev + 1) % currentLineData.paradas.length);
-  };
+  const filteredLines = useMemo(() => {
+    return INFO_ONIBUS_MOCK_LINES.filter((line) => {
+      const matchesSentido = sentidoFilter === 'TODOS' || line.sentido === sentidoFilter;
+      const matchesSearch =
+        line.cd_linha.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        line.nm_linha.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesSentido && matchesSearch;
+    });
+  }, [searchQuery, sentidoFilter]);
 
   return (
-    <div className="frontend-challenge-screen">
-      {/* Header */}
-      <div className="challenge-page-header">
-        <div className="header-badge bg-cyan-pill">
-          <Layout size={16} />
-          <span>DESAFIO PRÁTICO FRONT-END</span>
-        </div>
-        <h1 className="page-title">O Novo "InfoÔnibus": Interface em Tempo Real</h1>
-        <p className="page-subtitle">
-          Construa a aplicação de visualização de transporte para os cidadãos e fiscais do DF. Aplique o padrão SUTINF de 5 camadas, a Regra das 50 Linhas e integração com APIs de telemetria.
-        </p>
-
-        <div className="challenge-completion-box">
-          <div className="completion-info">
-            <strong>Status do Desafio Front-end:</strong>
-            <span>{isCompleted ? '✓ Concluído com Sucesso' : 'Em andamento'}</span>
-          </div>
-          <button 
-            onClick={onToggleComplete}
-            className={`btn-primary ${isCompleted ? 'btn-green' : ''}`}
-          >
-            <CheckCircle2 size={18} />
-            {isCompleted ? 'Conclusão Registrada!' : 'Marcar Desafio como Concluído'}
-          </button>
-        </div>
-      </div>
-
-      {/* Specifications Checklist */}
-      <div className="specs-checklist-card">
-        <h3>📋 Requisitos Obrigatórios da Solução</h3>
-        <div className="specs-grid">
-          <div className="spec-item">
-            <CheckCircle2 size={18} className="text-cyan" />
-            <div>
-              <strong>Pesquisa Dinâmica de Linhas:</strong>
-              <p>Campo de busca integrado à API com sugestões automáticas por número ou nome.</p>
-            </div>
-          </div>
-          <div className="spec-item">
-            <CheckCircle2 size={18} className="text-cyan" />
-            <div>
-              <strong>Pontos de Parada:</strong>
-              <p>Exibição ordenada de todas as paradas do trajeto com destaque para início e fim.</p>
-            </div>
-          </div>
-          <div className="spec-item">
-            <CheckCircle2 size={18} className="text-cyan" />
-            <div>
-              <strong>GPS & Telemetria ao Vivo:</strong>
-              <p>Marcador no mapa da posição atual do veículo com velocidade em km/h.</p>
-            </div>
-          </div>
-          <div className="spec-item">
-            <CheckCircle2 size={18} className="text-cyan" />
-            <div>
-              <strong>Traçado Espacial no Mapa:</strong>
-              <p>Renderização de LineString do PostGIS com cores diferenciadas por sentido.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Interactive InfoÔnibus Simulator Demo */}
-      <div className="simulator-interactive-section">
-        <div className="sim-header">
-          <div className="sim-badge">
-            <Bus size={16} />
-            <span>DEMONSTRAÇÃO INTERATIVA DO INFOÔNIBUS</span>
-          </div>
-          <p>Experimente abaixo como a sua interface deve se comportar ao consultar linhas e telemetria:</p>
-        </div>
-
-        <div className="infoonibus-simulator-container">
-          {/* Top Search Toolbar */}
-          <div className="infoonibus-toolbar">
-            <div className="select-line-box">
-              <label>Selecione a Linha:</label>
-              <select 
-                value={selectedLine} 
-                onChange={(e) => {
-                  setSelectedLine(e.target.value);
-                  setBusPositionIndex(1);
-                }}
-                className="select-custom"
-              >
-                <option value="0.111">Linha 0.111 (W3 Sul / Norte)</option>
-                <option value="0.170">Linha 0.170 (Gama / Eixo Sul)</option>
-              </select>
-            </div>
-
-            <div className="filter-sentido-buttons">
-              <button
-                onClick={() => setActiveFilterSentido('IDA')}
-                className={`sentido-btn ${activeFilterSentido === 'IDA' ? 'active' : ''}`}
-              >
-                Sentido IDA
-              </button>
-              <button
-                onClick={() => setActiveFilterSentido('VOLTA')}
-                className={`sentido-btn ${activeFilterSentido === 'VOLTA' ? 'active' : ''}`}
-              >
-                Sentido VOLTA
-              </button>
-            </div>
-
-            <button onClick={handleNextPosition} className="btn-secondary btn-sm" title="Simular próximo ponto de GPS">
-              <RefreshCw size={14} />
-              Simular Avanço GPS
+    <div className="screen-container">
+      {/* Hero Banner */}
+      <section className="hero-banner">
+        <div className="hero-content">
+          <span className="hero-badge">
+            <Layout size={14} /> Desafio Prático • Engenharia Frontend
+          </span>
+          <h1>Projeto InfoÔnibus — Protótipo Interativo & Arquitetura React</h1>
+          <p>
+            Interaja abaixo com o modelo vivo do <strong>InfoÔnibus — DF</strong> para entender o
+            comportamento exato que a sua aplicação React + TypeScript deve entregar ao consumir a API Backend.
+          </p>
+          <div className="hero-actions">
+            <button className="btn-secondary" onClick={() => onOpenModule('mod-5-frontend')}>
+              <BookOpen size={16} /> Revisar Módulo de Arquitetura Frontend na Plataforma
             </button>
           </div>
+        </div>
+      </section>
 
-          {/* InfoÔnibus View Body */}
-          <div className="infoonibus-body-grid">
-            {/* Map Simulator */}
-            <div className="simulated-map-card">
-              <div className="map-overlay-header">
-                <span className="dot-live"></span>
-                <strong>Telemetria em Tempo Real (Brasília-DF)</strong>
-                <span className="text-muted text-xs">GPS Atualizado há 4s</span>
+      {/* Protótipo Interativo InfoÔnibus (Browser Mockup Original) */}
+      <section className="section-card">
+        <div className="section-header-row">
+          <div>
+            <h2>
+              <Sparkles size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
+              Guia Visual Interativo: Como o seu "InfoÔnibus" deve funcionar
+            </h2>
+            <p className="text-muted">
+              Experimente digitar na busca, alternar os sentidos e clicar numa linha para ver o painel de itinerário e horários.
+            </p>
+          </div>
+        </div>
+
+        <div className="browser-mockup" style={{ marginTop: '1.25rem', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(148, 163, 184, 0.25)' }}>
+          {/* Barra do Navegador Simulado */}
+          <div
+            className="browser-header"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.75rem 1.25rem',
+              background: 'rgba(15, 23, 42, 0.9)',
+              borderBottom: '1px solid rgba(148, 163, 184, 0.2)',
+            }}
+          >
+            <div style={{ display: 'flex', gap: '0.4rem' }}>
+              <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#ef4444' }} />
+              <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#f59e0b' }} />
+              <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#10b981' }} />
+            </div>
+            <div
+              style={{
+                flex: 1,
+                background: 'rgba(30, 41, 59, 0.9)',
+                padding: '0.3rem 0.85rem',
+                borderRadius: '8px',
+                fontSize: '0.78rem',
+                fontFamily: 'monospace',
+                color: '#94a3b8',
+              }}
+            >
+              http://localhost:5173/info-onibus-df
+            </div>
+          </div>
+
+          {/* Corpo do Simulador InfoÔnibus */}
+          <div style={{ padding: '1.5rem' }}>
+            {/* Filtros de Busca e Sentido */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '1 1 260px' }}>
+                <Search size={18} />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Buscar por número (ex: 0.110) ou destino (ex: UnB)..."
+                  className="sql-editor-textarea"
+                  style={{ minHeight: '40px', height: '40px', padding: '0.45rem 0.85rem' }}
+                />
               </div>
 
-              {/* Vector representation of route & bus */}
-              <div className="svg-map-frame">
-                <svg viewBox="0 0 500 280" className="interactive-svg-route">
-                  {/* Background grid */}
-                  <defs>
-                    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
-                      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1"/>
-                    </pattern>
-                  </defs>
-                  <rect width="500" height="280" fill="url(#grid)" />
-
-                  {/* Route Polyline */}
-                  <path
-                    d="M 40,240 C 120,200 150,140 240,120 S 380,80 460,40"
-                    fill="none"
-                    stroke="#0284c7"
-                    strokeWidth="6"
-                    strokeDasharray="4 2"
-                    className="route-line"
-                  />
-
-                  {/* Stops */}
-                  <circle cx="40" cy="240" r="6" fill="#10b981" />
-                  <text x="45" y="255" fill="#94a3b8" fontSize="10">Terminal Partida</text>
-
-                  <circle cx="160" cy="165" r="5" fill="#38bdf8" />
-                  <circle cx="240" cy="120" r="5" fill="#38bdf8" />
-                  <circle cx="340" cy="85" r="5" fill="#38bdf8" />
-
-                  <circle cx="460" cy="40" r="6" fill="#ef4444" />
-                  <text x="410" y="30" fill="#94a3b8" fontSize="10">Terminal Destino</text>
-
-                  {/* Dynamic Bus Icon Marker */}
-                  <g 
-                    transform={`translate(${
-                      busPositionIndex === 0 ? 40 : 
-                      busPositionIndex === 1 ? 160 : 
-                      busPositionIndex === 2 ? 240 : 
-                      busPositionIndex === 3 ? 340 : 460
-                    }, ${
-                      busPositionIndex === 0 ? 240 : 
-                      busPositionIndex === 1 ? 165 : 
-                      busPositionIndex === 2 ? 120 : 
-                      busPositionIndex === 3 ? 85 : 40
-                    })`}
-                    className="bus-marker-pulse"
+              <div className="sql-filter-buttons">
+                {(['TODOS', 'IDA', 'VOLTA', 'CIRCULAR'] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setSentidoFilter(s)}
+                    className={`sql-filter-btn ${sentidoFilter === s ? 'active' : ''}`}
                   >
-                    <circle r="16" fill="rgba(56, 189, 248, 0.3)" className="radar-circle" />
-                    <circle r="10" fill="#38bdf8" stroke="#ffffff" strokeWidth="2" />
-                    <text x="-4" y="4" fill="#0f172a" fontSize="10" fontWeight="bold">🚌</text>
-                  </g>
-                </svg>
-
-                <div className="bus-floating-telemetry">
-                  <div className="telemetry-pill">
-                    <Navigation size={14} className="text-sky" />
-                    <span>Veículo: <strong>{currentLineData.veiculo}</strong></span>
-                  </div>
-                  <div className="telemetry-pill">
-                    <Clock size={14} className="text-emerald" />
-                    <span>Velocidade: <strong>{currentLineData.velocidade}</strong></span>
-                  </div>
-                </div>
+                    {s}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Line Information & Stops Card */}
-            <div className="simulated-info-card">
-              <div className="line-badge-top">
-                <span className="line-num">{currentLineData.numero}</span>
-                <span className="line-fare">{currentLineData.tarifa}</span>
-              </div>
-              <h4 className="line-name">{currentLineData.nome}</h4>
-              <div className="line-meta-row">
-                <span>Operadora: <strong>{currentLineData.empresa}</strong></span>
-                <span>Sentido: <strong>{activeFilterSentido}</strong></span>
-              </div>
-
-              <div className="stops-timeline-header">
-                <MapPin size={16} />
-                <span>Sequência de Paradas ({currentLineData.paradas.length})</span>
-              </div>
-
-              <div className="stops-timeline-list">
-                {currentLineData.paradas.map((parada, idx) => {
-                  const isCurrentStop = idx === busPositionIndex;
-
-                  return (
-                    <div key={idx} className={`timeline-stop-item ${isCurrentStop ? 'active-stop' : ''}`}>
-                      <div className="stop-bullet">
-                        {isCurrentStop ? <Bus size={12} /> : idx + 1}
+            {/* Grid Mestre-Detalhe do InfoÔnibus */}
+            <div className="cards-grid two-cols">
+              {/* Coluna Esquerda: Lista de Cartões de Ônibus */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {filteredLines.length === 0 ? (
+                  <div className="glass-card" style={{ textAlign: 'center', padding: '2rem' }}>
+                    <p className="text-muted">Nenhuma linha encontrada para o filtro informado (Empty State).</p>
+                  </div>
+                ) : (
+                  filteredLines.map((line) => {
+                    const isSelected = selectedLine?.cd_linha === line.cd_linha;
+                    return (
+                      <div
+                        key={line.cd_linha}
+                        onClick={() => setSelectedLine(line)}
+                        className="glass-card io-bus-card"
+                        style={{
+                          cursor: 'pointer',
+                          border: isSelected ? '2px solid #0ea5e9' : undefined,
+                          padding: '1rem',
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span className="status-pill passed" style={{ fontWeight: 800 }}>
+                            <Bus size={14} style={{ display: 'inline', marginRight: 4 }} />
+                            Linha {line.cd_linha}
+                          </span>
+                          <span className="status-pill pending" style={{ fontSize: '0.72rem' }}>
+                            {line.sentido} • R$ {Number(line.vl_tarifa).toFixed(2)}
+                          </span>
+                        </div>
+                        <h4 style={{ marginTop: '0.5rem', fontSize: '0.98rem' }}>{line.nm_linha}</h4>
+                        <p className="text-muted" style={{ fontSize: '0.78rem', marginTop: '0.25rem' }}>
+                          Operadora: {line.operadora}
+                        </p>
                       </div>
-                      <div className="stop-name">
-                        {parada}
-                        {isCurrentStop && <span className="pill-near">Próxima Parada</span>}
-                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Coluna Direita: Painel de Detalhes da Linha Selecionada */}
+              {selectedLine && (
+                <div className="glass-card" style={{ padding: '1.25rem' }}>
+                  <div style={{ borderBottom: '1px solid rgba(148,163,184,0.2)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
+                    <span className="text-muted" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                      Detalhes da Linha Selecionada
+                    </span>
+                    <h3 style={{ fontSize: '1.2rem', marginTop: '0.2rem' }}>
+                      {selectedLine.cd_linha} — {selectedLine.nm_linha}
+                    </h3>
+                  </div>
+
+                  <div style={{ marginBottom: '1rem' }}>
+                    <strong style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
+                      <MapPin size={15} /> Principais Pontos do Itinerário:
+                    </strong>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', alignItems: 'center' }}>
+                      {selectedLine.itinerario.map((ponto, idx) => (
+                        <React.Fragment key={ponto}>
+                          <span className="status-pill pending" style={{ fontSize: '0.75rem' }}>
+                            {ponto}
+                          </span>
+                          {idx < selectedLine.itinerario.length - 1 && <ArrowRight size={13} />}
+                        </React.Fragment>
+                      ))}
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+
+                  <div>
+                    <strong style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
+                      <Clock size={15} /> Próximas Partidas Programadas:
+                    </strong>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      {selectedLine.horarios.map((h) => (
+                        <span key={h} className="status-pill passed" style={{ fontFamily: 'monospace' }}>
+                          {h}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* SUTINF Architectural Standard Guide */}
-      <div className="architecture-recap-card">
-        <h3>🏛️ Estrutura de Pastas Recomendada para o Projeto</h3>
-        <pre className="code-tree">
-{`src/
-├── screens/
-│   └── InfoOnibusScreen.tsx        # UI pura (sem chamadas a APIs!)
-├── hooks/
-│   └── useInfoOnibus.ts           # Regra das 50 Linhas: estado, timer de GPS e busca
-├── services/
-│   └── infoonibusService.ts       # Chamadas HTTP com axios (VITE_API_URL)
-├── components/
-│   ├── MapaItinerario.tsx         # Componente burro de renderização do mapa
-│   ├── ListaParadas.tsx           # Componente burro de lista de paradas
-│   └── LinhaSearchInput.tsx       # Componente burro de busca
-└── types/
-    └── infoonibus.ts              # Interfaces estritas (proibido usar any!)`}
-        </pre>
-      </div>
+      {/* Roteiro de Arquitetura de Pastas Frontend */}
+      <section className="section-card">
+        <h2>
+          <Layers size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
+          Sequência Guiada de Ficheiros do Frontend
+        </h2>
+        <div className="checklist-box" style={{ marginTop: '1rem' }}>
+          {FRONTEND_STEPS.map((step) => {
+            const done = completedItems.includes(step.key);
+            return (
+              <div
+                key={step.key}
+                onClick={() => onToggleItem(step.key)}
+                className={`checklist-item ${done ? 'completed' : ''}`}
+                style={{ cursor: 'pointer', alignItems: 'flex-start' }}
+              >
+                <div style={{ marginTop: '0.15rem' }}>
+                  {done ? <CheckCircle2 size={20} color="#10b981" /> : <Circle size={20} />}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <span className="status-pill passed" style={{ fontSize: '0.72rem' }}>
+                      {step.order}
+                    </span>
+                    <strong>{step.title}</strong>
+                    <code style={{ fontSize: '0.78rem', opacity: 0.8 }}>{step.file}</code>
+                  </div>
+                  <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.3rem' }}>
+                    {step.desc}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
-      {/* Footer Banner */}
-      <div className="frontend-footer-cta">
-        <p>Revise as 4 Regras de Ouro e a analogia do restaurante no Guia Oficial de Front-end:</p>
-        <button onClick={() => onNavigate('modulo-frontend')} className="btn-secondary">
-          <BookOpen size={16} />
-          Consultar Guia Prático de Arquitetura Front-end
-        </button>
-      </div>
+      {/* Painel Padronizado de Revisão de PR e Submissão */}
+      <ChallengeSubmissionPanel
+        challengeId="challenge-frontend-ui"
+        title="Entrega do Repositório & Checklist do Projeto InfoÔnibus"
+        subtitle="Confirme se a sua interface trata todos os estados de UI e cole o link do repositório Git."
+        requireRepoUrl={true}
+        prChecklist={[
+          'Separei a chamada HTTP num serviço dedicado (services/api.ts) fora do JSX dos componentes?',
+          'Tratei os 4 estados obrigatórios de UI: Loading, Erro de Rede, Lista Vazia (Empty State) e Sucesso?',
+          'O filtro por texto (código/nome) e por sentido (TODOS, IDA, VOLTA) funciona sem recarregar a página?',
+          'O projeto compila sem nenhum erro de TypeScript e sem uso de "any"?',
+        ]}
+      />
     </div>
   );
 };
+export default FrontendChallengeScreen;
