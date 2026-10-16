@@ -16,19 +16,36 @@ import {
 import { ModuleMetadata } from '../types';
 
 interface ModuleNotesPanelProps {
-  module: ModuleMetadata;
+  module?: ModuleMetadata;
+  moduleId?: string;
+  moduleTitle?: string;
   initialNotes?: string;
-  onSaveNotes: (notes: string) => void;
+  initialNote?: string;
+  onSaveNotes?: (notes: string) => void;
+  onSaveNote?: (moduleId: string, note: string) => void;
   isSplitView?: boolean;
 }
 
 export const ModuleNotesPanel: React.FC<ModuleNotesPanelProps> = ({
   module,
-  initialNotes = '',
+  moduleId: propModuleId,
+  moduleTitle: propModuleTitle,
+  initialNotes: propInitialNotes,
+  initialNote: propInitialNote,
   onSaveNotes,
+  onSaveNote,
   isSplitView = false,
 }) => {
-  const [notes, setNotes] = useState<string>(initialNotes);
+  const currentModuleId = module?.id || propModuleId || 'modulo';
+  const currentModuleTitle = module?.title || propModuleTitle || 'Anotações do Módulo';
+  const initialValue = propInitialNotes ?? propInitialNote ?? '';
+
+  const saveNotesCallback = (val: string) => {
+    if (onSaveNotes) onSaveNotes(val);
+    if (onSaveNote) onSaveNote(currentModuleId, val);
+  };
+
+  const [notes, setNotes] = useState<string>(initialValue);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'idle'>('saved');
   const [lastSavedTime, setLastSavedTime] = useState<string>('');
   const [copied, setCopied] = useState<boolean>(false);
@@ -38,11 +55,11 @@ export const ModuleNotesPanel: React.FC<ModuleNotesPanelProps> = ({
 
   // Sincroniza estado inicial se mudar de módulo
   useEffect(() => {
-    setNotes(initialNotes);
+    setNotes(initialValue);
     setSaveStatus('saved');
     const now = new Date();
     setLastSavedTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-  }, [module.id, initialNotes]);
+  }, [currentModuleId, initialValue]);
 
   // Debounced auto-save (800ms)
   const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -55,7 +72,7 @@ export const ModuleNotesPanel: React.FC<ModuleNotesPanelProps> = ({
     }
 
     debounceTimerRef.current = setTimeout(() => {
-      onSaveNotes(val);
+      saveNotesCallback(val);
       setSaveStatus('saved');
       const now = new Date();
       setLastSavedTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
@@ -74,7 +91,7 @@ export const ModuleNotesPanel: React.FC<ModuleNotesPanelProps> = ({
     const newText = `${before}${before.length > 0 && !before.endsWith('\n') ? '\n' : ''}${snippet}\n${after}`;
     
     setNotes(newText);
-    onSaveNotes(newText);
+    saveNotesCallback(newText);
     setSaveStatus('saved');
     const now = new Date();
     setLastSavedTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
@@ -97,7 +114,7 @@ export const ModuleNotesPanel: React.FC<ModuleNotesPanelProps> = ({
     if (!notes.trim()) return;
     const blob = new Blob([
       `# Anotações de Estágio SEMOB-DF\n` +
-      `**Módulo:** ${module.title}\n` +
+      `**Módulo:** ${currentModuleTitle}\n` +
       `**Data:** ${new Date().toLocaleDateString('pt-BR')}\n\n` +
       `---\n\n` +
       notes
@@ -106,7 +123,7 @@ export const ModuleNotesPanel: React.FC<ModuleNotesPanelProps> = ({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `anotacoes-semob-${module.id}.md`;
+    a.download = `anotacoes-semob-${currentModuleId}.md`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -116,7 +133,7 @@ export const ModuleNotesPanel: React.FC<ModuleNotesPanelProps> = ({
     const confirmClear = window.confirm('Deseja realmente limpar as anotações deste módulo?');
     if (confirmClear) {
       setNotes('');
-      onSaveNotes('');
+      saveNotesCallback('');
       setSaveStatus('saved');
     }
   };
@@ -134,7 +151,7 @@ export const ModuleNotesPanel: React.FC<ModuleNotesPanelProps> = ({
           </div>
           <div>
             <h3 className="notes-title">Caderno de Notas Técnicas</h3>
-            <p className="notes-subtitle">Anotações pessoais salvas para: <strong>{module.shortTitle}</strong></p>
+            <p className="notes-subtitle">Anotações pessoais salvas para: <strong>{currentModuleTitle}</strong></p>
           </div>
         </div>
 
@@ -257,7 +274,7 @@ export const ModuleNotesPanel: React.FC<ModuleNotesPanelProps> = ({
           ref={textareaRef}
           value={notes}
           onChange={handleNotesChange}
-          placeholder={`Escreva aqui suas anotações pessoais sobre ${module.shortTitle}...\n\nExemplos de uso:\n• Comandos de terminal que você precisou rodar;\n• Regras e tabelas do banco de dados (ex: dados_mobilidade);\n• Dúvidas que quer tirar com seu supervisor na SUTINF;\n• Lembretes e atalhos para os testes do Quiz.`}
+          placeholder={`Escreva aqui suas anotações pessoais sobre ${currentModuleTitle}...\n\nExemplos de uso:\n• Comandos de terminal que você precisou rodar;\n• Regras e tabelas do banco de dados (ex: dados_mobilidade);\n• Dúvidas que quer tirar com seu supervisor na SUTINF;\n• Lembretes e atalhos para os testes do Quiz.`}
           className={`notes-textarea ${useMonospace ? 'font-mono' : ''}`}
           rows={isSplitView ? 18 : 12}
         />

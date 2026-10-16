@@ -24,471 +24,622 @@ interface SqlChallengeScreenProps {
   onOpenModule: (moduleId: string) => void;
 }
 
-interface SqlQuestion {
-  id: number;
-  level: 'basico' | 'intermediario' | 'avancado';
-  levelLabel: string;
+export interface SqlQuestion {
+  id: string; // 'a' até 'y'
+  part: 'parte1' | 'parte2' | 'parte3';
+  partLabel: string;
   points: number;
   title: string;
-  context: string;
-  tablesUsed: string[];
+  badge: string;
   hint: string;
-  expectedColumns: string[];
-  answerSql: string;
   explanation: string;
+  answerSql: string;
 }
 
-const SQL_QUESTIONS: SqlQuestion[] = [
-  // NÍVEL BÁSICO
+export const SCHEMA_TABLES = [
   {
-    id: 1,
-    level: 'basico',
-    levelLabel: 'Básico',
-    points: 5,
-    title: 'Listagem de Linhas Ativas com Filtro WHERE',
-    context:
-      'A equipe de operação precisa visualizar todas as linhas de ônibus que estão atualmente ativas no sistema, ordenadas pelo código da linha.',
-    tablesUsed: ['semob.linhas'],
-    hint: 'Filtre pela coluna st_ativa = true na cláusula WHERE e ordene por cd_linha.',
-    expectedColumns: ['cd_linha', 'nm_linha', 'vl_tarifa'],
-    answerSql: `SELECT cd_linha, nm_linha, vl_tarifa
-FROM semob.linhas
-WHERE st_ativa = true
-ORDER BY cd_linha ASC;`,
-    explanation:
-      'Selecionamos apenas as colunas necessárias (evitando SELECT *) e aplicamos o filtro booleano explícito no WHERE.',
+    name: 'dados_mobilidade.tab_linha (l)',
+    pk: 'id_linha',
+    columns: 'id_linha, cd_linha, tx_linha, vl_tarifa, fx_tarifaria, sentido',
   },
   {
-    id: 2,
-    level: 'basico',
-    levelLabel: 'Básico',
-    points: 5,
-    title: 'Frota Fabricada a partir de 2022 com Ar-Condicionado',
-    context:
-      'Levante todos os veículos fabricados a partir de 2022 que possuem ar-condicionado para o relatório de modernização da frota.',
-    tablesUsed: ['semob.veiculos'],
-    hint: 'Combine duas condições no WHERE utilizando o operador AND (nr_ano_fabricacao >= 2022 e fl_ar_condicionado = true).',
-    expectedColumns: ['nr_prefixo', 'nr_placa', 'nr_ano_fabricacao', 'qt_capacidade'],
-    answerSql: `SELECT nr_prefixo, nr_placa, nr_ano_fabricacao, qt_capacidade
-FROM semob.veiculos
-WHERE nr_ano_fabricacao >= 2022
-  AND fl_ar_condicionado = true
-ORDER BY nr_ano_fabricacao DESC;`,
-    explanation:
-      'O operador AND garante que ambas as condições de corte sejam atendidas simultaneamente na cláusula WHERE.',
+    name: 'dados_mobilidade.tab_itinerario (i)',
+    pk: 'id_itinerario',
+    columns: 'id_itinerario, id_linha (FK), lin_sentido, lin_extensao, geo_linhas_lin (PostGIS)',
   },
   {
-    id: 3,
-    level: 'basico',
-    levelLabel: 'Básico',
-    points: 5,
-    title: 'Busca Textual de Linhas com Destino ao Plano Piloto / Rodoviária',
-    context:
-      'Identifique todas as linhas ativas cujo nome mencione "Rodoviária" ou "Plano Piloto" (independentemente de maiúsculas/minúsculas).',
-    tablesUsed: ['semob.linhas'],
-    hint: 'Use o operador ILIKE no PostgreSQL combinado com % no WHERE.',
-    expectedColumns: ['cd_linha', 'nm_linha', 'tp_servico'],
-    answerSql: `SELECT cd_linha, nm_linha, tp_servico
-FROM semob.linhas
-WHERE st_ativa = true
-  AND (nm_linha ILIKE '%Rodoviária%' OR nm_linha ILIKE '%Plano Piloto%');`,
-    explanation:
-      'O uso de parênteses ao redor do OR é essencial para não anular o filtro obrigatório st_ativa = true.',
+    name: 'dados_mobilidade.tab_itinerario_descritivo (d)',
+    pk: 'id_itinerario_descritivo',
+    columns: 'id_itinerario (FK), nm_sequencia, nm_via, localidade',
   },
   {
-    id: 4,
-    level: 'basico',
-    levelLabel: 'Básico',
-    points: 5,
-    title: 'Motoristas com CNH Categoria D ou E Ativos',
-    context:
-      'Liste o nome, matrícula e validade da CNH dos motoristas ativos habilitados nas categorias D ou E.',
-    tablesUsed: ['semob.motoristas'],
-    hint: 'Utilize o operador IN (\'D\', \'E\') juntamente com st_ativo = true no WHERE.',
-    expectedColumns: ['nm_motorista', 'nr_matricula', 'tp_categoria_cnh', 'dt_validade_cnh'],
-    answerSql: `SELECT nm_motorista, nr_matricula, tp_categoria_cnh, dt_validade_cnh
-FROM semob.motoristas
-WHERE st_ativo = true
-  AND tp_categoria_cnh IN ('D', 'E')
-ORDER BY dt_validade_cnh ASC;`,
-    explanation:
-      'O operador IN torna a leitura mais limpa do que múltiplos OR para verificar valores de uma mesma coluna.',
+    name: 'dados_mobilidade.tab_operadora_linha (ol)',
+    pk: 'id_operadora_linha',
+    columns: 'id_operadora_linha, id_linha (FK), id_operadora (FK) — Tabela Associativa N:N',
   },
   {
-    id: 5,
-    level: 'basico',
-    levelLabel: 'Básico',
-    points: 5,
-    title: 'Faixa Tarifária Intermediária (BETWEEN)',
-    context:
-      'Retorne as linhas ativas cuja tarifa esteja entre R$ 3,80 e R$ 5,50.',
-    tablesUsed: ['semob.linhas'],
-    hint: 'Use BETWEEN 3.80 AND 5.50 na cláusula WHERE.',
-    expectedColumns: ['cd_linha', 'nm_linha', 'vl_tarifa'],
-    answerSql: `SELECT cd_linha, nm_linha, vl_tarifa
-FROM semob.linhas
-WHERE st_ativa = true
-  AND vl_tarifa BETWEEN 3.80 AND 5.50
-ORDER BY vl_tarifa DESC;`,
-    explanation:
-      'O operador BETWEEN é inclusivo nas duas extremidades (>= 3.80 e <= 5.50).',
+    name: 'dados_mobilidade.tab_operadora (o)',
+    pk: 'id_operadora',
+    columns: 'id_operadora, nm_operadora, nm_cpf_cnpj',
   },
   {
-    id: 6,
-    level: 'basico',
-    levelLabel: 'Básico',
-    points: 5,
-    title: 'Ocorrências Graves Pendentes de Resolução',
-    context:
-      'Liste as ocorrências de gravidade "ALTA" que ainda não possuem data de encerramento (dt_resolvido nulo).',
-    tablesUsed: ['semob.ocorrencias'],
-    hint: 'Em SQL, valores nulos devem ser filtrados no WHERE com IS NULL (nunca com = NULL).',
-    expectedColumns: ['id_ocorrencia', 'id_viagem', 'tp_ocorrencia', 'dt_registro'],
-    answerSql: `SELECT id_ocorrencia, id_viagem, tp_ocorrencia, dt_registro
-FROM semob.ocorrencias
-WHERE ds_gravidade = 'ALTA'
-  AND dt_resolvido IS NULL
-ORDER BY dt_registro DESC;`,
-    explanation:
-      'A verificação IS NULL no WHERE é indispensável para localizar registos em aberto.',
-  },
-
-  // NÍVEL INTERMEDIÁRIO
-  {
-    id: 7,
-    level: 'intermediario',
-    levelLabel: 'Intermediário',
-    points: 10,
-    title: 'Relação de Linhas e suas respetivas Operadoras (INNER JOIN)',
-    context:
-      'Exiba o código da linha, nome da linha e a sigla/nome do órgão/operadora responsável apenas para operadoras e linhas ativas.',
-    tablesUsed: ['semob.linhas', 'semob.orgaos'],
-    hint: 'Faça INNER JOIN entre semob.linhas l e semob.orgaos o usando id_orgao e filtre ambos no WHERE.',
-    expectedColumns: ['cd_linha', 'nm_linha', 'sg_orgao', 'nm_orgao'],
-    answerSql: `SELECT l.cd_linha, l.nm_linha, o.sg_orgao, o.nm_orgao
-FROM semob.linhas l
-INNER JOIN semob.orgaos o ON o.id_orgao = l.id_orgao
-WHERE l.st_ativa = true
-  AND o.st_ativo = true
-ORDER BY o.sg_orgao, l.cd_linha;`,
-    explanation:
-      'Aliases curtos (l, o) deixam o JOIN legível e evitam ambiguidade nas colunas do SELECT e do WHERE.',
-  },
-  {
-    id: 8,
-    level: 'intermediario',
-    levelLabel: 'Intermediário',
-    points: 10,
-    title: 'Total de Viagens e Passageiros Transportados por Linha',
-    context:
-      'Calcule a quantidade de viagens concluídas e o total de passageiros transportados por cada linha ativa.',
-    tablesUsed: ['semob.linhas', 'semob.viagens'],
-    hint: 'Use COUNT() e SUM(qt_passageiros) com GROUP BY e filtre viagens com st_viagem = \'CONCLUIDA\' no WHERE.',
-    expectedColumns: ['cd_linha', 'nm_linha', 'total_viagens', 'total_passageiros'],
-    answerSql: `SELECT
-  l.cd_linha,
-  l.nm_linha,
-  COUNT(v.id_viagem) AS total_viagens,
-  COALESCE(SUM(v.qt_passageiros), 0) AS total_passageiros
-FROM semob.linhas l
-INNER JOIN semob.viagens v ON v.id_linha = l.id_linha
-WHERE l.st_ativa = true
-  AND v.st_viagem = 'CONCLUIDA'
-GROUP BY l.id_linha, l.cd_linha, l.nm_linha
-ORDER BY total_passageiros DESC;`,
-    explanation:
-      'O WHERE filtra as viagens concluídas antes do agrupamento, e o COALESCE evita retorno NULL na soma.',
-  },
-  {
-    id: 9,
-    level: 'intermediario',
-    levelLabel: 'Intermediário',
-    points: 10,
-    title: 'Linhas com Média Superior a 40 Passageiros por Viagem (HAVING)',
-    context:
-      'Identifique quais linhas ativas possuem média de passageiros por viagem concluída acima de 40.',
-    tablesUsed: ['semob.linhas', 'semob.viagens'],
-    hint: 'Filtre linhas/viagens no WHERE, agrupe com GROUP BY e aplique o corte da função agregada AVG() no HAVING.',
-    expectedColumns: ['cd_linha', 'nm_linha', 'media_passageiros'],
-    answerSql: `SELECT
-  l.cd_linha,
-  l.nm_linha,
-  ROUND(AVG(v.qt_passageiros), 2) AS media_passageiros
-FROM semob.linhas l
-INNER JOIN semob.viagens v ON v.id_linha = l.id_linha
-WHERE l.st_ativa = true
-  AND v.st_viagem = 'CONCLUIDA'
-GROUP BY l.id_linha, l.cd_linha, l.nm_linha
-HAVING AVG(v.qt_passageiros) > 40
-ORDER BY media_passageiros DESC;`,
-    explanation:
-      'WHERE filtra linhas individuais antes do GROUP BY; HAVING filtra o resultado agregado depois do GROUP BY.',
-  },
-  {
-    id: 10,
-    level: 'intermediario',
-    levelLabel: 'Intermediário',
-    points: 10,
-    title: 'Veículos Ativos Sem Nenhuma Viagem Registada (LEFT JOIN)',
-    context:
-      'A auditoria quer descobrir quais veículos ativos da frota nunca realizaram uma viagem registada no sistema.',
-    tablesUsed: ['semob.veiculos', 'semob.viagens'],
-    hint: 'Use LEFT JOIN de veiculos para viagens e filtre no WHERE onde v.id_viagem IS NULL.',
-    expectedColumns: ['nr_prefixo', 'nr_placa', 'nm_modelo'],
-    answerSql: `SELECT ve.nr_prefixo, ve.nr_placa, ve.nm_modelo
-FROM semob.veiculos ve
-LEFT JOIN semob.viagens vi ON vi.id_veiculo = ve.id_veiculo
-WHERE ve.st_status = 'ATIVO'
-  AND vi.id_viagem IS NULL
-ORDER BY ve.nr_prefixo;`,
-    explanation:
-      'O padrão LEFT JOIN + chave da direita IS NULL no WHERE é a forma clássica de encontrar registos órfãos/sem correspondência.',
-  },
-  {
-    id: 11,
-    level: 'intermediario',
-    levelLabel: 'Intermediário',
-    points: 10,
-    title: 'Relatório Completo de Viagens com Motorista, Veículo e Linha',
-    context:
-      'Monte a visão operacional contendo código da linha, prefixo do veículo, nome do motorista e horário de partida das viagens concluídas.',
-    tablesUsed: ['semob.viagens', 'semob.linhas', 'semob.veiculos', 'semob.motoristas'],
-    hint: 'Encadeie 3 INNER JOINs a partir de semob.viagens e aplique o filtro no WHERE.',
-    expectedColumns: ['cd_linha', 'nr_prefixo', 'nm_motorista', 'dt_partida', 'qt_passageiros'],
-    answerSql: `SELECT
-  l.cd_linha,
-  ve.nr_prefixo,
-  m.nm_motorista,
-  vi.dt_partida,
-  vi.qt_passageiros
-FROM semob.viagens vi
-INNER JOIN semob.linhas l ON l.id_linha = vi.id_linha
-INNER JOIN semob.veiculos ve ON ve.id_veiculo = vi.id_veiculo
-INNER JOIN semob.motoristas m ON m.id_motorista = vi.id_motorista
-WHERE vi.st_viagem = 'CONCLUIDA'
-ORDER BY vi.dt_partida DESC;`,
-    explanation:
-      'Relacionamos a tabela fato (viagens) com as três dimensões operacionais mantendo filtro explícito no WHERE.',
-  },
-  {
-    id: 12,
-    level: 'intermediario',
-    levelLabel: 'Intermediário',
-    points: 10,
-    title: 'Receita Estimada por Operadora (Multiplicação Agregada)',
-    context:
-      'Calcule a receita bruta estimada (passageiros × tarifa da linha) agrupada por operadora apenas para viagens concluídas.',
-    tablesUsed: ['semob.orgaos', 'semob.linhas', 'semob.viagens'],
-    hint: 'Multiplique vi.qt_passageiros * l.vl_tarifa dentro do SUM() e filtre no WHERE.',
-    expectedColumns: ['sg_orgao', 'nm_orgao', 'receita_estimada'],
-    answerSql: `SELECT
-  o.sg_orgao,
-  o.nm_orgao,
-  SUM(vi.qt_passageiros * l.vl_tarifa) AS receita_estimada
-FROM semob.orgaos o
-INNER JOIN semob.linhas l ON l.id_orgao = o.id_orgao
-INNER JOIN semob.viagens vi ON vi.id_linha = l.id_linha
-WHERE vi.st_viagem = 'CONCLUIDA'
-  AND o.st_ativo = true
-GROUP BY o.id_orgao, o.sg_orgao, o.nm_orgao
-ORDER BY receita_estimada DESC;`,
-    explanation:
-      'A agregação financeira exige que o cálculo seja feito linha a linha dentro do SUM() após filtrar apenas viagens válidas no WHERE.',
-  },
-
-  // NÍVEL AVANÇADO
-  {
-    id: 13,
-    level: 'avancado',
-    levelLabel: 'Avançado',
-    points: 15,
-    title: 'Linhas com Tarifa Acima da Média Geral (Subquery + WHERE)',
-    context:
-      'Liste as linhas ativas cuja tarifa é superior à média tarifária de todas as linhas ativas do sistema.',
-    tablesUsed: ['semob.linhas'],
-    hint: 'Compare vl_tarifa > (SELECT AVG(vl_tarifa) FROM semob.linhas WHERE st_ativa = true).',
-    expectedColumns: ['cd_linha', 'nm_linha', 'vl_tarifa'],
-    answerSql: `SELECT cd_linha, nm_linha, vl_tarifa
-FROM semob.linhas
-WHERE st_ativa = true
-  AND vl_tarifa > (
-    SELECT AVG(vl_tarifa)
-    FROM semob.linhas
-    WHERE st_ativa = true
-  )
-ORDER BY vl_tarifa DESC;`,
-    explanation:
-      'Tanto a consulta externa quanto a subconsulta utilizam cláusula WHERE para garantir que linhas inativas não distorçam a média.',
-  },
-  {
-    id: 14,
-    level: 'avancado',
-    levelLabel: 'Avançado',
-    points: 15,
-    title: 'Ranking das Top 3 Linhas por Operadora (CTE + ROW_NUMBER)',
-    context:
-      'Utilizando Window Functions e CTE (WITH), classifique as 3 linhas com maior volume de passageiros dentro de cada operadora.',
-    tablesUsed: ['semob.orgaos', 'semob.linhas', 'semob.viagens'],
-    hint: 'Crie uma CTE com ROW_NUMBER() OVER (PARTITION BY o.id_orgao ORDER BY SUM(vi.qt_passageiros) DESC) e filtre rn <= 3 no WHERE externo.',
-    expectedColumns: ['sg_orgao', 'cd_linha', 'total_passageiros', 'ranking'],
-    answerSql: `WITH ranking_linhas AS (
-  SELECT
-    o.sg_orgao,
-    l.cd_linha,
-    l.nm_linha,
-    SUM(vi.qt_passageiros) AS total_passageiros,
-    ROW_NUMBER() OVER (
-      PARTITION BY o.id_orgao
-      ORDER BY SUM(vi.qt_passageiros) DESC
-    ) AS ranking
-  FROM semob.orgaos o
-  INNER JOIN semob.linhas l ON l.id_orgao = o.id_orgao
-  INNER JOIN semob.viagens vi ON vi.id_linha = l.id_linha
-  WHERE vi.st_viagem = 'CONCLUIDA'
-    AND l.st_ativa = true
-  GROUP BY o.id_orgao, o.sg_orgao, l.id_linha, l.cd_linha, l.nm_linha
-)
-SELECT sg_orgao, cd_linha, nm_linha, total_passageiros, ranking
-FROM ranking_linhas
-WHERE ranking <= 3
-ORDER BY sg_orgao, ranking;`,
-    explanation:
-      'A CTE organiza a partição analítica por operadora e a query principal filtra o top 3 no WHERE.',
-  },
-  {
-    id: 15,
-    level: 'avancado',
-    levelLabel: 'Avançado',
-    points: 15,
-    title: 'Taxa de Ocorrências por 100 Viagens (Indicador de Risco)',
-    context:
-      'Calcule o percentual de viagens que tiveram ocorrências registadas por linha ativa.',
-    tablesUsed: ['semob.linhas', 'semob.viagens', 'semob.ocorrencias'],
-    hint: 'Use COUNT(DISTINCT oc.id_viagem) dividido por NULLIF(COUNT(DISTINCT vi.id_viagem), 0).',
-    expectedColumns: ['cd_linha', 'total_viagens', 'viagens_com_ocorrencia', 'taxa_percentual'],
-    answerSql: `SELECT
-  l.cd_linha,
-  COUNT(DISTINCT vi.id_viagem) AS total_viagens,
-  COUNT(DISTINCT oc.id_viagem) AS viagens_com_ocorrencia,
-  ROUND(
-    (COUNT(DISTINCT oc.id_viagem)::numeric / NULLIF(COUNT(DISTINCT vi.id_viagem), 0)) * 100,
-    2
-  ) AS taxa_percentual
-FROM semob.linhas l
-INNER JOIN semob.viagens vi ON vi.id_linha = l.id_linha
-LEFT JOIN semob.ocorrencias oc ON oc.id_viagem = vi.id_viagem
-WHERE l.st_ativa = true
-  AND vi.st_viagem = 'CONCLUIDA'
-GROUP BY l.id_linha, l.cd_linha
-ORDER BY taxa_percentual DESC;`,
-    explanation:
-      'O uso de NULLIF previne erro de divisão por zero e COUNT(DISTINCT) evita duplicar viagens que tiveram mais de uma ocorrência.',
-  },
-  {
-    id: 16,
-    level: 'avancado',
-    levelLabel: 'Avançado',
-    points: 15,
-    title: 'Classificação de Ocupação das Viagens (CASE WHEN + WHERE)',
-    context:
-      'Classifique cada viagem concluída em "LOTADO" (>= 90% da capacidade do veículo), "NORMAL" (entre 40% e 89%) ou "BAIXA OCUPAÇÃO" (< 40%).',
-    tablesUsed: ['semob.viagens', 'semob.veiculos', 'semob.linhas'],
-    hint: 'Compare vi.qt_passageiros com ve.qt_capacidade dentro de uma expressão CASE WHEN.',
-    expectedColumns: ['id_viagem', 'cd_linha', 'qt_passageiros', 'qt_capacidade', 'nivel_ocupacao'],
-    answerSql: `SELECT
-  vi.id_viagem,
-  l.cd_linha,
-  vi.qt_passageiros,
-  ve.qt_capacidade,
-  CASE
-    WHEN vi.qt_passageiros >= (ve.qt_capacidade * 0.9) THEN 'LOTADO'
-    WHEN vi.qt_passageiros >= (ve.qt_capacidade * 0.4) THEN 'NORMAL'
-    ELSE 'BAIXA OCUPAÇÃO'
-  END AS nivel_ocupacao
-FROM semob.viagens vi
-INNER JOIN semob.veiculos ve ON ve.id_veiculo = vi.id_veiculo
-INNER JOIN semob.linhas l ON l.id_linha = vi.id_linha
-WHERE vi.st_viagem = 'CONCLUIDA'
-  AND ve.qt_capacidade > 0
-ORDER BY vi.dt_partida DESC;`,
-    explanation:
-      'Garantimos ve.qt_capacidade > 0 no WHERE e aplicamos a regra de negócio diretamente na projeção com CASE WHEN.',
-  },
-  {
-    id: 17,
-    level: 'avancado',
-    levelLabel: 'Avançado',
-    points: 15,
-    title: 'Auditoria de Motoristas com Viagens em Veículos em Manutenção (EXISTS)',
-    context:
-      'Verifique se existe algum motorista ativo que possua viagem associada a um veículo cujo status atual é "MANUTENCAO".',
-    tablesUsed: ['semob.motoristas', 'semob.viagens', 'semob.veiculos'],
-    hint: 'Utilize EXISTS no WHERE correlacionando o id_motorista com a subconsulta.',
-    expectedColumns: ['id_motorista', 'nm_motorista', 'nr_matricula'],
-    answerSql: `SELECT m.id_motorista, m.nm_motorista, m.nr_matricula
-FROM semob.motoristas m
-WHERE m.st_ativo = true
-  AND EXISTS (
-    SELECT 1
-    FROM semob.viagens vi
-    INNER JOIN semob.veiculos ve ON ve.id_veiculo = vi.id_veiculo
-    WHERE vi.id_motorista = m.id_motorista
-      AND ve.st_status = 'MANUTENCAO'
-  );`,
-    explanation:
-      'O operador EXISTS interrompe a busca assim que encontra a primeira ocorrência, sendo mais performático que IN em tabelas grandes.',
-  },
-  {
-    id: 18,
-    level: 'avancado',
-    levelLabel: 'Avançado',
-    points: 15,
-    title: 'Atualização Segura de Tarifa em Lote com Filtro Estrito WHERE',
-    context:
-      'Aplique um reajuste de 5% apenas nas linhas ativas do serviço "CONVENCIONAL" pertencentes ao órgão de ID 1.',
-    tablesUsed: ['semob.linhas'],
-    hint: 'Jamais execute UPDATE sem WHERE! Especifique st_ativa = true, tp_servico = \'CONVENCIONAL\' e id_orgao = 1.',
-    expectedColumns: ['Comando DML UPDATE com WHERE explícito'],
-    answerSql: `UPDATE semob.linhas
-SET vl_tarifa = ROUND(vl_tarifa * 1.05, 2)
-WHERE st_ativa = true
-  AND tp_servico = 'CONVENCIONAL'
-  AND id_orgao = 1;`,
-    explanation:
-      'Em produção, todo comando UPDATE ou DELETE deve obrigatoriamente conter cláusula WHERE restritiva validada previamente com um SELECT.',
+    name: 'dados_mobilidade.tab_horario (h)',
+    pk: 'id_horario',
+    columns: 'id_horario, id_operadora_linha (FK), sentido, hr_prevista (HHMMSS), segunda..domingo',
   },
 ];
 
-const SCHEMA_TABLES = [
+export const SQL_QUESTIONS: SqlQuestion[] = [
+  // PARTE I: INVESTIGANDO A LINHA 0.111 (a - h)
   {
-    name: 'semob.orgaos',
-    pk: 'id_orgao',
-    columns: 'id_orgao, sg_orgao, nm_orgao, st_ativo',
+    id: 'a',
+    part: 'parte1',
+    partLabel: 'Parte I • Linha 0.111',
+    points: 4,
+    title: 'a. Liste as linhas de ônibus disponíveis, trazendo apenas o nome e o número da linha.',
+    badge: 'tab_linha',
+    hint: 'Envolve apenas a tabela principal de linhas (tab_linha). Use projeção de colunas com apelidos (AS).',
+    explanation: 'Consulta de catálogo simples em tabela única. Projetamos tx_linha e cd_linha aplicando apelidos legíveis.',
+    answerSql: `SELECT 
+    tx_linha AS nome_linha,
+    cd_linha AS numero_linha
+FROM 
+    dados_mobilidade.tab_linha;`,
   },
   {
-    name: 'semob.linhas',
-    pk: 'id_linha',
-    columns: 'id_linha, id_orgao (FK), cd_linha, nm_linha, vl_tarifa, tp_servico, st_ativa',
+    id: 'b',
+    part: 'parte1',
+    partLabel: 'Parte I • Linha 0.111',
+    points: 4,
+    title: 'b. Apresente o nome, código e extensão especificamente da linha 0.111.',
+    badge: 'tab_linha + tab_itinerario',
+    hint: 'Relacione tab_linha e tab_itinerario através da chave id_linha na cláusula WHERE.',
+    explanation: 'O nome e o código estão em tab_linha, mas a extensão reside em tab_itinerario. Declaramos ambas no FROM e igualamos l.id_linha = i.id_linha no WHERE.',
+    answerSql: `SELECT 
+    l.tx_linha AS nome_linha,
+    l.cd_linha AS codigo_linha,
+    i.lin_extensao AS extensao_km
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND l.cd_linha = '0.111';`,
   },
   {
-    name: 'semob.veiculos',
-    pk: 'id_veiculo',
-    columns: 'id_veiculo, id_orgao (FK), nr_prefixo, nr_placa, nm_modelo, nr_ano_fabricacao, qt_capacidade, fl_ar_condicionado, st_status',
+    id: 'c',
+    part: 'parte1',
+    partLabel: 'Parte I • Linha 0.111',
+    points: 4,
+    title: 'c. Qual é a extensão total da linha 0.111?',
+    badge: 'SUM() + GROUP BY',
+    hint: 'Como a linha possui mais de um sentido cadastrado, utilize SUM(i.lin_extensao) agrupado pelo código da linha.',
+    explanation: 'A linha possui trajetos de ida e volta cadastrados separadamente. Somamos os registos com SUM(i.lin_extensao) agrupando por l.cd_linha.',
+    answerSql: `SELECT 
+    l.cd_linha,
+    SUM(i.lin_extensao) AS extensao_total_km
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND l.cd_linha = '0.111'
+GROUP BY 
+    l.cd_linha;`,
   },
   {
-    name: 'semob.motoristas',
-    pk: 'id_motorista',
-    columns: 'id_motorista, id_orgao (FK), nm_motorista, nr_matricula, tp_categoria_cnh, dt_validade_cnh, st_ativo',
+    id: 'd',
+    part: 'parte1',
+    partLabel: 'Parte I • Linha 0.111',
+    points: 4,
+    title: 'd. Qual o traçado espacial (geometria) da linha 0.111?',
+    badge: 'PostGIS • ST_AsText',
+    hint: 'A coluna geométrica geo_linhas_lin é binária. Utilize a função PostGIS ST_AsText() para torná-la legível em WKT.',
+    explanation: 'A coluna geo_linhas_lin é do tipo geometry(linestring, 4326). Usamos public.ST_AsText() para convertê-la em coordenadas vetoriais legíveis.',
+    answerSql: `SELECT 
+    l.cd_linha,
+    i.lin_sentido,
+    public.ST_AsText(i.geo_linhas_lin) AS wkt_geometria
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND l.cd_linha = '0.111';`,
   },
   {
-    name: 'semob.viagens',
-    pk: 'id_viagem',
-    columns: 'id_viagem, id_linha (FK), id_veiculo (FK), id_motorista (FK), dt_partida, dt_chegada, qt_passageiros, vl_km_percorrido, st_viagem',
+    id: 'e',
+    part: 'parte1',
+    partLabel: 'Parte I • Linha 0.111',
+    points: 4,
+    title: 'e. Qual é o itinerário em formato de texto descritivo da linha 0.111?',
+    badge: '3 Tabelas via WHERE',
+    hint: 'Navegue de tab_linha até tab_itinerario e desta até tab_itinerario_descritivo usando WHERE, ordenando por nm_sequencia.',
+    explanation: 'O nome das vias está em tab_itinerario_descritivo (d). Ligamos l.id_linha = i.id_linha e i.id_itinerario = d.id_itinerario no WHERE.',
+    answerSql: `SELECT 
+    l.cd_linha,
+    i.lin_sentido,
+    d.nm_sequencia,
+    d.nm_via,
+    d.localidade
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i,
+    dados_mobilidade.tab_itinerario_descritivo d
+WHERE 
+    l.id_linha = i.id_linha
+    AND i.id_itinerario = d.id_itinerario
+    AND l.cd_linha = '0.111'
+ORDER BY 
+    i.lin_sentido ASC,
+    d.nm_sequencia ASC;`,
   },
   {
-    name: 'semob.ocorrencias',
-    pk: 'id_ocorrencia',
-    columns: 'id_ocorrencia, id_viagem (FK), tp_ocorrencia, ds_gravidade, ds_observacao, dt_registro, dt_resolvido',
+    id: 'f',
+    part: 'parte1',
+    partLabel: 'Parte I • Linha 0.111',
+    points: 4,
+    title: 'f. Qual o valor atual da tarifa da linha 0.111?',
+    badge: 'tab_linha',
+    hint: 'No PostgreSQL, essa informação reside diretamente na tabela tab_linha na coluna vl_tarifa.',
+    explanation: 'No banco PostgreSQL da SEMOB, o valor tarifário está desnormalizado e acessível diretamente na coluna vl_tarifa de tab_linha.',
+    answerSql: `SELECT 
+    cd_linha,
+    tx_linha,
+    vl_tarifa,
+    fx_tarifaria
+FROM 
+    dados_mobilidade.tab_linha
+WHERE 
+    cd_linha = '0.111';`,
+  },
+  {
+    id: 'g',
+    part: 'parte1',
+    partLabel: 'Parte I • Linha 0.111',
+    points: 4,
+    title: 'g. Quais são os horários de operação da linha 0.111, detalhados por dia da semana e ordem de partida?',
+    badge: 'tab_horario',
+    hint: 'Relacione tab_linha, a associativa tab_operadora_linha e tab_horario no WHERE.',
+    explanation: 'Associamos tab_linha com tab_operadora_linha (ol) e esta com tab_horario (h) via id_operadora_linha.',
+    answerSql: `SELECT 
+    l.cd_linha,
+    h.sentido,
+    h.hr_prevista,
+    h.segunda,
+    h.terca,
+    h.quarta,
+    h.quinta,
+    h.sexta,
+    h.sabado,
+    h.domingo
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_operadora_linha ol,
+    dados_mobilidade.tab_horario h
+WHERE 
+    l.id_linha = ol.id_linha
+    AND ol.id_operadora_linha = h.id_operadora_linha
+    AND l.cd_linha = '0.111'
+ORDER BY 
+    h.sentido ASC,
+    h.hr_prevista ASC;`,
+  },
+  {
+    id: 'h',
+    part: 'parte1',
+    partLabel: 'Parte I • Linha 0.111',
+    points: 4,
+    title: 'h. Qual empresa permissionária opera a linha 0.111?',
+    badge: 'tab_operadora',
+    hint: 'Conecte tab_linha à tab_operadora passando pela associativa tab_operadora_linha no WHERE.',
+    explanation: 'A relação N:N entre linhas e operadoras é resolvida por tab_operadora_linha: l.id_linha = ol.id_linha AND ol.id_operadora = o.id_operadora.',
+    answerSql: `SELECT 
+    l.cd_linha,
+    l.tx_linha,
+    o.nm_operadora,
+    o.nm_cpf_cnpj
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_operadora_linha ol,
+    dados_mobilidade.tab_operadora o
+WHERE 
+    l.id_linha = ol.id_linha
+    AND ol.id_operadora = o.id_operadora
+    AND l.cd_linha = '0.111';`,
+  },
+
+  // PARTE II: COMPREENDENDO OS SENTIDOS — LINHA 0.170 (i - o)
+  {
+    id: 'i',
+    part: 'parte2',
+    partLabel: 'Parte II • Linha 0.170',
+    points: 4,
+    title: 'i. Apresente o nome, código e extensão da linha 0.170.',
+    badge: 'tab_linha + tab_itinerario',
+    hint: 'Semelhante ao exercício b, mas filtrando pelo código 0.170 no WHERE.',
+    explanation: 'Junção explícita no WHERE entre tab_linha e tab_itinerario filtrando cd_linha = \'0.170\'.',
+    answerSql: `SELECT 
+    l.cd_linha,
+    l.tx_linha,
+    i.lin_extensao AS extensao_km
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND l.cd_linha = '0.170';`,
+  },
+  {
+    id: 'j',
+    part: 'parte2',
+    partLabel: 'Parte II • Linha 0.170',
+    points: 4,
+    title: 'j. Qual a extensão da linha 0.170, separada por sentido (ida/volta)?',
+    badge: 'Segmentação de Sentido',
+    hint: 'Projete a coluna i.lin_sentido ao lado da extensão sem aplicar soma agregada.',
+    explanation: 'Projetamos individualmente i.lin_sentido para visualizar a quilometragem na Ida (I) e na Volta (V).',
+    answerSql: `SELECT 
+    l.cd_linha,
+    l.tx_linha,
+    i.lin_sentido,
+    i.lin_extensao AS extensao_km
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND l.cd_linha = '0.170'
+ORDER BY 
+    i.lin_sentido ASC;`,
+  },
+  {
+    id: 'k',
+    part: 'parte2',
+    partLabel: 'Parte II • Linha 0.170',
+    points: 4,
+    title: 'k. Qual o traçado espacial da linha 0.170, segmentado por sentido?',
+    badge: 'PostGIS por Sentido',
+    hint: 'Aplique public.ST_AsText(i.geo_linhas_lin) projetando i.lin_sentido.',
+    explanation: 'O traçado geográfico de ida difere da volta devido a vias de mão única. ST_AsText() projeta cada geometria por sentido.',
+    answerSql: `SELECT 
+    l.cd_linha,
+    i.lin_sentido,
+    public.ST_AsText(i.geo_linhas_lin) AS wkt_geometria
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND l.cd_linha = '0.170';`,
+  },
+  {
+    id: 'l',
+    part: 'parte2',
+    partLabel: 'Parte II • Linha 0.170',
+    points: 4,
+    title: 'l. Qual o itinerário em formato de texto da linha 0.170, por sentido?',
+    badge: 'Vias Ordenadas',
+    hint: 'Vincule tab_itinerario_descritivo ordenando por i.lin_sentido ASC, d.nm_sequencia ASC.',
+    explanation: 'Unimos as 3 tabelas via WHERE garantindo a ordenação sequencial das vias para cada sentido.',
+    answerSql: `SELECT 
+    l.cd_linha,
+    i.lin_sentido,
+    d.nm_sequencia,
+    d.nm_via,
+    d.localidade
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i,
+    dados_mobilidade.tab_itinerario_descritivo d
+WHERE 
+    l.id_linha = i.id_linha
+    AND i.id_itinerario = d.id_itinerario
+    AND l.cd_linha = '0.170'
+ORDER BY 
+    i.lin_sentido ASC,
+    d.nm_sequencia ASC;`,
+  },
+  {
+    id: 'm',
+    part: 'parte2',
+    partLabel: 'Parte II • Linha 0.170',
+    points: 4,
+    title: 'm. Qual o valor da tarifa da linha 0.170?',
+    badge: 'Tarifa',
+    hint: 'Consulta direta em tab_linha filtrando cd_linha = \'0.170\'.',
+    explanation: 'Consulta pontual sobre a coluna vl_tarifa filtrada por cd_linha = \'0.170\'.',
+    answerSql: `SELECT 
+    cd_linha,
+    tx_linha,
+    vl_tarifa
+FROM 
+    dados_mobilidade.tab_linha
+WHERE 
+    cd_linha = '0.170';`,
+  },
+  {
+    id: 'n',
+    part: 'parte2',
+    partLabel: 'Parte II • Linha 0.170',
+    points: 4,
+    title: 'n. Quais são os horários (por dia da semana e ordem de partida) da linha 0.170, agrupados por sentido?',
+    badge: 'Quadro Horário',
+    hint: 'Ordene os resultados por h.sentido ASC, h.hr_prevista ASC.',
+    explanation: 'Conectamos a linha até a tabela de horários através de tab_operadora_linha, ordenando pelo sentido e hora prevista.',
+    answerSql: `SELECT 
+    l.cd_linha,
+    h.sentido,
+    h.hr_prevista,
+    h.segunda,
+    h.terca,
+    h.quarta,
+    h.quinta,
+    h.sexta,
+    h.sabado,
+    h.domingo
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_operadora_linha ol,
+    dados_mobilidade.tab_horario h
+WHERE 
+    l.id_linha = ol.id_linha
+    AND ol.id_operadora_linha = h.id_operadora_linha
+    AND l.cd_linha = '0.170'
+ORDER BY 
+    h.sentido ASC,
+    h.hr_prevista ASC;`,
+  },
+  {
+    id: 'o',
+    part: 'parte2',
+    partLabel: 'Parte II • Linha 0.170',
+    points: 4,
+    title: 'o. Qual empresa opera a linha 0.170?',
+    badge: 'Operadora',
+    hint: 'Vinculação de 3 tabelas no WHERE filtrando por cd_linha = \'0.170\'.',
+    explanation: 'Vinculamos tab_linha, tab_operadora_linha e tab_operadora no WHERE.',
+    answerSql: `SELECT 
+    l.cd_linha,
+    o.nm_operadora
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_operadora_linha ol,
+    dados_mobilidade.tab_operadora o
+WHERE 
+    l.id_linha = ol.id_linha
+    AND ol.id_operadora = o.id_operadora
+    AND l.cd_linha = '0.170';`,
+  },
+
+  // PARTE III: CRUZAMENTOS ESTRATÉGICOS & BI (p - y)
+  {
+    id: 'p',
+    part: 'parte3',
+    partLabel: 'Parte III • Cruzamentos & BI',
+    points: 4,
+    title: 'p. Quais linhas do sistema possuem uma extensão superior a 70 km?',
+    badge: 'WHERE lin_extensao > 70',
+    hint: 'Use i.lin_extensao > 70.00 no WHERE combinado com SELECT DISTINCT.',
+    explanation: 'Fazemos a junção de tab_linha com tab_itinerario no WHERE e filtramos i.lin_extensao > 70.00.',
+    answerSql: `SELECT DISTINCT 
+    l.cd_linha,
+    l.tx_linha,
+    i.lin_sentido,
+    i.lin_extensao
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND i.lin_extensao > 70.00
+ORDER BY 
+    i.lin_extensao DESC;`,
+  },
+  {
+    id: 'q',
+    part: 'parte3',
+    partLabel: 'Parte III • Cruzamentos & BI',
+    points: 4,
+    title: 'q. Qual é a linha de ônibus mais curta de todo o sistema?',
+    badge: 'Subconsulta / MIN()',
+    hint: 'Use uma subconsulta com SELECT MIN(lin_extensao) WHERE lin_extensao > 0.',
+    explanation: 'A subconsulta calcula o menor valor positivo de extensão com MIN(lin_extensao) e a consulta externa recupera os dados da linha.',
+    answerSql: `SELECT 
+    l.cd_linha,
+    l.tx_linha,
+    i.lin_sentido,
+    i.lin_extensao
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND i.lin_extensao = (
+        SELECT MIN(lin_extensao) 
+        FROM dados_mobilidade.tab_itinerario 
+        WHERE lin_extensao > 0
+    );`,
+  },
+  {
+    id: 'r',
+    part: 'parte3',
+    partLabel: 'Parte III • Cruzamentos & BI',
+    points: 4,
+    title: 'r. Qual é a linha de ônibus mais longa do sistema?',
+    badge: 'Subconsulta / MAX()',
+    hint: 'Utilize subconsulta escalar com SELECT MAX(lin_extensao).',
+    explanation: 'Utilizamos a função de agregação MAX(lin_extensao) na subconsulta para encontrar o maior percurso do DF.',
+    answerSql: `SELECT 
+    l.cd_linha,
+    l.tx_linha,
+    i.lin_sentido,
+    i.lin_extensao
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND i.lin_extensao = (
+        SELECT MAX(lin_extensao) 
+        FROM dados_mobilidade.tab_itinerario
+    );`,
+  },
+  {
+    id: 's',
+    part: 'parte3',
+    partLabel: 'Parte III • Cruzamentos & BI',
+    points: 4,
+    title: 's. Quantas linhas no total operam no formato "circular"?',
+    badge: 'COUNT(DISTINCT)',
+    hint: 'Combine COUNT(DISTINCT l.id_linha) com o filtro de sentido circular no WHERE.',
+    explanation: 'O formato circular é sinalizado por C em lin_sentido. COUNT(DISTINCT l.id_linha) garante contagem única por linha.',
+    answerSql: `SELECT 
+    COUNT(DISTINCT l.id_linha) AS total_linhas_circulares
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND (i.lin_sentido = 'C' OR i.lin_sentido ILIKE '%CIRC%');`,
+  },
+  {
+    id: 't',
+    part: 'parte3',
+    partLabel: 'Parte III • Cruzamentos & BI',
+    points: 4,
+    title: 't. Dentre as linhas de sentido circular, qual possui a maior extensão?',
+    badge: 'ORDER BY + LIMIT 1',
+    hint: 'Filtre apenas circulares no WHERE, ordene por i.lin_extensao DESC e aplique LIMIT 1.',
+    explanation: 'Filtramos apenas itinerários circulares, ordenamos pela extensão de forma decrescente e cortamos no primeiro registo com LIMIT 1.',
+    answerSql: `SELECT 
+    l.cd_linha,
+    l.tx_linha,
+    i.lin_extensao
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_itinerario i
+WHERE 
+    l.id_linha = i.id_linha
+    AND (i.lin_sentido = 'C' OR i.lin_sentido ILIKE '%CIRC%')
+ORDER BY 
+    i.lin_extensao DESC
+LIMIT 1;`,
+  },
+  {
+    id: 'u',
+    part: 'parte3',
+    partLabel: 'Parte III • Cruzamentos & BI',
+    points: 4,
+    title: 'u. Quais linhas possuem a tarifa exata de R$ 5,50?',
+    badge: 'vl_tarifa = 5.50',
+    hint: 'Filtro direto na coluna vl_tarifa = 5.50 na tabela tab_linha.',
+    explanation: 'Filtro exato na coluna vl_tarifa = 5.50 ordenado pelo código da linha.',
+    answerSql: `SELECT 
+    cd_linha,
+    tx_linha,
+    vl_tarifa
+FROM 
+    dados_mobilidade.tab_linha
+WHERE 
+    vl_tarifa = 5.50
+ORDER BY 
+    cd_linha ASC;`,
+  },
+  {
+    id: 'v',
+    part: 'parte3',
+    partLabel: 'Parte III • Cruzamentos & BI',
+    points: 4,
+    title: 'v. Quais linhas são operadas especificamente pela empresa "Piracicabana"?',
+    badge: 'ILIKE em tab_operadora',
+    hint: 'Conecte tab_linha, tab_operadora_linha e tab_operadora no WHERE e filtre o.nm_operadora ILIKE \'%PIRACICABANA%\'.',
+    explanation: 'Ligamos as 3 tabelas operacionais no WHERE e aplicamos ILIKE sobre o nome da operadora.',
+    answerSql: `SELECT DISTINCT 
+    l.cd_linha,
+    l.tx_linha,
+    o.nm_operadora
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_operadora_linha ol,
+    dados_mobilidade.tab_operadora o
+WHERE 
+    l.id_linha = ol.id_linha
+    AND ol.id_operadora = o.id_operadora
+    AND o.nm_operadora ILIKE '%PIRACICABANA%'
+ORDER BY 
+    l.cd_linha ASC;`,
+  },
+  {
+    id: 'w',
+    part: 'parte3',
+    partLabel: 'Parte III • Cruzamentos & BI',
+    points: 4,
+    title: 'w. Quais linhas contêm a palavra "Gama" em sua nomenclatura?',
+    badge: 'ILIKE \'%GAMA%\'',
+    hint: 'Aplique busca textual com curingas na coluna tx_linha ILIKE \'%GAMA%\'.',
+    explanation: 'O curinga %GAMA% localiza qualquer registo onde a palavra apareça no início, meio ou fim de tx_linha.',
+    answerSql: `SELECT 
+    cd_linha,
+    tx_linha
+FROM 
+    dados_mobilidade.tab_linha
+WHERE 
+    tx_linha ILIKE '%GAMA%'
+ORDER BY 
+    cd_linha ASC;`,
+  },
+  {
+    id: 'x',
+    part: 'parte3',
+    partLabel: 'Parte III • Cruzamentos & BI',
+    points: 4,
+    title: 'x. Quais linhas do sistema possuem operação compartilhada (mais de uma empresa operando)?',
+    badge: 'GROUP BY + HAVING COUNT > 1',
+    hint: 'Agrupe por linha e use HAVING COUNT(DISTINCT ol.id_operadora) > 1.',
+    explanation: 'Agrupamos tab_operadora_linha por linha e filtramos os grupos com HAVING COUNT(DISTINCT ol.id_operadora) > 1.',
+    answerSql: `SELECT 
+    l.cd_linha,
+    l.tx_linha,
+    COUNT(DISTINCT ol.id_operadora) AS qtd_operadoras
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_operadora_linha ol
+WHERE 
+    l.id_linha = ol.id_linha
+GROUP BY 
+    l.cd_linha,
+    l.tx_linha
+HAVING 
+    COUNT(DISTINCT ol.id_operadora) > 1
+ORDER BY 
+    qtd_operadoras DESC;`,
+  },
+  {
+    id: 'y',
+    part: 'parte3',
+    partLabel: 'Parte III • Cruzamentos & BI',
+    points: 4,
+    title: 'y. Quais linhas compõem o sistema noturno e operam de madrugada (com partidas entre 00h00 e 04h00)?',
+    badge: 'BETWEEN 0 AND 40000',
+    hint: 'Filtre a faixa horária numérica com h.hr_prevista BETWEEN 0 AND 40000.',
+    explanation: 'A coluna hr_prevista é numérica no formato HHMMSS. O intervalo entre 00h00 e 04h00 corresponde aos valores de 0 a 40000.',
+    answerSql: `SELECT DISTINCT 
+    l.cd_linha,
+    l.tx_linha,
+    h.hr_prevista,
+    h.sentido
+FROM 
+    dados_mobilidade.tab_linha l,
+    dados_mobilidade.tab_operadora_linha ol,
+    dados_mobilidade.tab_horario h
+WHERE 
+    l.id_linha = ol.id_linha
+    AND ol.id_operadora_linha = h.id_operadora_linha
+    AND h.hr_prevista BETWEEN 0 AND 40000
+ORDER BY 
+    h.hr_prevista ASC,
+    l.cd_linha ASC;`,
   },
 ];
 
@@ -497,18 +648,18 @@ export const SqlChallengeScreen: React.FC<SqlChallengeScreenProps> = ({
   onToggleItem,
   onOpenModule,
 }) => {
-  const [selectedLevel, setSelectedLevel] = useState<'todos' | 'basico' | 'intermediario' | 'avancado'>('todos');
-  const [showHint, setShowHint] = useState<Record<number, boolean>>({});
-  const [showAnswer, setShowAnswer] = useState<Record<number, boolean>>({});
-  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [selectedPart, setSelectedPart] = useState<'todos' | 'parte1' | 'parte2' | 'parte3'>('todos');
+  const [showHint, setShowHint] = useState<Record<string, boolean>>({});
+  const [showAnswer, setShowAnswer] = useState<Record<string, boolean>>({});
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Carrega as queries SQL já salvas pelo estagiário no storageService
-  const [userQueries, setUserQueries] = useState<Record<number, string>>(() => {
+  // Carrega as queries SQL salvas pelo estagiário no storageService
+  const [userQueries, setUserQueries] = useState<Record<string, string>>(() => {
     const saved = storageService.getProgress().challengeSubmissions?.['challenge-sql-relatorios'];
-    return saved?.sqlQueries || {};
+    return (saved?.sqlQueries as Record<string, string>) || {};
   });
 
-  // Persiste automaticamente cada alteração nas queries para o futuro motor SQL
+  // Persiste automaticamente cada alteração nas queries para o storageService
   useEffect(() => {
     storageService.saveChallengeSubmission('challenge-sql-relatorios', {
       sqlQueries: userQueries,
@@ -516,7 +667,7 @@ export const SqlChallengeScreen: React.FC<SqlChallengeScreenProps> = ({
   }, [userQueries]);
 
   const filteredQuestions = SQL_QUESTIONS.filter(
-    (q) => selectedLevel === 'todos' || q.level === selectedLevel
+    (q) => selectedPart === 'todos' || q.part === selectedPart
   );
 
   const totalPoints = SQL_QUESTIONS.reduce((acc, q) => acc + q.points, 0);
@@ -525,7 +676,7 @@ export const SqlChallengeScreen: React.FC<SqlChallengeScreenProps> = ({
     0
   );
 
-  const handleCopySql = (id: number, sql: string) => {
+  const handleCopySql = (id: string, sql: string) => {
     navigator.clipboard.writeText(sql);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -544,11 +695,10 @@ export const SqlChallengeScreen: React.FC<SqlChallengeScreenProps> = ({
           <span className="hero-badge">
             <Database size={14} /> Desafio Prático • Engenharia de Dados & SQL
           </span>
-          <h1>Desafio SQL — Mobilidade Urbana (18 Questões)</h1>
+          <h1>Desafio SQL — Mobilidade Urbana (25 Questões Oficiais)</h1>
           <p>
-            Resolva problemas reais de consulta, relacionamento e agregação no esquema{' '}
-            <code>semob</code>. Todas as suas queries ficam salvas automaticamente no seu navegador e
-            devem utilizar cláusula <code>WHERE</code> explícita.
+            Resolva as 25 consultas oficiais da SEMOB (Letras <code>a</code> até <code>y</code>) divididas em 3 partes no esquema{' '}
+            <code>dados_mobilidade</code>. Todas as suas queries ficam salvas automaticamente e devem utilizar junções explícitas e filtros na cláusula <code>WHERE</code>.
           </p>
           <div className="hero-actions">
             <button className="btn-secondary" onClick={() => onOpenModule('mod-3-banco-dados')}>
@@ -569,7 +719,7 @@ export const SqlChallengeScreen: React.FC<SqlChallengeScreenProps> = ({
           </div>
           <div className="hero-mini-meta">
             <span>
-              ✅ {completedItems.length} de {SQL_QUESTIONS.length} questões resolvidas
+              ✅ {completedItems.filter((i) => i.startsWith('sql-q-')).length} de {SQL_QUESTIONS.length} questões resolvidas
             </span>
           </div>
         </div>
@@ -579,9 +729,9 @@ export const SqlChallengeScreen: React.FC<SqlChallengeScreenProps> = ({
       <section className="section-card">
         <div className="section-header-row">
           <div>
-            <h2>🗄️ Mapa Rápido do Esquema Relacional (Schema: semob)</h2>
+            <h2>🗄️ Mapa Rápido do Esquema Relacional (Schema: dados_mobilidade)</h2>
             <p className="text-muted">
-              Consulte as 6 tabelas e suas chaves estrangeiras para montar os seus JOINs e filtros WHERE.
+              Consulte as 6 tabelas operacionais e suas chaves primárias/estrangeiras para montar as suas junções e filtros WHERE.
             </p>
           </div>
         </div>
@@ -603,26 +753,25 @@ export const SqlChallengeScreen: React.FC<SqlChallengeScreenProps> = ({
         </div>
       </section>
 
-      {/* Barra de Filtros por Nível */}
+      {/* Barra de Filtros por Parte */}
       <section className="section-card">
         <div className="sql-filter-bar">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
-            <Filter size={18} /> Filtrar por complexidade:
+            <Filter size={18} /> Filtrar por Etapa:
           </div>
           <div className="sql-filter-buttons">
-            {(['todos', 'basico', 'intermediario', 'avancado'] as const).map((lvl) => (
+            {[
+              { id: 'todos', label: `Todas (${SQL_QUESTIONS.length})` },
+              { id: 'parte1', label: `Parte I • Linha 0.111 (${SQL_QUESTIONS.filter((q) => q.part === 'parte1').length})` },
+              { id: 'parte2', label: `Parte II • Linha 0.170 (${SQL_QUESTIONS.filter((q) => q.part === 'parte2').length})` },
+              { id: 'parte3', label: `Parte III • Cruzamentos & BI (${SQL_QUESTIONS.filter((q) => q.part === 'parte3').length})` },
+            ].map((tab) => (
               <button
-                key={lvl}
-                onClick={() => setSelectedLevel(lvl)}
-                className={`sql-filter-btn ${selectedLevel === lvl ? 'active' : ''}`}
+                key={tab.id}
+                onClick={() => setSelectedPart(tab.id as any)}
+                className={`sql-filter-btn ${selectedPart === tab.id ? 'active' : ''}`}
               >
-                {lvl === 'todos'
-                  ? 'Todas (18)'
-                  : lvl === 'basico'
-                  ? 'Básico (6)'
-                  : lvl === 'intermediario'
-                  ? 'Intermediário (6)'
-                  : 'Avançado (6)'}
+                {tab.label}
               </button>
             ))}
           </div>
@@ -652,8 +801,11 @@ export const SqlChallengeScreen: React.FC<SqlChallengeScreenProps> = ({
                     </button>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <span className={`sql-level-pill ${q.level}`}>
-                          Questão #{q.id} • {q.levelLabel}
+                        <span className="sql-level-pill intermediario">
+                          Questão {q.id.toUpperCase()} • {q.partLabel}
+                        </span>
+                        <span className="status-pill passed" style={{ fontSize: '0.72rem' }}>
+                          {q.badge}
                         </span>
                         <span className="status-pill pending">{q.points} pts</span>
                       </div>
@@ -662,14 +814,12 @@ export const SqlChallengeScreen: React.FC<SqlChallengeScreenProps> = ({
                   </div>
                 </div>
 
-                <p className="sql-question-context">{q.context}</p>
-
                 <div className="sql-meta-tags">
                   <span>
-                    <strong>Tabelas:</strong> {q.tablesUsed.join(', ')}
+                    <strong>Operação / Foco:</strong> <code>{q.badge}</code>
                   </span>
                   <span>
-                    <strong>Colunas esperadas:</strong> {q.expectedColumns.join(', ')}
+                    <strong>Esquema Relacional:</strong> <code>dados_mobilidade</code>
                   </span>
                 </div>
 
@@ -690,7 +840,7 @@ export const SqlChallengeScreen: React.FC<SqlChallengeScreenProps> = ({
                   </div>
                   <textarea
                     className="sql-editor-textarea"
-                    placeholder={`-- Escreva aqui a sua query SQL para a Questão #${q.id} (use sempre WHERE)...`}
+                    placeholder={`-- Escreva aqui a sua query SQL para a Questão [${q.id.toUpperCase()}] usando cláusula WHERE...`}
                     value={currentQuery}
                     onChange={(e) =>
                       setUserQueries((prev) => ({ ...prev, [q.id]: e.target.value }))
@@ -727,7 +877,7 @@ export const SqlChallengeScreen: React.FC<SqlChallengeScreenProps> = ({
                   <div className="sql-hint-box" style={{ marginTop: '0.85rem' }}>
                     <Sparkles size={16} />
                     <span>
-                      <strong>Dica:</strong> {q.hint}
+                      <strong>Dica Técnica:</strong> {q.hint}
                     </span>
                   </div>
                 )}
@@ -747,12 +897,12 @@ export const SqlChallengeScreen: React.FC<SqlChallengeScreenProps> = ({
                       >
                         <AlertTriangle size={15} />
                         <span>
-                          Recomendação: escreva a sua própria query com <code>WHERE</code> no editor acima antes de marcar como concluída!
+                          Recomendação: pratique escrevendo a sua própria query com <code>WHERE</code> no editor acima antes de marcar como resolvida!
                         </span>
                       </div>
                     )}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                      <strong style={{ fontSize: '0.82rem' }}>✅ Solução SQL de Referência:</strong>
+                      <strong style={{ fontSize: '0.82rem' }}>✅ Solução SQL Oficial de Referência:</strong>
                       <button
                         type="button"
                         className="btn-secondary"
@@ -767,7 +917,7 @@ export const SqlChallengeScreen: React.FC<SqlChallengeScreenProps> = ({
                       <code>{q.answerSql}</code>
                     </pre>
                     <p className="text-muted" style={{ fontSize: '0.82rem', marginTop: '0.5rem' }}>
-                      <strong>Explicação:</strong> {q.explanation}
+                      <strong>Explicação Técnica:</strong> {q.explanation}
                     </p>
                   </div>
                 )}
@@ -781,16 +931,17 @@ export const SqlChallengeScreen: React.FC<SqlChallengeScreenProps> = ({
       <ChallengeSubmissionPanel
         challengeId="challenge-sql-relatorios"
         title="Validação Final do Desafio de Banco de Dados (SQL)"
-        subtitle="Confirme se todas as suas queries respeitam as diretrizes de segurança e performance antes de registar a entrega."
+        subtitle="Confirme se todas as suas consultas respeitam o schema dados_mobilidade e as diretrizes do gabarito oficial da SEMOB."
         requireRepoUrl={false}
         prChecklist={[
-          'Todas as 18 consultas e comandos de atualização possuem cláusula WHERE explícita?',
-          'Evitei o uso de SELECT * projetando apenas as colunas pedidas em cada relatório?',
-          'Utilizei IS NULL corretamente para filtrar campos vazios (Questões 6 e 10)?',
-          'Apliquei HAVING apenas para filtrar funções agregadas após o GROUP BY (Questão 9)?',
+          'Todas as 25 consultas utilizam cláusula WHERE explícita para relacionamentos e filtros?',
+          'Evitei o uso de SELECT * projetando apenas as colunas necessárias com alias (AS)?',
+          'Utilizei funções do PostGIS (como ST_AsText) nas questões espaciais?',
+          'As agregações (SUM, COUNT, MIN, MAX, HAVING) foram aplicadas corretamente nas Partes I e III?',
         ]}
       />
     </div>
   );
 };
+
 export default SqlChallengeScreen;

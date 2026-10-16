@@ -216,13 +216,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <div key={module.id} className={`module-card ${isCompleted ? 'module-done' : ''}`}>
                 <div className="module-card-top">
                   <div className="module-step-badge">Módulo 0{index + 1}</div>
-                  <div className="module-duration">{module.duration}</div>
+                  <div className="module-duration">{module.duration || module.estimatedTime}</div>
                 </div>
 
                 <div className="module-header-block">
                   <div className="module-icon-box">{getModuleIcon(module.id)}</div>
                   <div>
-                    <h3 className="module-title">{module.shortTitle}</h3>
+                    <h3 className="module-title">{module.shortTitle || module.title}</h3>
                     <span className="module-category">{module.category}</span>
                   </div>
                 </div>
@@ -230,7 +230,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <p className="module-desc">{module.description}</p>
 
                 <div className="module-topics-list">
-                  {module.topics.map((topic, i) => (
+                  {(module.topics || []).map((topic, i) => (
                     <span key={i} className="module-topic-chip">
                       • {topic}
                     </span>
@@ -239,7 +239,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
                 <div className="module-card-footer">
                   <button 
-                    onClick={() => onNavigate(module.screenKey)} 
+                    onClick={() => onNavigate(module.screenKey || 'roteiro')} 
                     className="btn-primary btn-sm"
                   >
                     Estudar Manual <ArrowRight size={14} />

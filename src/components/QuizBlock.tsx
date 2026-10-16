@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { QuizBlockData, QuizAttempt } from '../types';
+import { QuizBlockData, QuizAttempt, QuizQuestion } from '../types';
 import confetti from 'canvas-confetti';
 import { 
   CheckCircle, 
@@ -13,16 +13,44 @@ import {
 } from 'lucide-react';
 
 interface QuizBlockProps {
-  quiz: QuizBlockData;
+  quiz?: QuizBlockData;
+  moduleId?: string;
+  moduleTitle?: string;
+  questions?: QuizQuestion[];
+  previousAttempt?: QuizAttempt;
   existingAttempt?: QuizAttempt;
-  onSaveAttempt: (attempt: QuizAttempt) => void;
+  onSaveAttempt?: (attempt: QuizAttempt) => void;
+  onCompleteQuiz?: (attempt: QuizAttempt) => void;
 }
 
 export const QuizBlock: React.FC<QuizBlockProps> = ({
-  quiz,
-  existingAttempt,
+  quiz: propQuiz,
+  moduleId,
+  moduleTitle,
+  questions: propQuestions,
+  previousAttempt,
+  existingAttempt: propExistingAttempt,
   onSaveAttempt,
+  onCompleteQuiz,
 }) => {
+  const existingAttempt = propExistingAttempt || previousAttempt;
+  const effectiveQuestions = propQuiz?.questions || propQuestions || [];
+  const quiz: QuizBlockData = propQuiz || {
+    id: moduleId || 'quiz',
+    moduleId: moduleId || 'modulo',
+    title: moduleTitle ? `Quiz: ${moduleTitle}` : 'Quiz de Validação',
+    subtitle: 'Validação de Conhecimentos',
+    badge: 'Avaliação',
+    description: 'Teste os seus conhecimentos adquiridos neste módulo.',
+    passingScore: 70,
+    questions: effectiveQuestions,
+  };
+
+  const handleSaveAttemptCallback = (att: QuizAttempt) => {
+    if (onSaveAttempt) onSaveAttempt(att);
+    if (onCompleteQuiz) onCompleteQuiz(att);
+  };
+
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -78,7 +106,7 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({
     };
 
     setIsSubmitted(true);
-    onSaveAttempt(attempt);
+    handleSaveAttemptCallback(attempt);
 
     if (passed) {
       try {

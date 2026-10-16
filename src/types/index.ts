@@ -3,6 +3,7 @@
 export type ScreenType = 
   | 'home' 
   | 'roteiro' 
+  | 'modulo-ambiente'
   | 'modulo-git' 
   | 'modulo-sql' 
   | 'modulo-gabarito' 
@@ -69,8 +70,8 @@ export interface ChallengeSubmission {
   deployUrl?: string;
   checkedPrItems: number[];
   checklistCompleted: boolean;
-  /** Guarda as queries SQL digitadas pelo aluno em cada uma das 18 questões */
-  sqlQueries?: Record<number, string>;
+  /** Guarda as queries SQL digitadas pelo aluno em cada uma das questões */
+  sqlQueries?: Record<string, string>;
   completedAt?: string;
 }
 
@@ -108,13 +109,62 @@ export interface SqlQuestion {
   trapsAndTips: string;
 }
 
+export interface RichCallout {
+  type: 'info' | 'success' | 'warning' | 'danger' | 'important';
+  title: string;
+  content: string;
+  bullets?: string[];
+}
+
+export interface RichTable {
+  headers: string[];
+  rows: string[][];
+}
+
+export interface RichCodeBlock {
+  title: string;
+  language: string;
+  code: string;
+}
+
+export interface RichCommandCard {
+  name: string;
+  role: string;
+  concept: string;
+  details?: string[];
+  code: string;
+}
+
+export interface RichScenarioCard {
+  title: string;
+  badgeText: string;
+  badgeType: 'info' | 'warning' | 'danger' | 'success';
+  description: string;
+  commands: string[];
+  extraNote?: string;
+}
+
 export interface ModuleSection {
   heading: string;
   body: string;
+  paragraphs?: string[];
   bullets?: string[];
   codeExample?: string;
   codeLanguage?: string;
   tip?: string;
+  /** NOVOS BLOCOS RICOS EXTRAÍDOS DOS MANUAIS HTML */
+  callouts?: RichCallout[];
+  tables?: RichTable[];
+  codeBlocks?: RichCodeBlock[];
+  commandCards?: RichCommandCard[];
+  scenarios?: RichScenarioCard[];
+  svgDiagramType?:
+    | 'git-4-zones'
+    | 'git-tags-pipeline'
+    | 'sql-where-join'
+    | 'sql-pg-vs-oracle'
+    | 'backend-request-lifecycle'
+    | 'frontend-unidirectional-flow';
 }
 
 export interface LearningModule {
@@ -128,15 +178,15 @@ export interface LearningModule {
   sections: ModuleSection[];
   checklist?: string[];
 
-  // Compatibilidade com telas existentes
-  screenKey: ScreenType;
-  shortTitle: string;
-  subtitle: string;
-  duration: string;
+  // Compatibilidade com telas existentes (opcionais para permitir módulos modulares)
+  screenKey?: ScreenType;
+  shortTitle?: string;
+  subtitle?: string;
+  duration?: string;
   htmlFile?: string;
-  iconName: string;
-  quizId: string;
-  topics: string[];
+  iconName?: string;
+  quizId?: string;
+  topics?: string[];
   externalManualUrl?: string;
 }
 

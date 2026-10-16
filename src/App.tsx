@@ -36,7 +36,9 @@ export const App: React.FC = () => {
 
   const handleOpenModule = (moduleId: string) => {
     const id = moduleId.toLowerCase();
-    if (id.includes('sql') || id.includes('banco') || id.includes('dados')) {
+    if (id.includes('ambiente') || id.includes('docker') || id.includes('setup')) {
+      handleNavigate('modulo-ambiente');
+    } else if (id.includes('sql') || id.includes('banco') || id.includes('dados')) {
       handleNavigate('modulo-sql');
     } else if (id.includes('backend') || id.includes('back')) {
       handleNavigate('modulo-backend');
@@ -72,19 +74,21 @@ export const App: React.FC = () => {
       case 'roteiro':
         return <IntegrationTrackScreen onNavigate={handleNavigate} />;
 
+      case 'modulo-ambiente':
       case 'modulo-git':
       case 'modulo-sql':
       case 'modulo-gabarito':
       case 'modulo-backend':
       case 'modulo-frontend': {
         const idMap: Record<string, string> = {
-          'modulo-git': 'git',
-          'modulo-sql': 'sql',
-          'modulo-gabarito': 'gabarito-sql',
-          'modulo-backend': 'backend',
-          'modulo-frontend': 'frontend',
+          'modulo-ambiente': 'mod-1-ambiente',
+          'modulo-git': 'mod-2-git',
+          'modulo-sql': 'mod-3-banco-dados',
+          'modulo-gabarito': 'mod-3-banco-dados',
+          'modulo-backend': 'mod-4-backend',
+          'modulo-frontend': 'mod-5-frontend',
         };
-        const moduleId = idMap[currentScreen] || 'git';
+        const moduleId = idMap[currentScreen] || 'mod-1-ambiente';
         const allMods = getModules();
         const mod = allMods.find((m) => m.id === moduleId) || allMods[0];
         const quizKey = mod.quizId || mod.id;
@@ -107,7 +111,14 @@ export const App: React.FC = () => {
             onSaveQuiz={(att) => recordQuizAttempt(att)}
             onSaveNote={(id, noteText) => recordNote(id, noteText)}
             onSelectModule={(id) => {
-              const targetScreen = `modulo-${id}` as ScreenType;
+              const reverseMap: Record<string, ScreenType> = {
+                'mod-1-ambiente': 'modulo-ambiente',
+                'mod-2-git': 'modulo-git',
+                'mod-3-banco-dados': 'modulo-sql',
+                'mod-4-backend': 'modulo-backend',
+                'mod-5-frontend': 'modulo-frontend',
+              };
+              const targetScreen = reverseMap[id] || (`modulo-${id}` as ScreenType);
               handleNavigate(targetScreen);
             }}
             allModules={allMods}

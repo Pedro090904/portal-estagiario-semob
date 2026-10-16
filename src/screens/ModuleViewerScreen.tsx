@@ -12,11 +12,13 @@ import {
   History,
   Layers,
   ListChecks,
+  Search,
 } from 'lucide-react';
-import { LearningModule, QuizAttempt, QuizBlockData } from '../types';
-import { getQuizByModuleId, QUIZZES } from '../services/dataService';
+import { LearningModule, QuizAttempt } from '../types';
+import { getQuizByModuleId } from '../services/dataService';
 import { QuizBlock } from '../components/QuizBlock';
 import { ModuleNotesPanel } from '../components/ModuleNotesPanel';
+import { TechnicalDiagram } from '../components/TechnicalDiagrams';
 
 interface ModuleViewerScreenProps {
   module: LearningModule;
@@ -50,26 +52,16 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
   allModules,
 }) => {
   const [activeSectionIndex, setActiveSectionIndex] = useState(0);
-  const [viewMode, setViewMode] = useState<'step' | 'full'>('step');
+  // Inicia em 'full' para entregar a experiência de Tutorial Completo imediata, permitindo focar por lição no 'step'
+  const [viewMode, setViewMode] = useState<'full' | 'step'>('full');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [scenarioQuery, setScenarioQuery] = useState('');
 
   const questions = getQuizByModuleId(module.id);
-  const quizData: QuizBlockData = QUIZZES.find(
-    (q) => q.moduleId === module.id || q.id === module.quizId
-  ) || {
-    id: module.quizId || `quiz-${module.id}`,
-    moduleId: module.id,
-    title: `Quiz: ${module.title}`,
-    subtitle: 'Validação de Conhecimentos',
-    badge: module.category,
-    description: module.description,
-    passingScore: 75,
-    questions,
-  };
 
-  // Sempre que mudar de módulo, volta para a primeira lição e para o topo
   useEffect(() => {
     setActiveSectionIndex(0);
+    setScenarioQuery('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [module.id]);
 
@@ -91,7 +83,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
 
   return (
     <div className="screen-container">
-      {/* Barra de Topo e Navegação entre Módulos */}
+      {/* Barra de Topo */}
       <div
         className="module-viewer-topbar"
         style={{
@@ -107,15 +99,16 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
           <ArrowLeft size={16} /> Voltar para a Trilha
         </button>
 
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <button
             type="button"
-            onClick={() => setViewMode(viewMode === 'step' ? 'full' : 'step')}
+            onClick={() => setViewMode(viewMode === 'full' ? 'step' : 'full')}
             className="btn-secondary"
-            title="Alternar modo de visualização"
           >
             <Layers size={15} />
-            {viewMode === 'step' ? 'Ver Todas as Lições Juntas' : 'Modo Passo a Passo (Microlearning)'}
+            {viewMode === 'full'
+              ? 'Modo Foco (1 Lição por Vez)'
+              : 'Ver Tutorial Completo na Mesma Página'}
           </button>
 
           <button
@@ -123,12 +116,12 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
             onClick={() => onToggleComplete(module.id)}
           >
             <CheckCircle2 size={16} />
-            {isCompleted ? 'Módulo Concluído ✓' : 'Marcar Módulo como Lido'}
+            {isCompleted ? 'Módulo Concluído ✓' : 'Marcar Módulo como Concluído'}
           </button>
         </div>
       </div>
 
-      {/* Hero do Módulo */}
+      {/* Hero Banner do Manual */}
       <section className="hero-banner">
         <div className="hero-content">
           <span className="hero-badge">
@@ -138,7 +131,6 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
           <h1>{module.title}</h1>
           <p>{module.description}</p>
 
-          {/* Objetivos de Aprendizagem */}
           {module.objectives && module.objectives.length > 0 && (
             <div style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
               {module.objectives.map((obj, idx) => (
@@ -151,66 +143,139 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
         </div>
       </section>
 
-      {/* Navegador de Micro-Lições (Etapas Internas do Módulo) */}
-      {viewMode === 'step' && module.sections.length > 1 && (
-        <section className="section-card" style={{ padding: '1rem 1.25rem' }}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '0.75rem',
-            }}
-          >
-            <strong style={{ fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <BookOpen size={16} /> Progresso da Leitura neste Módulo: Lição {activeSectionIndex + 1} de{' '}
-              {module.sections.length}
-            </strong>
-            <span className="text-muted" style={{ fontSize: '0.8rem' }}>
-              {Math.round(((activeSectionIndex + 1) / module.sections.length) * 100)}% do conteúdo teórico
-            </span>
-          </div>
+      {/* Sumário Rápido de Navegação das Secções do Tutorial */}
+      <section className="section-card" style={{ padding: '1.1rem 1.35rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.75rem',
+            flexWrap: 'wrap',
+          }}
+        >
+          <strong style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <BookOpen size={16} /> Sumário do Tutorial ({module.sections.length} Capítulos)
+          </strong>
+          <span className="text-muted" style={{ fontSize: '0.78rem' }}>
+            {viewMode === 'full'
+              ? 'Clique num capítulo para saltar ou ative o Modo Foco acima'
+              : `Capítulo ${activeSectionIndex + 1} de ${module.sections.length}`}
+          </span>
+        </div>
 
-          <div className="sql-filter-buttons" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-            {module.sections.map((sec, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => setActiveSectionIndex(idx)}
-                className={`sql-filter-btn ${activeSectionIndex === idx ? 'active' : ''}`}
-              >
-                {idx + 1}. {sec.heading}
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
+        <div className="sql-filter-buttons" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          {module.sections.map((sec, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => {
+                setActiveSectionIndex(idx);
+                if (viewMode === 'full') {
+                  const el = document.getElementById(`chapter-${idx}`);
+                  el?.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className={`sql-filter-btn ${
+                viewMode === 'step' && activeSectionIndex === idx ? 'active' : ''
+              }`}
+            >
+              {sec.heading}
+            </button>
+          ))}
+        </div>
+      </section>
 
-      {/* Renderização das Secções de Conteúdo */}
+      {/* Renderização Rica dos Capítulos do Tutorial */}
       <div className="module-sections-list">
         {sectionsToRender.map((section, idx) => {
           const realIndex = viewMode === 'step' ? activeSectionIndex : idx;
           const codeKey = `${module.id}-sec-${realIndex}`;
 
+          const filteredScenarios = section.scenarios?.filter(
+            (sc) =>
+              sc.title.toLowerCase().includes(scenarioQuery.toLowerCase()) ||
+              sc.description.toLowerCase().includes(scenarioQuery.toLowerCase()) ||
+              sc.commands.some((c) => c.toLowerCase().includes(scenarioQuery.toLowerCase()))
+          );
+
           return (
-            <section key={codeKey} className="section-card">
+            <section id={`chapter-${realIndex}`} key={codeKey} className="section-card">
               <div className="section-header-row">
-                <h2>
-                  <span className="status-pill passed" style={{ marginRight: '0.6rem', fontSize: '0.8rem' }}>
-                    Lição {realIndex + 1}/{module.sections.length}
-                  </span>
-                  {section.heading}
-                </h2>
+                <h2>{section.heading}</h2>
               </div>
 
               <p style={{ lineHeight: 1.75, marginTop: '0.75rem', fontSize: '0.96rem' }}>
                 {section.body}
               </p>
 
+              {/* Parágrafos Extras */}
+              {section.paragraphs?.map((pText, pIdx) => (
+                <p key={pIdx} style={{ lineHeight: 1.75, marginTop: '0.75rem', fontSize: '0.96rem' }}>
+                  {pText}
+                </p>
+              ))}
+
+              {/* Diagrama Vetorial SVG Original */}
+              {section.svgDiagramType && <TechnicalDiagram type={section.svgDiagramType} />}
+
+              {/* Callouts / Caixas de Alerta e Analogias */}
+              {section.callouts?.map((callout, cIdx) => (
+                <div
+                  key={cIdx}
+                  className="glass-card"
+                  style={{
+                    marginTop: '1.25rem',
+                    borderLeft: `4px solid ${
+                      callout.type === 'danger'
+                        ? '#ef4444'
+                        : callout.type === 'warning'
+                        ? '#f59e0b'
+                        : callout.type === 'success'
+                        ? '#10b981'
+                        : callout.type === 'important'
+                        ? '#6366f1'
+                        : '#38bdf8'
+                    }`,
+                    padding: '1.15rem 1.35rem',
+                  }}
+                >
+                  <strong
+                    style={{
+                      display: 'block',
+                      fontSize: '0.84rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      marginBottom: '0.4rem',
+                    }}
+                  >
+                    {callout.title}
+                  </strong>
+                  <p style={{ fontSize: '0.92rem', lineHeight: 1.65 }}>{callout.content}</p>
+                  {callout.bullets && (
+                    <ul
+                      style={{
+                        marginTop: '0.5rem',
+                        paddingLeft: '1.25rem',
+                        fontSize: '0.88rem',
+                        lineHeight: 1.65,
+                      }}
+                    >
+                      {callout.bullets.map((b, bIdx) => (
+                        <li key={bIdx} style={{ marginBottom: '0.25rem' }}>
+                          {b}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+
+              {/* Lista de Bullets Padrão */}
               {section.bullets && section.bullets.length > 0 && (
                 <ul
                   className="module-bullet-list"
-                  style={{ marginTop: '1rem', paddingLeft: '1.25rem', lineHeight: 1.7 }}
+                  style={{ marginTop: '1rem', paddingLeft: '1.25rem', lineHeight: 1.75 }}
                 >
                   {section.bullets.map((item, bIdx) => (
                     <li key={bIdx} style={{ marginBottom: '0.4rem' }}>
@@ -220,32 +285,244 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
                 </ul>
               )}
 
+              {/* Tabelas Comparativas Ricas */}
+              {section.tables?.map((tb, tIdx) => (
+                <div
+                  key={tIdx}
+                  className="glass-card"
+                  style={{ overflowX: 'auto', marginTop: '1.25rem', padding: 0 }}
+                >
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
+                    <thead>
+                      <tr
+                        style={{
+                          borderBottom: '2px solid rgba(56, 189, 248, 0.3)',
+                          textAlign: 'left',
+                          background: 'rgba(15, 23, 42, 0.35)',
+                        }}
+                      >
+                        {tb.headers.map((h, hIdx) => (
+                          <th
+                            key={hIdx}
+                            style={{
+                              padding: '0.85rem 1rem',
+                              color: '#38bdf8',
+                              textTransform: 'uppercase',
+                              fontSize: '0.76rem',
+                              letterSpacing: '0.04em',
+                            }}
+                          >
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tb.rows.map((row, rIdx) => (
+                        <tr
+                          key={rIdx}
+                          style={{ borderBottom: '1px solid rgba(148, 163, 184, 0.12)' }}
+                        >
+                          {row.map((cell, cellIdx) => (
+                            <td
+                              key={cellIdx}
+                              style={{
+                                padding: '0.8rem 1rem',
+                                verticalAlign: 'top',
+                                whiteSpace: 'pre-line',
+                                lineHeight: 1.55,
+                              }}
+                            >
+                              {cell}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+
+              {/* Cartões Didáticos de Comandos (SQL / Git) */}
+              {section.commandCards?.map((cmd, cmdIdx) => {
+                const cmdCopyKey = `${codeKey}-cmd-${cmdIdx}`;
+                return (
+                  <div
+                    key={cmdIdx}
+                    className="glass-card"
+                    style={{
+                      marginTop: '1.25rem',
+                      borderLeft: '4px solid #38bdf8',
+                      padding: '1.35rem',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '0.6rem',
+                        flexWrap: 'wrap',
+                        gap: '0.5rem',
+                      }}
+                    >
+                      <code style={{ fontSize: '1.05rem', fontWeight: 700, color: '#38bdf8' }}>
+                        {cmd.name}
+                      </code>
+                      <span className="status-pill pending" style={{ fontSize: '0.72rem' }}>
+                        {cmd.role}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.92rem', lineHeight: 1.65 }}>{cmd.concept}</p>
+                    {cmd.details && (
+                      <ul
+                        style={{
+                          marginTop: '0.5rem',
+                          paddingLeft: '1.25rem',
+                          fontSize: '0.86rem',
+                          lineHeight: 1.6,
+                        }}
+                      >
+                        {cmd.details.map((d, dIdx) => (
+                          <li key={dIdx}>{d}</li>
+                        ))}
+                      </ul>
+                    )}
+                    <div style={{ marginTop: '0.9rem' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '0.35rem',
+                        }}
+                      >
+                        <span className="text-muted" style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>
+                          Sintaxe & Exemplo Prático
+                        </span>
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          style={{ padding: '0.2rem 0.6rem', fontSize: '0.72rem' }}
+                          onClick={() => handleCopyCode(cmdCopyKey, cmd.code)}
+                        >
+                          {copiedKey === cmdCopyKey ? <Check size={12} /> : <Copy size={12} />}
+                          {copiedKey === cmdCopyKey ? 'Copiado!' : 'Copiar'}
+                        </button>
+                      </div>
+                      <pre className="code-block">
+                        <code>{cmd.code}</code>
+                      </pre>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Múltiplos Blocos de Código Passo a Passo */}
+              {section.codeBlocks?.map((cb, cbIdx) => {
+                const cbCopyKey = `${codeKey}-cb-${cbIdx}`;
+                return (
+                  <div key={cbIdx} style={{ marginTop: '1.35rem' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '0.4rem',
+                      }}
+                    >
+                      <strong style={{ fontSize: '0.84rem', fontFamily: 'monospace' }}>
+                        {cb.title}
+                      </strong>
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        style={{ padding: '0.2rem 0.65rem', fontSize: '0.74rem' }}
+                        onClick={() => handleCopyCode(cbCopyKey, cb.code)}
+                      >
+                        {copiedKey === cbCopyKey ? <Check size={13} /> : <Copy size={13} />}
+                        {copiedKey === cbCopyKey ? 'Copiado!' : 'Copiar Código'}
+                      </button>
+                    </div>
+                    <pre className="code-block">
+                      <code>{cb.code}</code>
+                    </pre>
+                  </div>
+                );
+              })}
+
+              {/* Código Único Legado (caso exista) */}
               {section.codeExample && (
+                <div style={{ marginTop: '1.25rem' }}>
+                  <pre className="code-block">
+                    <code>{section.codeExample}</code>
+                  </pre>
+                </div>
+              )}
+
+              {/* Base Interativa de Cenários ("O que fazer quando...?") com Pesquisa em Tempo Real */}
+              {section.scenarios && section.scenarios.length > 0 && (
                 <div style={{ marginTop: '1.25rem' }}>
                   <div
                     style={{
                       display: 'flex',
-                      justifyContent: 'space-between',
                       alignItems: 'center',
-                      marginBottom: '0.4rem',
+                      gap: '0.6rem',
+                      marginBottom: '1rem',
                     }}
                   >
-                    <span className="text-muted" style={{ fontSize: '0.78rem', fontFamily: 'monospace' }}>
-                      Exemplo Prático ({section.codeLanguage || 'code'})
-                    </span>
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      style={{ padding: '0.25rem 0.65rem', fontSize: '0.75rem' }}
-                      onClick={() => handleCopyCode(codeKey, section.codeExample!)}
-                    >
-                      {copiedKey === codeKey ? <Check size={13} /> : <Copy size={13} />}
-                      {copiedKey === codeKey ? 'Copiado!' : 'Copiar Código'}
-                    </button>
+                    <Search size={18} />
+                    <input
+                      type="text"
+                      value={scenarioQuery}
+                      onChange={(e) => setScenarioQuery(e.target.value)}
+                      placeholder="🔍 Pesquisar cenário (ex: esqueci, errei o commit, conflito, branch errada, stash)..."
+                      className="sql-editor-textarea"
+                      style={{ minHeight: '42px', height: '42px', padding: '0.5rem 0.9rem' }}
+                    />
                   </div>
-                  <pre className="code-block">
-                    <code>{section.codeExample}</code>
-                  </pre>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    {filteredScenarios?.map((sc, scIdx) => (
+                      <div key={scIdx} className="glass-card" style={{ padding: '1.2rem' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            gap: '0.75rem',
+                            marginBottom: '0.5rem',
+                          }}
+                        >
+                          <h4 style={{ fontSize: '0.96rem', fontWeight: 700 }}>{sc.title}</h4>
+                          <span
+                            className={`status-pill ${
+                              sc.badgeType === 'success' || sc.badgeType === 'info'
+                                ? 'passed'
+                                : 'pending'
+                            }`}
+                            style={{ fontSize: '0.72rem' }}
+                          >
+                            {sc.badgeText}
+                          </span>
+                        </div>
+                        <p className="text-muted" style={{ fontSize: '0.88rem', marginBottom: '0.65rem' }}>
+                          {sc.description}
+                        </p>
+                        <pre className="code-block">
+                          <code>{sc.commands.join('\n')}</code>
+                        </pre>
+                        {sc.extraNote && (
+                          <p
+                            className="text-muted"
+                            style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}
+                          >
+                            💡 {sc.extraNote}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -258,7 +535,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
                 </div>
               )}
 
-              {/* Botões de Avanço Rápido entre Micro-Lições */}
+              {/* Paginação caso esteja no Modo Foco (Step) */}
               {viewMode === 'step' && (
                 <div
                   style={{
@@ -276,21 +553,18 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
                     onClick={() => setActiveSectionIndex((prev) => Math.max(0, prev - 1))}
                     style={{ opacity: activeSectionIndex === 0 ? 0.4 : 1 }}
                   >
-                    <ArrowLeft size={15} /> Lição Anterior
+                    <ArrowLeft size={15} /> Capítulo Anterior
                   </button>
 
-                  {activeSectionIndex < module.sections.length - 1 ? (
+                  {activeSectionIndex < module.sections.length - 1 && (
                     <button
                       type="button"
                       className="btn-primary"
                       onClick={() => setActiveSectionIndex((prev) => prev + 1)}
                     >
-                      Próxima Lição ({activeSectionIndex + 2}/{module.sections.length}) <ArrowRight size={15} />
+                      Próximo Capítulo ({activeSectionIndex + 2}/{module.sections.length}){' '}
+                      <ArrowRight size={15} />
                     </button>
-                  ) : (
-                    <span className="status-pill passed">
-                      🎉 Última lição deste módulo! Realize o checklist e o Quiz abaixo.
-                    </span>
                   )}
                 </div>
               )}
@@ -299,15 +573,15 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
         })}
       </div>
 
-      {/* Checklist Prático do Módulo */}
+      {/* Checklist Prático (DoD do Módulo) */}
       {module.checklist && module.checklist.length > 0 && (
         <section className="section-card">
           <h2>
             <ListChecks size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
-            Checklist de Verificação Prática
+            Checklist Final de Qualidade e Prática (DoD)
           </h2>
           <p className="text-muted" style={{ marginBottom: '1rem' }}>
-            Marque cada atividade à medida que a testar na sua máquina de desenvolvimento:
+            Valide cada item abaixo à medida que aplicar os conhecimentos deste manual:
           </p>
           <div className="checklist-box">
             {module.checklist.map((item, idx) => {
@@ -332,14 +606,15 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
         </section>
       )}
 
-      {/* Bloco de Anotações Pessoais do Estudante */}
+      {/* Bloco de Anotações Pessoais */}
       <ModuleNotesPanel
-        module={module}
-        initialNotes={moduleNote}
-        onSaveNotes={(noteText) => onSaveNote(module.id, noteText)}
+        moduleId={module.id}
+        moduleTitle={module.title}
+        initialNote={moduleNote}
+        onSaveNote={onSaveNote}
       />
 
-      {/* Histórico de Tentativas do Estudante neste Módulo (Fase 4 da Auditoria) */}
+      {/* Histórico de Tentativas do Estudante */}
       {quizHistory.length > 0 && (
         <section className="section-card">
           <div className="section-header-row">
@@ -349,7 +624,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
                 Histórico de Tentativas neste Módulo
               </h2>
               <p className="text-muted">
-                Todas as suas avaliações anteriores ficam preservadas para acompanhamento de evolução.
+                Registo auditável de todas as suas avaliações realizadas neste módulo.
               </p>
             </div>
             {quizAttempt && (
@@ -378,16 +653,18 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
         </section>
       )}
 
-      {/* Quiz de Validação do Módulo */}
+      {/* Quiz de Validação */}
       {questions.length > 0 && (
         <QuizBlock
-          quiz={quizData}
-          existingAttempt={quizAttempt}
-          onSaveAttempt={onSaveQuiz}
+          moduleId={module.id}
+          moduleTitle={module.title}
+          questions={questions}
+          previousAttempt={quizAttempt}
+          onCompleteQuiz={onSaveQuiz}
         />
       )}
 
-      {/* Navegação Inferior entre Módulos da Trilha */}
+      {/* Navegação entre Módulos */}
       <section
         className="section-card"
         style={{
@@ -412,7 +689,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
           </button>
         ) : (
           <button className="btn-primary" onClick={onBack}>
-            Concluir Leitura e Voltar à Trilha <CheckCircle2 size={16} />
+            Concluir e Voltar à Trilha <CheckCircle2 size={16} />
           </button>
         )}
       </section>
