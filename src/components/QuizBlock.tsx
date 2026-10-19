@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { QuizBlockData, QuizAttempt, QuizQuestion } from '../types';
+import { evaluateQuizAttempt, PASSING_PERCENTAGE } from '../services/progressEngine';
 import confetti from 'canvas-confetti';
 import { 
   CheckCircle, 
@@ -35,14 +36,16 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({
 }) => {
   const existingAttempt = propExistingAttempt || previousAttempt;
   const effectiveQuestions = propQuiz?.questions || propQuestions || [];
+  const effectiveModuleId = moduleId || propQuiz?.moduleId || propQuiz?.id || 'mod-1-ambiente';
+
   const quiz: QuizBlockData = propQuiz || {
-    id: moduleId || 'quiz',
-    moduleId: moduleId || 'modulo',
-    title: moduleTitle ? `Quiz: ${moduleTitle}` : 'Quiz de Validação',
-    subtitle: 'Validação de Conhecimentos',
-    badge: 'Avaliação',
-    description: 'Teste os seus conhecimentos adquiridos neste módulo.',
-    passingScore: 70,
+    id: effectiveModuleId,
+    moduleId: effectiveModuleId,
+    title: moduleTitle ? `Quiz: ${moduleTitle}` : 'Quiz de Validação de Competências',
+    subtitle: 'Validação Oficial de Aprendizagem (≥ 70%)',
+    badge: 'Avaliação Oficial',
+    description: 'Valide os conhecimentos adquiridos neste módulo técnico da SUTINF.',
+    passingScore: PASSING_PERCENTAGE,
     questions: effectiveQuestions,
   };
 
@@ -51,14 +54,20 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({
     if (onCompleteQuiz) onCompleteQuiz(att);
   };
 
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, number>>({});
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   // Carregar tentativa anterior se houver
   useEffect(() => {
     if (existingAttempt) {
-      setSelectedAnswers(existingAttempt.selectedAnswers || {});
+      if (existingAttempt.selectedAnswers) {
+        const parsed: Record<string, number> = {};
+        Object.entries(existingAttempt.selectedAnswers).forEach(([qId, val]) => {
+          parsed[qId] = typeof val === 'number' ? val : Number(val);
+        });
+        setSelectedAnswers(parsed);
+      }
       setIsSubmitted(true);
     } else {
       setSelectedAnswers({});
@@ -66,49 +75,32 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({
     }
   }, [quiz.id, existingAttempt]);
 
-  const handleSelectOption = (questionId: string, optionId: string) => {
-    if (isSubmitted) return; // bloqueia alteração se já finalizado
+  const handleSelectOption = (questionId: string, optionIndex: number) => {
+    if (isSubmitted) return;
     setSelectedAnswers((prev) => ({
       ...prev,
-      [questionId]: optionId,
+      [questionId]: optionIndex,
     }));
     setValidationError(null);
   };
 
   const handleSubmit = () => {
-    // Verificar se todas foram respondidas
-    const unansweredCount = quiz.questions.filter((q) => !selectedAnswers[q.id]).length;
+    const unansweredCount = quiz.questions.filter((q) => selectedAnswers[q.id] === undefined).length;
     if (unansweredCount > 0) {
-      setValidationError(`Você ainda tem ${unansweredCount} questão(ões) sem resposta. Por favor, marque uma alternativa para cada pergunta.`);
+      setValidationError(
+        `Você ainda tem ${unansweredCount} questão(ões) sem resposta. Por favor, selecione uma alternativa para cada pergunta antes de submeter.`
+      );
       return;
     }
 
-    let correctCount = 0;
-    quiz.questions.forEach((q) => {
-      if (selectedAnswers[q.id] === q.correctOptionId) {
-        correctCount++;
-      }
-    });
-
-    const score = Math.round((correctCount / quiz.questions.length) * 100);
-    const passed = score >= quiz.passingScore;
-
-    const attempt: QuizAttempt = {
-      moduleId: quiz.moduleId || quiz.id,
-      quizId: quiz.id,
-      selectedAnswers,
-      score: correctCount,
-      percentage: score,
-      correctCount,
-      totalQuestions: quiz.questions.length,
-      completedAt: new Date().toISOString(),
-      passed,
-    };
+    const attempt = evaluateQuizAttempt(effectiveModuleId, quiz.questions, selectedAnswers);
+    attempt.selectedAnswers = selectedAnswers;
+    attempt.quizId = quiz.id;
 
     setIsSubmitted(true);
     handleSaveAttemptCallback(attempt);
 
-    if (passed) {
+    if (attempt.passed) {
       try {
         confetti({
           particleCount: 100,
@@ -127,9 +119,13 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({
     setValidationError(null);
   };
 
-  const currentScore = existingAttempt?.percentage ?? existingAttempt?.score ?? (
+  const currentScore = existingAttempt?.percentage ?? (
     isSubmitted
-      ? Math.round((quiz.questions.filter(q => selectedAnswers[q.id] === q.correctOptionId).length / quiz.questions.length) * 100)
+      ? Math.round(
+          (quiz.questions.filter((q) => selectedAnswers[q.id] === q.correctOptionIndex).length /
+            quiz.questions.length) *
+            100
+        )
       : null
   );
 
@@ -138,7 +134,7 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({
       <div className="quiz-header">
         <div className="quiz-badge-wrap">
           <span className="quiz-badge">{quiz.badge}</span>
-          <span className="quiz-pass-score">Mínimo para aprovação: {quiz.passingScore}%</span>
+          <span className="quiz-pass-score">Mínimo para aprovação: {PASSING_PERCENTAGE}%</span>
         </div>
         <h3 className="quiz-title">{quiz.title}</h3>
         <p className="quiz-subtitle">{quiz.subtitle}</p>
@@ -155,9 +151,9 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({
 
       {/* Banner de resultado se já enviado */}
       {isSubmitted && currentScore !== null && (
-        <div className={`quiz-result-banner ${currentScore >= quiz.passingScore ? 'passed' : 'failed'}`}>
+        <div className={`quiz-result-banner ${currentScore >= PASSING_PERCENTAGE ? 'passed' : 'failed'}`}>
           <div className="result-icon-box">
-            {currentScore >= quiz.passingScore ? (
+            {currentScore >= PASSING_PERCENTAGE ? (
               <Award className="icon-success" size={32} />
             ) : (
               <AlertCircle className="icon-fail" size={32} />
@@ -165,16 +161,16 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({
           </div>
           <div className="result-details">
             <h4>
-              {currentScore >= quiz.passingScore
+              {currentScore >= PASSING_PERCENTAGE
                 ? '🎉 Parabéns! Você foi APROVADO(A) neste bloco!'
                 : 'Ainda não atingiu a pontuação mínima.'}
             </h4>
             <p>
               Sua pontuação: <strong>{currentScore}%</strong> (
-              {quiz.questions.filter(q => selectedAnswers[q.id] === q.correctOptionId).length} de {quiz.questions.length} questões corretas).
+              {quiz.questions.filter((q) => selectedAnswers[q.id] === q.correctOptionIndex).length} de {quiz.questions.length} questões corretas).
             </p>
             <p className="result-hint">
-              {currentScore >= quiz.passingScore
+              {currentScore >= PASSING_PERCENTAGE
                 ? 'Excelente domínio dos padrões da SEMOB. Você pode revisar o gabarito comentado abaixo ou avançar para o próximo módulo.'
                 : 'Recomendamos reler o manual técnico oficial acima e tentar novamente para fixar os conceitos.'}
             </p>
@@ -190,7 +186,8 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({
       <div className="quiz-questions-list">
         {quiz.questions.map((question, index) => {
           const userAnswer = selectedAnswers[question.id];
-          const isCorrect = userAnswer === question.correctOptionId;
+          const isAnswered = userAnswer !== undefined;
+          const isCorrect = isAnswered && userAnswer === question.correctOptionIndex;
 
           return (
             <div 
@@ -199,7 +196,7 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({
             >
               <div className="question-top">
                 <span className="question-number">Questão {index + 1} de {quiz.questions.length}</span>
-                <span className="question-cat">{question.category}</span>
+                <span className="question-cat">{question.competencyTag || question.category}</span>
                 {isSubmitted && (
                   <span className={`status-pill ${isCorrect ? 'pill-green' : 'pill-red'}`}>
                     {isCorrect ? (
@@ -232,12 +229,9 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({
               {/* Opções */}
               <div className="quiz-options-group">
                 {question.options.map((opt, optIndex) => {
-                  const optId = typeof opt === 'string' ? String(optIndex) : opt.id;
                   const optText = typeof opt === 'string' ? opt : opt.text;
-                  const isSelected = userAnswer === optId;
-                  const isThisOptionCorrect =
-                    optId === question.correctOptionId ||
-                    (question.correctOptionIndex !== undefined && optIndex === question.correctOptionIndex);
+                  const isSelected = userAnswer === optIndex;
+                  const isThisOptionCorrect = optIndex === question.correctOptionIndex;
 
                   let optionClass = 'quiz-option-card';
                   if (isSelected) optionClass += ' selected';
@@ -250,22 +244,24 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({
                     }
                   }
 
+                  const letter = String.fromCharCode(65 + optIndex);
+
                   return (
                     <label 
-                      key={optId} 
+                      key={optIndex} 
                       className={optionClass}
-                      onClick={() => handleSelectOption(question.id, optId)}
+                      onClick={() => handleSelectOption(question.id, optIndex)}
                     >
                       <input
                         type="radio"
                         name={`quiz_${quiz.id}_${question.id}`}
-                        value={optId}
+                        value={optIndex}
                         checked={isSelected}
                         disabled={isSubmitted}
                         onChange={() => {}}
                         className="quiz-radio"
                       />
-                      <span className="opt-letter">{optId.toUpperCase()}</span>
+                      <span className="opt-letter">{letter}</span>
                       <span className="opt-text">{optText}</span>
                       {isSubmitted && isThisOptionCorrect && (
                         <CheckCircle size={18} className="opt-feedback-icon icon-green" />
@@ -312,3 +308,4 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({
     </div>
   );
 };
+export default QuizBlock;

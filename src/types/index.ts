@@ -1,112 +1,45 @@
-// Definições de Tipagem Estrita TypeScript (Padrão SUTINF - sem uso de 'any')
+export type CanonicalModuleId =
+  | 'mod-1-ambiente'
+  | 'mod-2-git'
+  | 'mod-3-banco-dados'
+  | 'mod-4-backend'
+  | 'mod-5-frontend';
 
-export type ScreenType = 
-  | 'home' 
-  | 'roteiro' 
+export type CanonicalChallengeId =
+  | 'challenge-sql-relatorios'
+  | 'challenge-backend-api'
+  | 'challenge-frontend-ui';
+
+export type UserRole = 'ALUNO' | 'DESENVOLVEDOR' | 'SUPERVISOR' | 'ADMIN';
+export type ContentAudience = 'PUBLICO' | 'INTERNO' | 'RESTRITO_PERFIL';
+export type ContentScope = 'GERAL' | 'INSTITUCIONAL_SEMOB';
+export type ReviewStatus = 'PENDENTE' | 'EM_REVISAO' | 'APROVADO' | 'AJUSTES_SOLICITADOS';
+
+export type ScreenType =
+  | 'home'
+  | 'roteiro'
+  | 'biblioteca'
   | 'modulo-ambiente'
-  | 'modulo-git' 
-  | 'modulo-sql' 
-  | 'modulo-gabarito' 
-  | 'modulo-backend' 
-  | 'modulo-frontend' 
-  | 'quizzes' 
-  | 'desafio-sql' 
-  | 'desafio-backend' 
-  | 'desafio-frontend' 
+  | 'modulo-git'
+  | 'modulo-sql'
+  | 'modulo-gabarito'
+  | 'modulo-backend'
+  | 'modulo-frontend'
+  | 'quizzes'
+  | 'desafio-sql'
+  | 'desafio-backend'
+  | 'desafio-frontend'
   | 'sql-challenge'
   | 'backend-challenge'
   | 'frontend-challenge'
-  | 'certificado';
+  | 'certificado'
+  | 'validar-certificado';
 
 export type ThemeMode = 'dark' | 'light';
 
 export interface QuizOption {
   id: string;
   text: string;
-}
-
-export interface QuizQuestion {
-  id: string;
-  question: string;
-  codeSnippet?: string;
-  language?: string;
-  options: (QuizOption | string)[];
-  correctOptionId?: string;
-  correctOptionIndex?: number;
-  explanation: string;
-  category?: string;
-  moduleId?: string;
-}
-
-export interface QuizBlockData {
-  id: string;
-  moduleId: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  badge: string;
-  questions: QuizQuestion[];
-  passingScore: number; // Porcentagem mínima de aprovação (ex: 70)
-}
-
-export interface QuizAttempt {
-  moduleId: string;
-  score: number;
-  totalQuestions: number;
-  percentage: number;
-  passed: boolean;
-  completedAt: string;
-  attemptNumber?: number;
-
-  // Propriedades para compatibilidade com a UI existente
-  quizId?: string;
-  selectedAnswers?: Record<string, any>;
-  correctCount?: number;
-}
-
-export interface ChallengeSubmission {
-  challengeId: string;
-  repositoryUrl?: string;
-  deployUrl?: string;
-  checkedPrItems: number[];
-  checklistCompleted: boolean;
-  /** Guarda as queries SQL digitadas pelo aluno em cada uma das questões */
-  sqlQueries?: Record<string, string>;
-  completedAt?: string;
-}
-
-export interface StudentProgress {
-  schemaVersion?: number;
-  studentName: string;
-  completedModules: string[];
-  completedChecklists: Record<string, string[]>;
-  /** Mantém a melhor tentativa ou a mais recente para compatibilidade imediata com a UI */
-  quizScores: Record<string, QuizAttempt>;
-  /** NOVO: Histórico completo de todas as tentativas por módulo (Fase 4) */
-  quizHistory: Record<string, QuizAttempt[]>;
-  /** NOVO: Submissões estruturadas de desafios práticos */
-  challengeSubmissions?: Record<string, ChallengeSubmission>;
-  moduleNotes: Record<string, string>;
-  startedAt: string;
-  completedAt?: string;
-  certificateCode?: string;
-
-  // Aliases sincronizados para 100% de compatibilidade com as telas atuais
-  quizAttempts: Record<string, QuizAttempt>;
-  completedChallenges: string[];
-  notes: Record<string, string>;
-}
-
-export interface SqlQuestion {
-  id: string;
-  letter: string;
-  title: string;
-  category: 'Parte I: Linha 0.111' | 'Parte II: Sentidos 0.170' | 'Parte III: Cruzamentos Gerais';
-  difficulty: 'Fácil' | 'Médio' | 'Avançado';
-  objective: string;
-  officialQuery: string;
-  logicExplanation: string;
-  trapsAndTips: string;
 }
 
 export interface RichCallout {
@@ -152,7 +85,6 @@ export interface ModuleSection {
   codeExample?: string;
   codeLanguage?: string;
   tip?: string;
-  /** NOVOS BLOCOS RICOS EXTRAÍDOS DOS MANUAIS HTML */
   callouts?: RichCallout[];
   tables?: RichTable[];
   codeBlocks?: RichCodeBlock[];
@@ -168,17 +100,27 @@ export interface ModuleSection {
 }
 
 export interface LearningModule {
-  id: string;
+  id: CanonicalModuleId | string;
   order: number;
-  category: string;
-  estimatedTime: string;
   title: string;
+  category: 'fundamentos' | 'git' | 'banco-dados' | 'backend' | 'frontend' | 'arquitetura' | string;
+  estimatedTime: string;
+  /** Carga horária oficial em horas para compor o certificado (Q34) */
+  workloadHours?: number;
+  /** Versão semântica do conteúdo para auditoria de progresso e certificado (C7) */
+  version?: string;
+  updatedAt?: string;
+  audience?: ContentAudience;
+  scope?: ContentScope;
   description: string;
-  objectives?: string[];
+  objectives: string[];
+  /** Habilidades observáveis da matriz de competências (Q4 / verso do certificado) */
+  competencies?: string[];
   sections: ModuleSection[];
-  checklist?: string[];
+  checklist: string[];
+  externalManualUrl?: string;
 
-  // Compatibilidade com telas existentes (opcionais para permitir módulos modulares)
+  // Propriedades opcionais para compatibilidade
   screenKey?: ScreenType;
   shortTitle?: string;
   subtitle?: string;
@@ -187,15 +129,84 @@ export interface LearningModule {
   iconName?: string;
   quizId?: string;
   topics?: string[];
-  externalManualUrl?: string;
 }
 
 export type ModuleMetadata = LearningModule;
 
-export interface IntegrationStep {
-  step: number;
+export interface QuizQuestion {
+  id: string;
+  moduleId: CanonicalModuleId | string;
+  question: string;
+  options: (string | QuizOption)[];
+  correctOptionIndex: number;
+  explanation: string;
+  competencyTag?: string;
+  category?: string;
+  codeSnippet?: string;
+  language?: string;
+  correctOptionId?: string;
+}
+
+export interface QuizBlockData {
+  id: string;
+  moduleId: string;
   title: string;
-  summary: string;
+  subtitle: string;
+  description: string;
+  badge: string;
+  questions: QuizQuestion[];
+  passingScore: number;
+}
+
+export interface QuizAttempt {
+  moduleId: string;
+  score: number;
+  totalQuestions: number;
+  percentage: number;
+  passed: boolean;
+  completedAt: string;
+  attemptNumber?: number;
+  contentVersion?: string;
+
+  // Propriedades legadas para compatibilidade
+  quizId?: string;
+  selectedAnswers?: Record<string, any>;
+  correctCount?: number;
+}
+
+export interface ChallengeSubmission {
+  challengeId: CanonicalChallengeId | string;
+  repositoryUrl?: string;
+  deployUrl?: string;
+  checkedPrItems: number[];
+  checklistCompleted: boolean;
+  sqlQueries?: Record<string, string>;
+  reviewStatus?: ReviewStatus;
+  supervisorFeedback?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  completedAt?: string;
+}
+
+export interface CertificateApprovalRecord {
+  status: 'BLOQUEADO' | 'AGUARDANDO_SUPERVISOR' | 'EMITIDO' | 'ANULADO';
+  seiProcessNumber?: string;
+  approvedBySupervisor?: string;
+  approvedAt?: string;
+  revokedReason?: string;
+  trackVersion: string;
+  totalWorkloadHours: number;
+}
+
+export interface IntegrationStep {
+  id?: string;
+  dayOrPhase?: string;
+  title: string;
+  description?: string;
+  deliverables?: string[];
+  relatedModuleId?: CanonicalModuleId | string;
+  step?: number;
+  summary?: string;
   content?: string;
   highlights?: string[];
   rules?: string[];
@@ -205,6 +216,41 @@ export interface IntegrationStep {
   layers?: { folder: string; desc: string }[];
   requirements?: string[];
   topics?: string[];
+}
+
+export interface StudentProgress {
+  schemaVersion?: number;
+  studentName: string;
+  studentEmail?: string;
+  studentRole?: UserRole;
+  seiProcessNumber?: string;
+  completedModules: string[];
+  completedChecklists: Record<string, string[]>;
+  quizScores: Record<string, QuizAttempt>;
+  quizHistory: Record<string, QuizAttempt[]>;
+  challengeSubmissions: Record<string, ChallengeSubmission>;
+  moduleNotes: Record<string, string>;
+  startedAt: string;
+  completedAt?: string;
+  certificateCode?: string;
+  certificateApproval?: CertificateApprovalRecord;
+
+  // Aliases sincronizados para compatibilidade de transição
+  quizAttempts?: Record<string, QuizAttempt>;
+  completedChallenges?: string[];
+  notes?: Record<string, string>;
+}
+
+export interface SqlQuestion {
+  id: string;
+  letter: string;
+  title: string;
+  category: 'Parte I: Linha 0.111' | 'Parte II: Sentidos 0.170' | 'Parte III: Cruzamentos Gerais';
+  difficulty: 'Fácil' | 'Médio' | 'Avançado';
+  objective: string;
+  officialQuery: string;
+  logicExplanation: string;
+  trapsAndTips: string;
 }
 
 export type ChallengeCategory = 'sql' | 'backend' | 'frontend' | 'arquitetura';
@@ -232,7 +278,6 @@ export interface ChallengeDefinition {
     code: string;
   };
   tasks: ChallengeTaskItem[];
-  /** Checklist de Revisão de PR (Definition of Done) exigido para concluir */
   prChecklist: string[];
   referenceGuideUrl?: string;
   referenceSolutionUrl?: string;

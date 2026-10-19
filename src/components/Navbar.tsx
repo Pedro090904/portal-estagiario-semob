@@ -18,7 +18,9 @@ import {
   Server,
   Layout,
   Home,
-  CheckCircle2
+  CheckCircle2,
+  Library,
+  Boxes
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -28,6 +30,33 @@ interface NavbarProps {
   onToggleTheme: () => void;
   overallPercentage: number;
 }
+
+// Ícone Vetorial de Alta Fidelidade — Azimute Dev / SUTINF
+const AzimuteLogo: React.FC<{ size?: number }> = ({ size = 36 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 36 36"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="brand-vector-logo"
+    aria-label="Logo Oficial Azimute Dev"
+  >
+    <rect width="36" height="36" rx="9" fill="url(#azimute-grad)" />
+    <circle cx="18" cy="18" r="10.5" stroke="rgba(255,255,255,0.25)" strokeWidth="1.2" strokeDasharray="2 2" />
+    <path d="M18 7.5L21.5 15L18 18L14.5 15L18 7.5Z" fill="#38bdf8" />
+    <path d="M18 28.5L14.5 21L18 18L21.5 21L18 28.5Z" fill="rgba(255,255,255,0.7)" />
+    <path d="M7.5 18L15 14.5L18 18L15 21.5L7.5 18Z" fill="rgba(255,255,255,0.5)" />
+    <path d="M28.5 18L21 21.5L18 18L21 14.5L28.5 18Z" fill="#818cf8" />
+    <circle cx="18" cy="18" r="2.2" fill="#ffffff" />
+    <defs>
+      <linearGradient id="azimute-grad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#0284c7" />
+        <stop offset="1" stopColor="#4338ca" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentScreen,
@@ -48,25 +77,33 @@ export const Navbar: React.FC<NavbarProps> = ({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const isManualActive = ['modulo-git', 'modulo-sql', 'modulo-gabarito', 'modulo-backend', 'modulo-frontend'].includes(currentScreen);
+  const isManualActive = [
+    'modulo-ambiente',
+    'modulo-git',
+    'modulo-sql',
+    'modulo-backend',
+    'modulo-frontend',
+  ].includes(currentScreen);
   const isChallengeActive = ['desafio-sql', 'desafio-backend', 'desafio-frontend'].includes(currentScreen);
 
   return (
     <>
       <header className="site-header no-print">
-        <div className="header-container">
-          {/* Brand / Logo */}
-          <div className="header-brand flex items-center gap-3 cursor-pointer" onClick={() => handleNav('home')}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white shadow-md font-bold text-lg">
-              🧭
-            </div>
-            <div>
-              <h1 className="font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+        <div className="header-container" style={{ paddingLeft: '1rem' }}>
+          {/* Brand / Logo Oficial */}
+          <div
+            className="header-brand flex items-center gap-3 cursor-pointer"
+            onClick={() => handleNav('home')}
+            style={{ margin: 0, padding: 0 }}
+          >
+            <AzimuteLogo size={38} />
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
+              <span className="font-extrabold tracking-tight text-slate-900 dark:text-white" style={{ fontSize: '1.15rem' }}>
                 {brandConfig.productName}
-              </h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              </span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                 {brandConfig.departmentName}
-              </p>
+              </span>
             </div>
           </div>
 
@@ -80,11 +117,21 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             <button
+              id="nav-trilha"
               className={`nav-btn ${currentScreen === 'roteiro' ? 'active' : ''}`}
               onClick={() => handleNav('roteiro')}
             >
               <Compass className="nav-icon" size={16} />
-              Roteiro de Integração
+              Trilha Guiada
+            </button>
+
+            <button
+              id="nav-biblioteca"
+              className={`nav-btn ${currentScreen === 'biblioteca' ? 'active' : ''}`}
+              onClick={() => handleNav('biblioteca')}
+            >
+              <Library className="nav-icon" size={16} />
+              Biblioteca
             </button>
 
             {/* Manuais Dropdown */}
@@ -103,6 +150,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               {manualsDropdownOpen && (
                 <div className="dropdown-menu">
+                  <button onClick={() => handleNav('modulo-ambiente')} className="dropdown-item">
+                    <Boxes size={16} className="text-cyan" />
+                    <div>
+                      <div className="item-title">Setup & Ecossistema SISMOB</div>
+                      <div className="item-desc">Docker Compose, Linux & PostgreSQL</div>
+                    </div>
+                  </button>
                   <button onClick={() => handleNav('modulo-git')} className="dropdown-item">
                     <GitBranch size={16} className="text-sky" />
                     <div>
@@ -115,13 +169,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <div>
                       <div className="item-title">Bancos de Dados & SQL SEMOB</div>
                       <div className="item-desc">PostgreSQL, PostGIS e produção</div>
-                    </div>
-                  </button>
-                  <button onClick={() => handleNav('modulo-gabarito')} className="dropdown-item">
-                    <CheckCircle2 size={16} className="text-emerald" />
-                    <div>
-                      <div className="item-title">Gabarito Oficial SQL</div>
-                      <div className="item-desc">As 25 resoluções passo a passo</div>
                     </div>
                   </button>
                   <button onClick={() => handleNav('modulo-backend')} className="dropdown-item">
@@ -273,7 +320,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Home size={18} className="text-sky" /> Início
             </button>
             <button onClick={() => handleNav('roteiro')} className={`drawer-btn ${currentScreen === 'roteiro' ? 'active' : ''}`}>
-              <Compass size={18} className="text-emerald" /> Roteiro de Integração (PDF)
+              <Compass size={18} className="text-emerald" /> Trilha Guiada
+            </button>
+            <button onClick={() => handleNav('biblioteca')} className={`drawer-btn ${currentScreen === 'biblioteca' ? 'active' : ''}`}>
+              <Library size={18} className="text-sky" /> Biblioteca de Consulta
             </button>
             <button onClick={() => handleNav('quizzes')} className={`drawer-btn ${currentScreen === 'quizzes' ? 'active' : ''}`}>
               <CheckSquare size={18} className="text-amber" /> Central de Quizzes
@@ -283,14 +333,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             <div className="drawer-section-title">Manuais Oficiais SUTINF</div>
+            <button onClick={() => handleNav('modulo-ambiente')} className={`drawer-btn ${currentScreen === 'modulo-ambiente' ? 'active' : ''}`}>
+              <Boxes size={16} className="text-cyan" /> Setup & Ecossistema SISMOB
+            </button>
             <button onClick={() => handleNav('modulo-git')} className={`drawer-btn ${currentScreen === 'modulo-git' ? 'active' : ''}`}>
               <GitBranch size={16} className="text-sky" /> Git & DevSecOps
             </button>
             <button onClick={() => handleNav('modulo-sql')} className={`drawer-btn ${currentScreen === 'modulo-sql' ? 'active' : ''}`}>
               <Database size={16} className="text-emerald" /> Banco de Dados & SQL
-            </button>
-            <button onClick={() => handleNav('modulo-gabarito')} className={`drawer-btn ${currentScreen === 'modulo-gabarito' ? 'active' : ''}`}>
-              <CheckCircle2 size={16} className="text-emerald" /> Gabarito Oficial SQL (25 Itens)
             </button>
             <button onClick={() => handleNav('modulo-backend')} className={`drawer-btn ${currentScreen === 'modulo-backend' ? 'active' : ''}`}>
               <Server size={16} className="text-indigo" /> Back-end NestJS (SISMOB)
@@ -328,15 +378,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           className={`dock-tab ${currentScreen === 'roteiro' ? 'active' : ''}`}
         >
           <Compass size={20} />
-          <span>Roteiro</span>
+          <span>Trilha</span>
         </button>
 
         <button
-          onClick={() => setMobileMenuOpen(true)}
-          className={`dock-tab ${isManualActive ? 'active' : ''}`}
+          onClick={() => handleNav('biblioteca')}
+          className={`dock-tab ${currentScreen === 'biblioteca' ? 'active' : ''}`}
         >
-          <BookOpen size={20} />
-          <span>Manuais</span>
+          <Library size={20} />
+          <span>Biblioteca</span>
         </button>
 
         <button

@@ -14,14 +14,21 @@ import {
   Copy,
   Check,
   AlertTriangle,
+  Play,
 } from 'lucide-react';
-import { storageService } from '../services/storageService';
 import { ChallengeSubmissionPanel } from '../components/ChallengeSubmissionPanel';
+import { ChallengeSubmission } from '../types';
+import {
+  validateStudentQuery,
+  SqlValidationReport,
+} from '../services/sqlSandboxEngine';
 
 interface SqlChallengeScreenProps {
   completedItems: string[];
   onToggleItem: (itemKey: string) => void;
   onOpenModule: (moduleId: string) => void;
+  submission?: ChallengeSubmission;
+  onSaveSubmission: (challengeId: string, data: Partial<ChallengeSubmission>) => void;
 }
 
 export interface SqlQuestion {
@@ -647,24 +654,52 @@ export const SqlChallengeScreen: React.FC<SqlChallengeScreenProps> = ({
   completedItems,
   onToggleItem,
   onOpenModule,
+  submission,
+  onSaveSubmission,
 }) => {
   const [selectedPart, setSelectedPart] = useState<'todos' | 'parte1' | 'parte2' | 'parte3'>('todos');
   const [showHint, setShowHint] = useState<Record<string, boolean>>({});
   const [showAnswer, setShowAnswer] = useState<Record<string, boolean>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Carrega as queries SQL salvas pelo estagiário no storageService
-  const [userQueries, setUserQueries] = useState<Record<string, string>>(() => {
-    const saved = storageService.getProgress().challengeSubmissions?.['challenge-sql-relatorios'];
-    return (saved?.sqlQueries as Record<string, string>) || {};
-  });
+  // Carrega as queries SQL salvas pelo estagiário passadas via submission
+  const [userQueries, setUserQueries] = useState<Record<string, string>>(
+    () => (submission?.sqlQueries as Record<string, string>) || {}
+  );
 
-  // Persiste automaticamente cada alteração nas queries para o storageService
   useEffect(() => {
-    storageService.saveChallengeSubmission('challenge-sql-relatorios', {
-      sqlQueries: userQueries,
-    });
-  }, [userQueries]);
+    if (submission?.sqlQueries) {
+      setUserQueries(submission.sqlQueries);
+    }
+  }, [submission?.sqlQueries]);
+
+  const handleQueryChange = (qId: string, val: string) => {
+    const nextQueries = { ...userQueries, [qId]: val };
+    setUserQueries(nextQueries);
+    onSaveSubmission('challenge-sql-relatorios', { sqlQueries: nextQueries });
+  };
+
+  const [executionReports, setExecutionReports] = useState<
+    Record<string, SqlValidationReport>
+  >({});
+
+  const handleRunQuery = (q: SqlQuestion) => {
+    const currentSql = userQueries[q.id] || '';
+    // A questão 'a' pede listagem geral do catálogo, mas conforme a nossa diretriz,
+    // incentivamos WHERE em todas ou validamos contra o gabarito:
+    const report = validateStudentQuery(
+      currentSql,
+      q.answerSql,
+      q.id !== 'a' // 'a' é catálogo simples, 'b' até 'y' exigem WHERE obrigatoriamente
+    );
+
+    setExecutionReports((prev) => ({ ...prev, [q.id]: report }));
+
+    const itemKey = `sql-q-${q.id}`;
+    if (report.passed && !completedItems.includes(itemKey)) {
+      onToggleItem(itemKey);
+    }
+  };
 
   const filteredQuestions = SQL_QUESTIONS.filter(
     (q) => selectedPart === 'todos' || q.part === selectedPart
@@ -725,31 +760,128 @@ export const SqlChallengeScreen: React.FC<SqlChallengeScreenProps> = ({
         </div>
       </section>
 
-      {/* Referência Rápida do Esquema Relacional */}
-      <section className="section-card">
+      {/* Diagrama de Entidade-Relacionamento Interativo (DER dados_mobilidade) */}
+      <section className="section-card" style={{ marginBottom: '1.5rem' }}>
         <div className="section-header-row">
           <div>
-            <h2>🗄️ Mapa Rápido do Esquema Relacional (Schema: dados_mobilidade)</h2>
-            <p className="text-muted">
-              Consulte as 6 tabelas operacionais e suas chaves primárias/estrangeiras para montar as suas junções e filtros WHERE.
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.25rem' }}>
+              <Database size={20} className="text-sky" />
+              Diagrama Relacional de Entidades (DER — Schema: dados_mobilidade)
+            </h2>
+            <p className="text-muted" style={{ margin: '0.25rem 0 0', fontSize: '0.88rem' }}>
+              Mapeamento visual das 6 tabelas oficiais, chaves primárias [PK], chaves estrangeiras [FK] e cardinalidades para junções explícitas no WHERE.
             </p>
           </div>
         </div>
 
-        <div className="cards-grid three-cols" style={{ marginTop: '1rem' }}>
-          {SCHEMA_TABLES.map((tb) => (
-            <div key={tb.name} className="glass-card" style={{ padding: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <strong style={{ fontFamily: 'monospace', fontSize: '0.95rem' }}>{tb.name}</strong>
-                <span className="status-pill passed" style={{ fontSize: '0.7rem' }}>
-                  PK: {tb.pk}
-                </span>
-              </div>
-              <p className="text-muted" style={{ fontSize: '0.8rem', fontFamily: 'monospace', lineHeight: 1.5 }}>
-                {tb.columns}
-              </p>
+        {/* Grade do Diagrama Relacional */}
+        <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Eixo 1: Linhas e Itinerários Geoespaciais (1:N ➔ 1:N) */}
+          <div style={{ background: 'var(--surface-hover)', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+              <span className="status-pill passed" style={{ fontSize: '0.72rem' }}>RAMO 1 • ESPACIAL & TRAÇADOS</span>
+              <strong style={{ fontSize: '0.88rem' }}>tab_linha ──(1:N)──➔ tab_itinerario ──(1:N)──➔ tab_itinerario_descritivo</strong>
             </div>
-          ))}
+
+            <div className="cards-grid three-cols" style={{ gap: '0.85rem' }}>
+              {/* Card tab_linha */}
+              <div className="glass-card" style={{ padding: '0.85rem', borderTop: '3px solid #38bdf8' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <strong style={{ fontFamily: 'monospace', fontSize: '0.92rem', color: '#38bdf8' }}>tab_linha (l)</strong>
+                  <span className="status-pill passed" style={{ fontSize: '0.68rem' }}>Entidade Forte</span>
+                </div>
+                <div style={{ fontSize: '0.78rem', fontFamily: 'monospace', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <div style={{ color: '#f59e0b', fontWeight: 'bold' }}>🔑 id_linha [PK] INT</div>
+                  <div>cd_linha VARCHAR(20)</div>
+                  <div>tx_linha VARCHAR(200)</div>
+                  <div>vl_tarifa NUMBER</div>
+                  <div>fx_tarifaria VARCHAR(50)</div>
+                  <div>sentido VARCHAR(20)</div>
+                </div>
+              </div>
+
+              {/* Card tab_itinerario */}
+              <div className="glass-card" style={{ padding: '0.85rem', borderTop: '3px solid #10b981' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <strong style={{ fontFamily: 'monospace', fontSize: '0.92rem', color: '#10b981' }}>tab_itinerario (i)</strong>
+                  <span className="status-pill passed" style={{ fontSize: '0.68rem' }}>PostGIS Spatial</span>
+                </div>
+                <div style={{ fontSize: '0.78rem', fontFamily: 'monospace', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <div style={{ color: '#f59e0b', fontWeight: 'bold' }}>🔑 id_itinerario [PK] INT</div>
+                  <div style={{ color: '#38bdf8', fontWeight: 600 }}>🔗 id_linha [FK ➔ l.id_linha]</div>
+                  <div>lin_sentido CHAR(1) ('I'/'V'/'C')</div>
+                  <div>lin_extensao NUMBER (km)</div>
+                  <div style={{ color: '#a855f7' }}>🌐 geo_linhas_lin [PostGIS]</div>
+                </div>
+              </div>
+
+              {/* Card tab_itinerario_descritivo */}
+              <div className="glass-card" style={{ padding: '0.85rem', borderTop: '3px solid #6366f1' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <strong style={{ fontFamily: 'monospace', fontSize: '0.92rem', color: '#6366f1' }}>tab_itinerario_descritivo (d)</strong>
+                  <span className="status-pill passed" style={{ fontSize: '0.68rem' }}>Vias & Paradas</span>
+                </div>
+                <div style={{ fontSize: '0.78rem', fontFamily: 'monospace', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <div style={{ color: '#f59e0b', fontWeight: 'bold' }}>🔑 id_itinerario_descritivo [PK]</div>
+                  <div style={{ color: '#10b981', fontWeight: 600 }}>🔗 id_itinerario [FK ➔ i.id_itinerario]</div>
+                  <div>nm_sequencia INT</div>
+                  <div>nm_via VARCHAR(150)</div>
+                  <div>localidade VARCHAR(100)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Eixo 2: Operadoras e Escala de Horários (N:N ➔ 1:N) */}
+          <div style={{ background: 'var(--surface-hover)', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+              <span className="status-pill passed" style={{ fontSize: '0.72rem' }}>RAMO 2 • OPERADORAS & HORÁRIOS (N:N)</span>
+              <strong style={{ fontSize: '0.88rem' }}>tab_linha ──(N:N via tab_operadora_linha)── tab_operadora ──(1:N)──➔ tab_horario</strong>
+            </div>
+
+            <div className="cards-grid three-cols" style={{ gap: '0.85rem' }}>
+              {/* Card tab_operadora */}
+              <div className="glass-card" style={{ padding: '0.85rem', borderTop: '3px solid #f59e0b' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <strong style={{ fontFamily: 'monospace', fontSize: '0.92rem', color: '#f59e0b' }}>tab_operadora (o)</strong>
+                  <span className="status-pill passed" style={{ fontSize: '0.68rem' }}>Empresas STPC</span>
+                </div>
+                <div style={{ fontSize: '0.78rem', fontFamily: 'monospace', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <div style={{ color: '#f59e0b', fontWeight: 'bold' }}>🔑 id_operadora [PK] INT</div>
+                  <div>nm_operadora VARCHAR(150)</div>
+                  <div>nm_cpf_cnpj VARCHAR(25)</div>
+                </div>
+              </div>
+
+              {/* Card tab_operadora_linha */}
+              <div className="glass-card" style={{ padding: '0.85rem', borderTop: '3px solid #ec4899' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <strong style={{ fontFamily: 'monospace', fontSize: '0.92rem', color: '#ec4899' }}>tab_operadora_linha (ol)</strong>
+                  <span className="status-pill passed" style={{ fontSize: '0.68rem' }}>Associação N:N</span>
+                </div>
+                <div style={{ fontSize: '0.78rem', fontFamily: 'monospace', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <div style={{ color: '#f59e0b', fontWeight: 'bold' }}>🔑 id_operadora_linha [PK] INT</div>
+                  <div style={{ color: '#38bdf8', fontWeight: 600 }}>🔗 id_linha [FK ➔ l.id_linha]</div>
+                  <div style={{ color: '#f59e0b', fontWeight: 600 }}>🔗 id_operadora [FK ➔ o.id_operadora]</div>
+                </div>
+              </div>
+
+              {/* Card tab_horario */}
+              <div className="glass-card" style={{ padding: '0.85rem', borderTop: '3px solid #14b8a6' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <strong style={{ fontFamily: 'monospace', fontSize: '0.92rem', color: '#14b8a6' }}>tab_horario (h)</strong>
+                  <span className="status-pill passed" style={{ fontSize: '0.68rem' }}>Tabelas Horárias</span>
+                </div>
+                <div style={{ fontSize: '0.78rem', fontFamily: 'monospace', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <div style={{ color: '#f59e0b', fontWeight: 'bold' }}>🔑 id_horario [PK] INT</div>
+                  <div style={{ color: '#ec4899', fontWeight: 600 }}>🔗 id_operadora_linha [FK]</div>
+                  <div>sentido CHAR(1) ('I'/'V')</div>
+                  <div>hr_prevista INT (HHMMSS)</div>
+                  <div style={{ color: 'var(--text-dim)' }}>segunda..domingo CHAR(1) ('S'/'N')</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -842,14 +974,28 @@ export const SqlChallengeScreen: React.FC<SqlChallengeScreenProps> = ({
                     className="sql-editor-textarea"
                     placeholder={`-- Escreva aqui a sua query SQL para a Questão [${q.id.toUpperCase()}] usando cláusula WHERE...`}
                     value={currentQuery}
-                    onChange={(e) =>
-                      setUserQueries((prev) => ({ ...prev, [q.id]: e.target.value }))
-                    }
+                    onChange={(e) => handleQueryChange(q.id, e.target.value)}
                   />
                 </div>
 
-                {/* Botões de Dica e Gabarito Embutido */}
-                <div className="sql-card-actions" style={{ marginTop: '0.85rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                {/* Botões de Ação da Questão: Executar SQL + Dica + Gabarito */}
+                <div
+                  className="sql-card-actions"
+                  style={{
+                    marginTop: '0.85rem',
+                    display: 'flex',
+                    gap: '0.75rem',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={() => handleRunQuery(q)}
+                  >
+                    <Play size={15} /> Executar & Validar SQL
+                  </button>
+
                   <button
                     type="button"
                     className="btn-secondary"
@@ -872,6 +1018,90 @@ export const SqlChallengeScreen: React.FC<SqlChallengeScreenProps> = ({
                     {showAnswer[q.id] ? 'Ocultar Gabarito Comentado' : 'Comparar com Gabarito Oficial'}
                   </button>
                 </div>
+
+                {/* Painel de Resultado da Execução SQL em Tempo Real */}
+                {executionReports[q.id] && (
+                  <div
+                    className="glass-card"
+                    style={{
+                      marginTop: '1rem',
+                      padding: '1rem',
+                      borderLeft: `4px solid ${
+                        executionReports[q.id].passed ? '#10b981' : '#ef4444'
+                      }`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: '0.5rem',
+                        marginBottom: '0.6rem',
+                      }}
+                    >
+                      <strong
+                        style={{
+                          color: executionReports[q.id].passed ? '#10b981' : '#ef4444',
+                          fontSize: '0.88rem',
+                        }}
+                      >
+                        {executionReports[q.id].feedback}
+                      </strong>
+                      {executionReports[q.id].studentResult.success && (
+                        <span className="text-muted" style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>
+                          {executionReports[q.id].studentResult.rowCount} registo(s) •{' '}
+                          {executionReports[q.id].studentResult.executionTimeMs} ms
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Tabela de Dados Retornados pela Query do Aluno */}
+                    {executionReports[q.id].studentResult.success &&
+                      executionReports[q.id].studentResult.rows.length > 0 && (
+                        <div style={{ overflowX: 'auto', marginTop: '0.5rem' }}>
+                          <table
+                            style={{
+                              width: '100%',
+                              borderCollapse: 'collapse',
+                              fontSize: '0.8rem',
+                              fontFamily: 'monospace',
+                            }}
+                          >
+                            <thead>
+                              <tr
+                                style={{
+                                  borderBottom: '1px solid rgba(148,163,184,0.3)',
+                                  textAlign: 'left',
+                                }}
+                              >
+                                {executionReports[q.id].studentResult.columns.map((col) => (
+                                  <th key={col} style={{ padding: '0.45rem 0.65rem', color: '#38bdf8' }}>
+                                    {col}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {executionReports[q.id].studentResult.rows.slice(0, 10).map((row, rIdx) => (
+                                <tr
+                                  key={rIdx}
+                                  style={{ borderBottom: '1px solid rgba(148,163,184,0.1)' }}
+                                >
+                                  {executionReports[q.id].studentResult.columns.map((col) => (
+                                    <td key={col} style={{ padding: '0.45rem 0.65rem' }}>
+                                      {String(row[col] ?? 'NULL')}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                  </div>
+                )}
 
                 {showHint[q.id] && (
                   <div className="sql-hint-box" style={{ marginTop: '0.85rem' }}>
@@ -933,6 +1163,8 @@ export const SqlChallengeScreen: React.FC<SqlChallengeScreenProps> = ({
         title="Validação Final do Desafio de Banco de Dados (SQL)"
         subtitle="Confirme se todas as suas consultas respeitam o schema dados_mobilidade e as diretrizes do gabarito oficial da SEMOB."
         requireRepoUrl={false}
+        existingSubmission={submission}
+        onSaveSubmission={onSaveSubmission}
         prChecklist={[
           'Todas as 25 consultas utilizam cláusula WHERE explícita para relacionamentos e filtros?',
           'Evitei o uso de SELECT * projetando apenas as colunas necessárias com alias (AS)?',

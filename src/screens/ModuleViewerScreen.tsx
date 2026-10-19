@@ -13,7 +13,13 @@ import {
   Layers,
   ListChecks,
   Search,
+  Sun,
+  Moon,
+  ArrowUp,
+  FileText,
+  X,
 } from 'lucide-react';
+import { useTheme } from '../hooks/useTheme';
 import { LearningModule, QuizAttempt } from '../types';
 import { getQuizByModuleId } from '../services/dataService';
 import { QuizBlock } from '../components/QuizBlock';
@@ -56,6 +62,8 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
   const [viewMode, setViewMode] = useState<'full' | 'step'>('full');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [scenarioQuery, setScenarioQuery] = useState('');
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   const questions = getQuizByModuleId(module.id);
 
@@ -102,13 +110,33 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <button
             type="button"
+            onClick={() => setIsNotesOpen(!isNotesOpen)}
+            className={`btn-secondary ${isNotesOpen ? 'active' : ''}`}
+            title="Abrir Caderno de Notas Técnicas lateral"
+          >
+            <FileText size={15} /> Caderno de Notas {moduleNote ? '•' : ''}
+          </button>
+
+          <button
+            type="button"
             onClick={() => setViewMode(viewMode === 'full' ? 'step' : 'full')}
             className="btn-secondary"
           >
             <Layers size={15} />
             {viewMode === 'full'
               ? 'Modo Foco (1 Lição por Vez)'
-              : 'Ver Tutorial Completo na Mesma Página'}
+              : 'Ver Tutorial Completo'}
+          </button>
+
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="theme-toggle-btn"
+            style={{ width: '38px', height: '38px', padding: 0 }}
+            aria-label="Alternar tema"
+            title={`Mudar para tema ${theme === 'dark' ? 'claro' : 'escuro'}`}
+          >
+            {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
           </button>
 
           <button
@@ -116,7 +144,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
             onClick={() => onToggleComplete(module.id)}
           >
             <CheckCircle2 size={16} />
-            {isCompleted ? 'Módulo Concluído ✓' : 'Marcar Módulo como Concluído'}
+            {isCompleted ? 'Módulo Concluído ✓' : 'Marcar Concluído'}
           </button>
         </div>
       </div>
@@ -606,17 +634,19 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
         </section>
       )}
 
-      {/* Bloco de Anotações Pessoais */}
-      <ModuleNotesPanel
-        moduleId={module.id}
-        moduleTitle={module.title}
-        initialNote={moduleNote}
-        onSaveNote={onSaveNote}
-      />
+      {/* Bloco de Anotações Pessoais (Visível no rodapé e disponível como Sidebar) */}
+      <section style={{ marginBottom: '2rem' }}>
+        <ModuleNotesPanel
+          moduleId={module.id}
+          moduleTitle={module.title}
+          initialNote={moduleNote}
+          onSaveNote={onSaveNote}
+        />
+      </section>
 
       {/* Histórico de Tentativas do Estudante */}
       {quizHistory.length > 0 && (
-        <section className="section-card">
+        <section className="section-card" style={{ marginBottom: '2rem' }}>
           <div className="section-header-row">
             <div>
               <h2>
@@ -653,15 +683,17 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
         </section>
       )}
 
-      {/* Quiz de Validação */}
+      {/* Quiz de Validação Isolado com Espaçamento Limpo */}
       {questions.length > 0 && (
-        <QuizBlock
-          moduleId={module.id}
-          moduleTitle={module.title}
-          questions={questions}
-          previousAttempt={quizAttempt}
-          onCompleteQuiz={onSaveQuiz}
-        />
+        <div style={{ marginTop: '1.5rem', marginBottom: '3rem', clear: 'both' }}>
+          <QuizBlock
+            moduleId={module.id}
+            moduleTitle={module.title}
+            questions={questions}
+            previousAttempt={quizAttempt}
+            onCompleteQuiz={onSaveQuiz}
+          />
+        </div>
       )}
 
       {/* Navegação entre Módulos */}
@@ -673,6 +705,8 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: '1rem',
+          marginTop: '2rem',
+          clear: 'both',
         }}
       >
         {prevModule ? (
@@ -693,7 +727,116 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
           </button>
         )}
       </section>
+
+      {/* Drawer / Sidebar Lateral para o Caderno de Anotações Técnicas */}
+      {isNotesOpen && (
+        <div
+          className="notes-drawer-overlay no-print"
+          onClick={() => setIsNotesOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(3px)',
+            zIndex: 1100,
+            display: 'flex',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <div
+            className="notes-drawer-container"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '490px',
+              maxWidth: '92vw',
+              height: '100%',
+              background: 'var(--surface)',
+              borderLeft: '1px solid var(--border-light)',
+              boxShadow: '-8px 0 30px rgba(0,0,0,0.5)',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '1.25rem',
+              overflowY: 'auto',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <FileText size={18} className="text-sky" />
+                <strong style={{ fontSize: '1.05rem' }}>Caderno de Notas • Módulo 0{module.order}</strong>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsNotesOpen(false)}
+                className="btn-secondary"
+                style={{ padding: '0.35rem 0.6rem' }}
+                aria-label="Fechar anotações"
+              >
+                <X size={16} /> Fechar
+              </button>
+            </div>
+
+            <ModuleNotesPanel
+              moduleId={module.id}
+              moduleTitle={module.title}
+              initialNote={moduleNote}
+              onSaveNote={onSaveNote}
+              isSplitView={true}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Botões Flutuantes: Voltar ao Topo & Abrir Anotações */}
+      <div
+        className="no-print"
+        style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.65rem',
+          zIndex: 990,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setIsNotesOpen(true)}
+          className="btn-primary"
+          style={{
+            borderRadius: '999px',
+            boxShadow: '0 4px 16px rgba(56, 189, 248, 0.35)',
+            padding: '0.65rem 1rem',
+            fontSize: '0.85rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+          }}
+          title="Abrir Caderno de Anotações"
+        >
+          <FileText size={16} /> Anotações
+        </button>
+
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="btn-secondary"
+          style={{
+            borderRadius: '999px',
+            boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
+            padding: '0.65rem 1rem',
+            fontSize: '0.85rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+          }}
+          title="Voltar ao início do manual"
+        >
+          <ArrowUp size={16} /> Topo
+        </button>
+      </div>
     </div>
   );
 };
 export default ModuleViewerScreen;
+

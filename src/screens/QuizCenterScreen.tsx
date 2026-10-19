@@ -59,7 +59,7 @@ export const QuizCenterScreen: React.FC<QuizCenterScreenProps> = ({
           <div className="stat-card">
             <span className="stat-label">Quizzes Aprovados</span>
             <div className="stat-num text-emerald">{passedCount} / {totalQuizzes}</div>
-            <span className="stat-sub">Mínimo de 75% exigido</span>
+            <span className="stat-sub">Mínimo de 70% exigido</span>
           </div>
 
           <div className="stat-card">
@@ -71,9 +71,9 @@ export const QuizCenterScreen: React.FC<QuizCenterScreenProps> = ({
           <div className="stat-card">
             <span className="stat-label">Status da Certificação</span>
             <div className="stat-num text-indigo">
-              {passedCount >= 4 ? 'Elegível 🏆' : `${4 - passedCount} faltante(s)`}
+              {passedCount >= totalQuizzes ? 'Elegível 🏆' : `${totalQuizzes - passedCount} faltante(s)`}
             </div>
-            <span className="stat-sub">Atingir 4 ou mais aprovações</span>
+            <span className="stat-sub">Aprovar nos {totalQuizzes} blocos oficiais</span>
           </div>
         </div>
       </div>

@@ -24,6 +24,8 @@ interface CertificateScreenProps {
   totalModules: number;
   passedQuizzesCount: number;
   totalQuizzes: number;
+  completedChallengesCount?: number;
+  totalChallenges?: number;
   overallPercentage: number;
   averageScore: number;
   isUnlocked: boolean;
@@ -171,6 +173,8 @@ export const CertificateScreen: React.FC<CertificateScreenProps> = ({
   totalModules,
   passedQuizzesCount,
   totalQuizzes,
+  completedChallengesCount = 0,
+  totalChallenges = 3,
   overallPercentage,
   averageScore,
   isUnlocked,
@@ -230,7 +234,7 @@ export const CertificateScreen: React.FC<CertificateScreenProps> = ({
   const verificationCRC = `${hexHash.substring(0, 4)}-${hexHash.substring(4, 8)}`;
   const certSequential = (Math.abs(rawHash) % 9000 + 1000).toString();
   const certificateCode = `${brandConfig.certificatePrefix}-${cleanId}-${new Date().getFullYear()}-${certSequential}`;
-  const validationUrl = `https://portaldodesenvolvedor.semob.df.gov.br/validar?cert=${certificateCode}&crc=${verificationCRC}`;
+  const validationUrl = `${window.location.origin}/certificados/validar/${certificateCode}?crc=${verificationCRC}`;
   
   const emissionDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
@@ -271,7 +275,7 @@ export const CertificateScreen: React.FC<CertificateScreenProps> = ({
         <div className="reqs-grid">
           <div className="req-item">
             <div className="req-icon">
-              {completedModulesCount >= 3 ? (
+              {completedModulesCount >= totalModules ? (
                 <CheckCircle2 size={18} className="text-emerald" />
               ) : (
                 <XCircle size={18} className="text-amber" />
@@ -279,21 +283,35 @@ export const CertificateScreen: React.FC<CertificateScreenProps> = ({
             </div>
             <div>
               <strong>Manuais Técnicos Obrigatórios:</strong>
-              <p>{completedModulesCount} de {totalModules} estudados e convalidados (mínimo de 3 exigido)</p>
+              <p>{completedModulesCount} de {totalModules} estudados e convalidados (100% obrigatório)</p>
             </div>
           </div>
 
           <div className="req-item">
             <div className="req-icon">
-              {passedQuizzesCount >= 4 ? (
+              {passedQuizzesCount >= totalQuizzes ? (
                 <CheckCircle2 size={18} className="text-emerald" />
               ) : (
                 <XCircle size={18} className="text-amber" />
               )}
             </div>
             <div>
-              <strong>Avaliações Técnicas de Suficiência (≥ 75%):</strong>
-              <p>{passedQuizzesCount} de {totalQuizzes} aprovadas (mínimo de 4 exigido)</p>
+              <strong>Avaliações Técnicas de Suficiência (≥ 70%):</strong>
+              <p>{passedQuizzesCount} de {totalQuizzes} aprovadas (100% obrigatório)</p>
+            </div>
+          </div>
+
+          <div className="req-item">
+            <div className="req-icon">
+              {completedChallengesCount >= totalChallenges ? (
+                <CheckCircle2 size={18} className="text-emerald" />
+              ) : (
+                <XCircle size={18} className="text-amber" />
+              )}
+            </div>
+            <div>
+              <strong>Desafios Práticos de Engenharia:</strong>
+              <p>{completedChallengesCount} de {totalChallenges} submetidos e validados (100% obrigatório)</p>
             </div>
           </div>
         </div>
@@ -513,6 +531,15 @@ export const CertificateScreen: React.FC<CertificateScreenProps> = ({
           <Award size={18} />
           Efeito Visual de Conclusão
         </button>
+
+        <a
+          href={`/certificados/validar/${certificateCode}?crc=${verificationCRC}`}
+          className="btn-secondary"
+          style={{ textDecoration: 'none' }}
+        >
+          <ShieldCheck size={18} />
+          Validar Autenticidade Pública
+        </a>
       </div>
     </div>
   );

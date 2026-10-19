@@ -3,6 +3,8 @@ import {
   evaluateQuizAttempt,
   recordQuizAttemptInProgress,
   calculateOverallProgress,
+  CANONICAL_MODULE_IDS,
+  CANONICAL_CHALLENGE_IDS,
 } from '../progressEngine';
 import { sanitizeAndMigrateProgress } from '../storageService';
 import { QuizQuestion, StudentProgress } from '../../types';
@@ -10,119 +12,118 @@ import { QuizQuestion, StudentProgress } from '../../types';
 const mockQuestions: QuizQuestion[] = [
   {
     id: 'q1',
-    moduleId: 'mod-git',
+    moduleId: 'mod-2-git',
     question: 'Qual comando cria uma branch?',
-    options: ['git checkout -b', 'git init', 'git status', 'git log'],
+    options: ['git switch -c', 'git init', 'git status', 'git log'],
     correctOptionIndex: 0,
-    explanation: 'git checkout -b cria e alterna para a nova branch.',
+    explanation: 'git switch -c cria e alterna para a nova branch.',
   },
   {
     id: 'q2',
-    moduleId: 'mod-git',
-    question: 'Qual cláusula filtra registros em SQL?',
+    moduleId: 'mod-2-git',
+    question: 'Qual cláusula filtra registos em SQL?',
     options: ['SELECT', 'WHERE', 'GROUP BY', 'ORDER BY'],
     correctOptionIndex: 1,
-    explanation: 'WHERE filtra linhas antes do agrupamento.',
+    explanation: 'WHERE filtra linhas e realiza junções.',
   },
 ];
 
 const createEmptyProgress = (): StudentProgress =>
   sanitizeAndMigrateProgress({});
 
-describe('Motor de Progresso e Avaliação (progressEngine)', () => {
-  it('deve aprovar o estudante quando atingir >= 70% de acerto no quiz', () => {
-    const attempt = evaluateQuizAttempt('mod-git', mockQuestions, {
+describe('Motor de Progresso e Integridade de Regras (Sprint 1)', () => {
+  it('deve aprovar o estudante quando atingir >= 70% (Decisão C2) e normalizar IDs legados', () => {
+    const attempt = evaluateQuizAttempt('git', mockQuestions, {
       q1: 0,
       q2: 1,
     });
 
-    expect(attempt.score).toBe(2);
+    expect(attempt.moduleId).toBe('mod-2-git');
     expect(attempt.percentage).toBe(100);
     expect(attempt.passed).toBe(true);
-    expect(attempt.attemptNumber).toBe(1);
   });
 
-  it('deve reprovar o estudante quando atingir menos de 70% no quiz', () => {
-    const attempt = evaluateQuizAttempt('mod-git', mockQuestions, {
-      q1: 0,
-      q2: 3, // errada
-    });
-
-    expect(attempt.score).toBe(1);
-    expect(attempt.percentage).toBe(50);
-    expect(attempt.passed).toBe(false);
-  });
-
-  it('deve preservar o histórico de tentativas sem sobrescrever tentativas anteriores e manter a melhor nota', () => {
+  it('NÃO deve marcar o módulo teórico como lido apenas por passar no quiz (Fim do Certificado sem Estudo)', () => {
     let state = createEmptyProgress();
+    const attempt = evaluateQuizAttempt('mod-2-git', mockQuestions, { q1: 0, q2: 1 });
+    state = recordQuizAttemptInProgress(state, attempt);
 
-    // 1ª tentativa: reprovado (50%)
-    const attempt1 = evaluateQuizAttempt('mod-git', mockQuestions, { q1: 0, q2: 3 });
-    state = recordQuizAttemptInProgress(state, attempt1);
-
-    expect(state.quizHistory['mod-git']).toHaveLength(1);
-    expect(state.quizScores['mod-git'].percentage).toBe(50);
-    expect(state.completedModules).not.toContain('mod-git');
-
-    // 2ª tentativa: aprovado (100%)
-    const attempt2 = evaluateQuizAttempt('mod-git', mockQuestions, { q1: 0, q2: 1 });
-    state = recordQuizAttemptInProgress(state, attempt2);
-
-    expect(state.quizHistory['mod-git']).toHaveLength(2);
-    expect(state.quizHistory['mod-git'][0].percentage).toBe(50);
-    expect(state.quizHistory['mod-git'][1].percentage).toBe(100);
-    expect(state.quizHistory['mod-git'][1].attemptNumber).toBe(2);
-    expect(state.quizScores['mod-git'].percentage).toBe(100);
-    expect(state.completedModules).toContain('mod-git');
-
-    // 3ª tentativa: refez e tirou nota menor (50%) -> histórico registra a 3ª, mas mantém os 100% conquistados no resumo!
-    const attempt3 = evaluateQuizAttempt('mod-git', mockQuestions, { q1: 0, q2: 2 });
-    state = recordQuizAttemptInProgress(state, attempt3);
-
-    expect(state.quizHistory['mod-git']).toHaveLength(3);
-    expect(state.quizScores['mod-git'].percentage).toBe(100);
+    expect(state.quizScores['mod-2-git'].passed).toBe(true);
+    // O módulo NÃO pode entrar em completedModules sem leitura explícita
+    expect(state.completedModules).not.toContain('mod-2-git');
   });
 
-  it('só deve liberar o certificado quando todos os módulos e todos os quizzes estiverem aprovados', () => {
-    let state = createEmptyProgress();
-    const totalModules = 2;
-
-    // Concluiu apenas 1 módulo e 1 quiz
-    const attemptMod1 = evaluateQuizAttempt('mod-1', mockQuestions, { q1: 0, q2: 1 });
-    state = recordQuizAttemptInProgress(state, attemptMod1);
-
-    let metrics = calculateOverallProgress(state, totalModules);
-    expect(metrics.completionPercentage).toBe(50);
-    expect(metrics.isCertificateUnlocked).toBe(false);
-
-    // Concluiu o 2º módulo e passou no 2º quiz
-    const attemptMod2 = evaluateQuizAttempt('mod-2', mockQuestions, { q1: 0, q2: 1 });
-    state = recordQuizAttemptInProgress(state, attemptMod2);
-
-    metrics = calculateOverallProgress(state, totalModules);
-    expect(metrics.completionPercentage).toBe(100);
-    expect(metrics.isCertificateUnlocked).toBe(true);
-  });
-
-  it('deve migrar dados antigos do localStorage sem quizHistory automaticamente', () => {
-    const legacyData = {
+  it('deve deduplicar chaves legadas (ex: "git" e "mod-2-git") sem contar o mesmo quiz duas vezes', () => {
+    const legacyCorruptedData = {
       studentName: 'Pedro',
-      completedModules: ['mod-git'],
+      completedModules: ['git', 'mod-2-git'],
       quizScores: {
-        'mod-git': {
-          moduleId: 'mod-git',
-          score: 5,
-          totalQuestions: 5,
+        git: {
+          moduleId: 'git',
+          score: 3,
+          totalQuestions: 4,
+          percentage: 75,
+          passed: true,
+          completedAt: '2026-10-18T00:00:00.000Z',
+        },
+        'mod-2-git': {
+          moduleId: 'mod-2-git',
+          score: 4,
+          totalQuestions: 4,
           percentage: 100,
           passed: true,
-          completedAt: '2026-01-01T00:00:00.000Z',
+          completedAt: '2026-10-18T01:00:00.000Z',
         },
       },
     };
 
-    const migrated = sanitizeAndMigrateProgress(legacyData);
-    expect(migrated.studentName).toBe('Pedro');
-    expect(migrated.quizHistory['mod-git']).toHaveLength(1);
-    expect(migrated.quizHistory['mod-git'][0].attemptNumber).toBe(1);
+    const migrated = sanitizeAndMigrateProgress(legacyCorruptedData);
+    expect(migrated.completedModules).toEqual(['mod-2-git']);
+    expect(Object.keys(migrated.quizScores)).toEqual(['mod-2-git']);
+    expect(migrated.quizScores['mod-2-git'].percentage).toBe(100);
+
+    const metrics = calculateOverallProgress(migrated, CANONICAL_MODULE_IDS, CANONICAL_CHALLENGE_IDS);
+    expect(metrics.completedCount).toBe(1);
+    expect(metrics.passedQuizzesCount).toBe(1);
+    expect(metrics.isCertificateUnlocked).toBe(false);
+  });
+
+  it('só deve liberar a elegibilidade do certificado quando 100% dos módulos, quizzes E desafios forem concluídos (Decisão C1)', () => {
+    let state = createEmptyProgress();
+    const testModules = ['mod-1-ambiente', 'mod-2-git'];
+    const testChallenges = ['challenge-sql-relatorios'];
+
+    // 1. Passou nos 2 quizzes, mas não leu os módulos nem fez o desafio
+    state = recordQuizAttemptInProgress(
+      state,
+      evaluateQuizAttempt('mod-1-ambiente', mockQuestions, { q1: 0, q2: 1 })
+    );
+    state = recordQuizAttemptInProgress(
+      state,
+      evaluateQuizAttempt('mod-2-git', mockQuestions, { q1: 0, q2: 1 })
+    );
+
+    let metrics = calculateOverallProgress(state, testModules, testChallenges);
+    expect(metrics.allQuizzesPassed).toBe(true);
+    expect(metrics.allModulesCompleted).toBe(false);
+    expect(metrics.isCertificateEligible).toBe(false);
+
+    // 2. Leu os 2 módulos, mas ainda falta o desafio prático
+    state.completedModules = ['mod-1-ambiente', 'mod-2-git'];
+    metrics = calculateOverallProgress(state, testModules, testChallenges);
+    expect(metrics.allModulesCompleted).toBe(true);
+    expect(metrics.allChallengesSubmitted).toBe(false);
+    expect(metrics.isCertificateEligible).toBe(false);
+
+    // 3. Concluiu e submeteu o desafio prático -> 100% elegível!
+    state.challengeSubmissions['challenge-sql-relatorios'] = {
+      challengeId: 'challenge-sql-relatorios',
+      checkedPrItems: [0, 1, 2, 3],
+      checklistCompleted: true,
+    };
+
+    metrics = calculateOverallProgress(state, testModules, testChallenges);
+    expect(metrics.completionPercentage).toBe(100);
+    expect(metrics.isCertificateEligible).toBe(true);
   });
 });

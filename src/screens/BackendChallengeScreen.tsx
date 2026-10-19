@@ -8,13 +8,22 @@ import {
   ArrowRight,
   BookOpen,
   Terminal,
+  ShieldCheck,
+  GitBranch,
+  Key,
+  FileCode2,
+  FileText,
+  Boxes,
 } from 'lucide-react';
 import { ChallengeSubmissionPanel } from '../components/ChallengeSubmissionPanel';
+import { ChallengeSubmission } from '../types';
 
 interface BackendChallengeScreenProps {
   completedItems: string[];
   onToggleItem: (itemKey: string) => void;
   onOpenModule: (moduleId: string) => void;
+  submission?: ChallengeSubmission;
+  onSaveSubmission: (challengeId: string, data: Partial<ChallengeSubmission>) => void;
 }
 
 interface ArchLayer {
@@ -29,161 +38,308 @@ interface ArchLayer {
 
 const ARCH_LAYERS: ArchLayer[] = [
   {
-    id: 'controller',
-    name: '1. Controller',
-    folder: 'src/controllers/LinhaController.ts',
-    role: 'Porta de entrada HTTP. Recebe req/res, extrai parâmetros, chama o Service e devolve o status HTTP adequado.',
+    id: 'entity',
+    name: '1. Entity',
+    folder: 'src/veiculos/entities/veiculo.entity.ts',
+    role: 'Mapeamento ORM (TypeORM) que espelha fielmente a tabela do PostgreSQL com tipagem estrita de colunas e chaves.',
     mustDo: [
-      'Extrair req.params, req.query e req.body',
-      'Chamar o método correspondente no LinhaService',
-      'Retornar status HTTP corretos (200, 201, 204, 400, 404)',
+      'Decorar a classe com @Entity({ name: "tab_veiculo", schema: "dados_mobilidade" })',
+      'Definir @PrimaryGeneratedColumn("increment") para id_veiculo',
+      'Mapear nr_placa, nr_prefixo, ano_fabricacao, tp_combustivel e relacionar com id_linha via @ManyToOne',
     ],
     mustNotDo: [
-      'NUNCA escrever SQL ou acessar o pool do banco diretamente',
-      'NUNCA concentrar cálculos de negócio complexos no controller',
+      'NUNCA colocar lógica de negócio ou queries SQL dentro da Entity',
+      'NUNCA importar Request, Response ou decorators HTTP nesta camada',
     ],
-    codeSample: `export class LinhaController {
-  constructor(private readonly service = new LinhaService()) {}
+    codeSample: `@Entity({ name: 'tab_veiculo', schema: 'dados_mobilidade' })
+export class VeiculoEntity {
+  @PrimaryGeneratedColumn()
+  id_veiculo: number;
 
-  listar = async (req: Request, res: Response) => {
-    const { ativa, sentido } = req.query;
-    const linhas = await this.service.listarLinhas({
-      ativa: ativa ? ativa === 'true' : undefined,
-      sentido: sentido as string | undefined,
-    });
-    return res.status(200).json(linhas);
-  };
+  @Column({ length: 7, unique: true })
+  nr_placa: string;
+
+  @Column({ length: 8 })
+  nr_prefixo: string;
+
+  @Column({ type: 'int' })
+  ano_fabricacao: number;
+
+  @Column({ default: true })
+  st_ativo: boolean;
+
+  @ManyToOne(() => LinhaEntity, { nullable: false })
+  @JoinColumn({ name: 'id_linha' })
+  linha: LinhaEntity;
 }`,
   },
   {
-    id: 'service',
-    name: '2. Service',
-    folder: 'src/services/LinhaService.ts',
-    role: 'Coração das regras de negócio. Valida se a tarifa é positiva, se o código da linha já existe e orquestra chamadas ao Repository.',
+    id: 'dto',
+    name: '2. DTO',
+    folder: 'src/veiculos/dto/create-veiculo.dto.ts',
+    role: 'Data Transfer Object para validação de entrada via class-validator e documentação OpenAPI Swagger.',
     mustDo: [
-      'Validar regras de domínio (ex: tarifa > 0, código único)',
-      'Lançar erros semânticos (AppError 400 ou 404) quando algo falhar',
-      'Formatar ou agregar dados para o resumo executivo',
+      'Validar formato de placa Mercosul com regex: @Matches(/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/)',
+      'Garantir ano de fabricação positivo com @Min(2000) e @Max(new Date().getFullYear() + 1)',
+      'Documentar cada campo com decorators do Swagger: @ApiProperty({ example: "ABC1D23" })',
     ],
     mustNotDo: [
-      'NUNCA manipular objetos Request ou Response do Express',
-      'NUNCA executar queries SQL cruas diretamente',
+      'NUNCA permitir dados não tipados ou any no payload',
+      'NUNCA confiar no body sem aplicar ValidationPipe({ whitelist: true })',
     ],
-    codeSample: `export class LinhaService {
-  constructor(private readonly repo = new LinhaRepository()) {}
+    codeSample: `import { IsString, IsNotEmpty, Matches, IsInt, Min, Max } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
-  async buscarPorCodigo(cd_linha: string) {
-    const linha = await this.repo.findByCodigo(cd_linha);
-    if (!linha) {
-      throw new AppError('Linha não encontrada para o código informado', 404);
-    }
-    return linha;
-  }
+export class CreateVeiculoDto {
+  @ApiProperty({ description: 'Placa padrão Mercosul', example: 'BRA2E19' })
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/, {
+    message: 'Placa deve seguir o padrão Mercosul (ex: ABC1D23)',
+  })
+  nr_placa: string;
+
+  @ApiProperty({ description: 'Prefixo operacional da operadora', example: '112450' })
+  @IsString()
+  @IsNotEmpty()
+  nr_prefixo: string;
+
+  @ApiProperty({ description: 'Ano de fabricação do chassi', example: 2023 })
+  @IsInt()
+  @Min(2005)
+  ano_fabricacao: number;
+
+  @ApiProperty({ description: 'ID da Linha vinculada', example: 104 })
+  @IsInt()
+  id_linha: number;
 }`,
   },
   {
     id: 'repository',
     name: '3. Repository',
-    folder: 'src/repositories/LinhaRepository.ts',
-    role: 'Camada exclusiva de persistência e consultas SQL parametrizadas (sempre com cláusula WHERE).',
+    folder: 'src/veiculos/veiculo.repository.ts',
+    role: 'Isolamento de persistência de dados. Executa queries com WHERE parametrizado e filtros operacionais.',
     mustDo: [
-      'Isolar todas as queries SQL ou chamadas ao banco/dados',
-      'Usar parâmetros ($1, $2) e cláusula WHERE explícita em buscas, updates e deletes',
-      'Retornar entidades tipadas para o Service',
+      'Estender ou injetar Repository<VeiculoEntity> gerenciado pelo TypeORM',
+      'Implementar buscas parametrizadas garantindo WHERE cd_linha ou WHERE nr_placa',
+      'Tratar paginação e isolar consultas geoespaciais caso aplicável',
     ],
     mustNotDo: [
-      'NUNCA concatenar strings em SQL (risco de SQL Injection)',
-      'NUNCA executar UPDATE ou DELETE sem cláusula WHERE',
+      'NUNCA concatenar parâmetros em SQL bruto (risco crítico de SQL Injection)',
+      'NUNCA executar comandos de escrita (UPDATE/DELETE) sem filtro WHERE explícito',
     ],
-    codeSample: `export class LinhaRepository {
-  async findByCodigo(cd_linha: string): Promise<Linha | null> {
-    const sql = \`
-      SELECT id_linha, cd_linha, nm_linha, vl_tarifa, sentido, st_ativa
-      FROM semob.linhas
-      WHERE cd_linha = $1 AND st_ativa = true;
-    \`;
-    // Execução parametrizada segura com WHERE
-    return db.queryOne(sql, [cd_linha]);
+    codeSample: `@Injectable()
+export class VeiculoRepository {
+  constructor(
+    @InjectRepository(VeiculoEntity)
+    private readonly repo: Repository<VeiculoEntity>,
+  ) {}
+
+  async findByPlaca(placa: string): Promise<VeiculoEntity | null> {
+    return this.repo.findOne({ where: { nr_placa: placa.toUpperCase() } });
+  }
+
+  async findByLinha(id_linha: number): Promise<VeiculoEntity[]> {
+    return this.repo.find({
+      where: { linha: { id_linha }, st_ativo: true },
+      relations: ['linha'],
+    });
   }
 }`,
   },
   {
-    id: 'model',
-    name: '4. Model / Types',
-    folder: 'src/models/Linha.ts',
-    role: 'Contratos TypeScript e DTOs que garantem tipagem forte em todas as camadas.',
+    id: 'service',
+    name: '4. Service',
+    folder: 'src/veiculos/veiculo.service.ts',
+    role: 'Núcleo das regras de negócio. Valida unicidade de placa, idade máxima da frota da SEMOB e lança exceções semânticas.',
     mustDo: [
-      'Definir a interface Linha e os DTOs CreateLinhaDTO / UpdateLinhaDTO',
-      'Tipar os filtros permitidos na listagem',
+      'Verificar se a placa já existe antes de cadastrar e lançar ConflictException (409)',
+      'Validar idade máxima do ônibus (regra SEMOB: frota máxima de 10 anos para convencionais)',
+      'Lançar NotFoundException (404) quando o veículo ou a linha vinculada não existir',
     ],
-    mustNotDo: ['NUNCA usar o tipo "any" para contornar erros de compilação'],
-    codeSample: `export type SentidoLinha = 'IDA' | 'VOLTA' | 'CIRCULAR';
+    mustNotDo: [
+      'NUNCA manipular objetos HTTP req/res diretamente dentro do Service',
+      'NUNCA deixar passar erros de banco de dados sem encapsular em exceções de domínio',
+    ],
+    codeSample: `@Injectable()
+export class VeiculoService {
+  constructor(
+    private readonly veiculoRepo: VeiculoRepository,
+    private readonly linhaRepo: LinhaRepository,
+  ) {}
 
-export interface Linha {
-  id_linha: number;
-  cd_linha: string;
-  nm_linha: string;
-  vl_tarifa: number;
-  sentido: SentidoLinha;
-  st_ativa: boolean;
-  horarios: string[];
+  async criarVeiculo(dto: CreateVeiculoDto): Promise<VeiculoEntity> {
+    const existe = await this.veiculoRepo.findByPlaca(dto.nr_placa);
+    if (existe) {
+      throw new ConflictException('Veículo com esta placa já está cadastrado no SISMOB');
+    }
+
+    const linha = await this.linhaRepo.findById(dto.id_linha);
+    if (!linha) {
+      throw new NotFoundException('Linha informada não existe');
+    }
+
+    return this.veiculoRepo.save({ ...dto, linha });
+  }
 }`,
+  },
+  {
+    id: 'controller',
+    name: '5. Controller',
+    folder: 'src/veiculos/veiculo.controller.ts',
+    role: 'Porta de entrada HTTP. Recebe payloads, valida tokens via Guards, anota rotas no Swagger e devolve respostas REST.',
+    mustDo: [
+      'Anotar classe com @ApiTags("Veículos") e @Controller("veiculos")',
+      'Proteger rotas de mutação (POST, PUT, DELETE) com @UseGuards(JwtAuthGuard)',
+      'Retornar status HTTP semânticos (200 OK, 201 Created, 204 No Content)',
+    ],
+    mustNotDo: [
+      'NUNCA colocar lógicas de cálculo ou queries dentro de métodos do controller',
+      'NUNCA deixar rotas sensíveis de gravação públicas sem autenticação JWT',
+    ],
+    codeSample: `@ApiTags('Veículos')
+@Controller('veiculos')
+export class VeiculoController {
+  constructor(private readonly veiculoService: VeiculoService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Listar frota de veículos com filtros' })
+  async listar(@Query('linhaId') linhaId?: number) {
+    return this.veiculoService.listar(linhaId);
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cadastrar novo veículo no SISMOB (Apenas Fiscais Autenticados)' })
+  @HttpCode(HttpStatus.CREATED)
+  async criar(@Body() dto: CreateVeiculoDto) {
+    return this.veiculoService.criarVeiculo(dto);
+  }
+}`,
+  },
+  {
+    id: 'module',
+    name: '6. Module',
+    folder: 'src/veiculos/veiculo.module.ts',
+    role: 'Módulo de injeção de dependências do NestJS que encapsula controllers, providers e exporta o service.',
+    mustDo: [
+      'Importar TypeOrmModule.forFeature([VeiculoEntity])',
+      'Registrar VeiculoController em controllers: [...]',
+      'Registrar VeiculoService e VeiculoRepository em providers: [...]',
+      'Exportar VeiculoService para que outros módulos (ex: Fiscalizacao) possam consumi-lo',
+    ],
+    mustNotDo: [
+      'NUNCA esquecer de registrar os repositories nos providers',
+      'NUNCA criar dependências circulares entre módulos sem forwardRef()',
+    ],
+    codeSample: `@Module({
+  imports: [
+    TypeOrmModule.forFeature([VeiculoEntity]),
+    LinhasModule, // Importa dependência de validação de linhas
+  ],
+  controllers: [VeiculoController],
+  providers: [VeiculoService, VeiculoRepository],
+  exports: [VeiculoService],
+})
+export class VeiculoModule {}`,
+  },
+  {
+    id: 'appmodule',
+    name: '7. AppModule',
+    folder: 'src/app.module.ts',
+    role: 'Raiz da aplicação NestJS. Agrega AuthModule (JWT), DatabaseModule, LinhasModule e o novo VeiculoModule.',
+    mustDo: [
+      'Importar ConfigModule para variáveis de ambiente (.env)',
+      'Importar AuthModule com JwtStrategy e JwtAuthGuard global ou por rota',
+      'Adicionar VeiculoModule à lista principal de imports do sistema',
+    ],
+    mustNotDo: [
+      'NUNCA deixar segredos de JWT hardcoded no app.module.ts',
+      'NUNCA subir a API sem registrar o módulo recém-criado na árvore raiz',
+    ],
+    codeSample: `@Module({
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRootAsync({ useClass: DatabaseConfigService }),
+    AuthModule,     // Provedor de JWT Tokens e Guards
+    LinhasModule,   // Módulo validado do ecossistema base
+    VeiculoModule,  // MÓDULO NOVO IMPLEMENTADO NO DESAFIO
+  ],
+})
+export class AppModule {}`,
   },
 ];
 
 const FILE_SEQUENCE_STEPS = [
   {
     key: 'back-step-1',
-    order: '1º Passo',
-    file: 'src/models/Linha.ts',
-    title: 'Definir Contratos e Interfaces (Model & DTOs)',
-    desc: 'Comece sempre pelos tipos: defina a entidade Linha, os filtros de busca e os DTOs de criação/atualização.',
+    order: '1º Arquivo',
+    file: 'src/veiculos/entities/veiculo.entity.ts',
+    title: 'Modelar a Entidade de Veículo (TypeORM Entity)',
+    desc: 'Mapeie as colunas da tabela dados_mobilidade.tab_veiculo, chaves primárias e o relacionamento com LinhaEntity.',
   },
   {
     key: 'back-step-2',
-    order: '2º Passo',
-    file: 'src/repositories/LinhaRepository.ts',
-    title: 'Implementar o Acesso a Dados (Repository)',
-    desc: 'Implemente findAll, findByCodigo, create, update e delete garantindo filtro WHERE explícito por código ou ID.',
+    order: '2º Arquivo',
+    file: 'src/veiculos/dto/create-veiculo.dto.ts',
+    title: 'Definir DTOs com Validação Estrita (class-validator)',
+    desc: 'Crie os DTOs com decorators de validação (Regex de placa Mercosul, ano de fabricação) e documentação Swagger.',
   },
   {
     key: 'back-step-3',
-    order: '3º Passo',
-    file: 'src/services/LinhaService.ts',
-    title: 'Codificar as Regras de Negócio (Service)',
-    desc: 'Valide se a linha já existe antes de cadastrar, verifique tarifa > 0 e implemente o cálculo da rota /linhas/resumo.',
+    order: '3º Arquivo',
+    file: 'src/veiculos/veiculo.repository.ts',
+    title: 'Implementar a Persistência (Custom Repository)',
+    desc: 'Isole as consultas ao banco: buscas por placa, filtros por linha e operações de escrita com cláusula WHERE explícita.',
   },
   {
     key: 'back-step-4',
-    order: '4º Passo',
-    file: 'src/controllers/LinhaController.ts',
-    title: 'Expor os Handlers HTTP (Controller)',
-    desc: 'Conecte os 6 endpoints recebendo os dados da requisição, chamando o Service e retornando os status HTTP corretos.',
+    order: '4º Arquivo',
+    file: 'src/veiculos/veiculo.service.ts',
+    title: 'Codificar as Regras de Domínio e Validações (Service)',
+    desc: 'Implemente regras de negócio da SEMOB: duplicidade de placa, limite de idade da frota (10 anos) e exceções semânticas.',
   },
   {
     key: 'back-step-5',
-    order: '5º Passo',
-    file: 'src/routes/linha.routes.ts & src/app.ts',
-    title: 'Registar as Rotas e Middleware Global de Erros',
-    desc: 'Atenção à ordem das rotas: registe GET /linhas/resumo ANTES de GET /linhas/:cd_linha para evitar conflito de parâmetros.',
+    order: '5º Arquivo',
+    file: 'src/veiculos/veiculo.controller.ts',
+    title: 'Expor os Endpoints HTTP com Guards JWT (Controller)',
+    desc: 'Mapeie as rotas REST com status codes corretos, documentação OpenAPI Swagger e proteção @UseGuards(JwtAuthGuard).',
+  },
+  {
+    key: 'back-step-6',
+    order: '6º Arquivo',
+    file: 'src/veiculos/veiculo.module.ts',
+    title: 'Empacotar o Módulo NestJS (Dependency Injection)',
+    desc: 'Conecte Entity, Repository, Service e Controller no módulo independente de Veículos.',
+  },
+  {
+    key: 'back-step-7',
+    order: '7º Arquivo',
+    file: 'src/app.module.ts',
+    title: 'Acoplar na Raiz da Aplicação (AppModule)',
+    desc: 'Importe o VeiculoModule no módulo principal para disponibilizar os endpoints na API e na documentação Swagger.',
   },
 ];
 
 const API_ENDPOINTS = [
-  { method: 'GET', path: '/linhas', status: '200 OK', desc: 'Lista linhas com filtros opcionais (?ativa=true&sentido=IDA&busca=UnB)' },
-  { method: 'GET', path: '/linhas/resumo', status: '200 OK', desc: 'Retorna total de linhas, ativas, inativas e tarifa média' },
-  { method: 'GET', path: '/linhas/:cd_linha', status: '200 / 404', desc: 'Busca detalhes de uma linha específica pelo código (ex: 0.110)' },
-  { method: 'POST', path: '/linhas', status: '201 / 400', desc: 'Cadastra uma nova linha validando campos obrigatórios e duplicidade' },
-  { method: 'PUT', path: '/linhas/:cd_linha', status: '200 / 404', desc: 'Atualiza dados de uma linha existente filtrando pelo código no WHERE' },
-  { method: 'DELETE', path: '/linhas/:cd_linha', status: '204 / 404', desc: 'Remove ou inativa uma linha específica de forma segura' },
+  { method: 'GET', path: '/veiculos', auth: 'Público', status: '200 OK', desc: 'Lista veículos cadastrados com filtros opcionais (?linhaId=104&ano=2023)' },
+  { method: 'GET', path: '/veiculos/:id', auth: 'Público', status: '200 / 404', desc: 'Retorna dados completos de um veículo específico pelo ID ou código' },
+  { method: 'GET', path: '/veiculos/linha/:cd_linha', auth: 'Público', status: '200 OK', desc: 'Retorna toda a frota operacional alocada a uma linha específica (ex: 0.110)' },
+  { method: 'POST', path: '/veiculos', auth: 'Bearer JWT', status: '201 / 400 / 409', desc: 'Cadastra novo veículo com validação de placa Mercosul e checagem de duplicidade' },
+  { method: 'PUT', path: '/veiculos/:id', auth: 'Bearer JWT', status: '200 / 404', desc: 'Atualiza dados cadastrais do veículo (status ativo, prefixo) filtrando pelo ID no WHERE' },
+  { method: 'DELETE', path: '/veiculos/:id', auth: 'Bearer JWT', status: '204 / 404', desc: 'Inativa operacionalmente o veículo na frota da SEMOB de forma segura' },
 ];
 
 export const BackendChallengeScreen: React.FC<BackendChallengeScreenProps> = ({
   completedItems,
   onToggleItem,
   onOpenModule,
+  submission,
+  onSaveSubmission,
 }) => {
-  const [activeLayerId, setActiveLayerId] = useState<string>('controller');
+  const [activeLayerId, setActiveLayerId] = useState<string>('entity');
   const activeLayer = ARCH_LAYERS.find((l) => l.id === activeLayerId) || ARCH_LAYERS[0];
 
   return (
@@ -194,48 +350,91 @@ export const BackendChallengeScreen: React.FC<BackendChallengeScreenProps> = ({
           <span className="hero-badge">
             <Server size={14} /> Desafio Prático • Engenharia Backend
           </span>
-          <h1>API RESTful de Linhas de Transporte — Arquitetura em Camadas</h1>
+          <h1>Desafio de Engenharia Backend: Módulo de Veículos (SISMOB)</h1>
           <p>
-            Construa a API que alimentará o sistema <strong>InfoÔnibus</strong> aplicando separação
-            estrita de responsabilidades entre <code>Controller</code>, <code>Service</code>,{' '}
-            <code>Repository</code> e <code>Model</code>.
+            Construa o módulo completo de <strong>Veículos da Frota SEMOB</strong> utilizando o padrão
+            arquitetural oficial da SUTINF em <strong>7 camadas NestJS + TypeORM</strong>, protegido por
+            autenticação <strong>JWT</strong> e documentado com <strong>OpenAPI Swagger</strong>.
           </p>
           <div className="hero-actions">
             <button className="btn-secondary" onClick={() => onOpenModule('mod-4-backend')}>
-              <BookOpen size={16} /> Revisar Módulo de Arquitetura Backend na Plataforma
+              <BookOpen size={16} /> Revisar Módulo 4: Arquitetura Backend na Plataforma
             </button>
           </div>
         </div>
       </section>
 
-      {/* Fluxo Interativo da Arquitetura em Camadas */}
+      {/* Roteiro da Missão: Do Clone ao Módulo de Veículos */}
+      <section className="section-card">
+        <h2>
+          <GitBranch size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
+          Roteiro da Missão: Como executar este desafio passo a passo
+        </h2>
+        <p className="text-muted" style={{ marginTop: '0.3rem', marginBottom: '1.25rem' }}>
+          Este desafio simula o fluxo diário de engenharia na SUTINF/SEMOB. Siga os 3 passos estruturantes:
+        </p>
+
+        <div className="cards-grid three-cols">
+          <div className="glass-card" style={{ borderTop: '4px solid #3b82f6', padding: '1.25rem' }}>
+            <span className="status-pill pending" style={{ marginBottom: '0.5rem' }}>Passo 1 • Setup</span>
+            <h3 style={{ fontSize: '1.05rem', marginTop: '0.3rem' }}>Clonar Boilerplate SEMOB</h3>
+            <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.5rem', lineHeight: 1.5 }}>
+              Clone o repositório base com a estrutura NestJS, Docker Compose e banco PostgreSQL já configurados:
+            </p>
+            <pre className="code-block" style={{ fontSize: '0.78rem', margin: '0.75rem 0' }}>
+              <code>git clone https://gitlab.semob.df.gov.br/sutinf/sismob-backend.git&#10;cd sismob-backend&#10;npm install</code>
+            </pre>
+          </div>
+
+          <div className="glass-card" style={{ borderTop: '4px solid #10b981', padding: '1.25rem' }}>
+            <span className="status-pill passed" style={{ marginBottom: '0.5rem' }}>Passo 2 • Validação</span>
+            <h3 style={{ fontSize: '1.05rem', marginTop: '0.3rem' }}>Subir e Testar /linhas</h3>
+            <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.5rem', lineHeight: 1.5 }}>
+              Suba o banco e a API com Docker, verifique o módulo de <code>/linhas</code> já existente e explore o Swagger:
+            </p>
+            <pre className="code-block" style={{ fontSize: '0.78rem', margin: '0.75rem 0' }}>
+              <code>docker compose up -d&#10;npm run start:dev&#10;# Acesse: http://localhost:3333/api/docs</code>
+            </pre>
+          </div>
+
+          <div className="glass-card" style={{ borderTop: '4px solid #f59e0b', padding: '1.25rem' }}>
+            <span className="status-pill active" style={{ marginBottom: '0.5rem' }}>Passo 3 • Desafio Real</span>
+            <h3 style={{ fontSize: '1.05rem', marginTop: '0.3rem' }}>Criar os 7 Arquivos de Veículos</h3>
+            <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.5rem', lineHeight: 1.5 }}>
+              O desafio começa aqui! Crie o novo domínio <code>/veiculos</code> passando por todos os 7 arquivos obrigatórios, com validação de placa Mercosul e JWT.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Fluxo Interativo dos 7 Arquivos da Arquitetura SUTINF */}
       <section className="section-card">
         <div className="section-header-row">
           <div>
             <h2>
               <Layers size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
-              Fluxo Interativo das Camadas (Clique para inspecionar)
+              Os 7 Arquivos Obrigatórios da Arquitetura SEMOB (Clique para inspecionar)
             </h2>
             <p className="text-muted">
-              Entenda exatamente o que entra e o que é proibido em cada camada antes de criar os ficheiros.
+              Inspecione o papel, as regras e o código de referência de cada uma das 7 camadas antes de escrever seu código.
             </p>
           </div>
         </div>
 
-        <div className="arch-flow" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', margin: '1.25rem 0' }}>
+        <div className="arch-flow" style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', margin: '1.25rem 0' }}>
           {ARCH_LAYERS.map((layer, index) => (
             <React.Fragment key={layer.id}>
               <button
                 type="button"
                 onClick={() => setActiveLayerId(layer.id)}
                 className={`sql-filter-btn ${activeLayerId === layer.id ? 'active' : ''}`}
-                style={{ padding: '0.75rem 1.1rem', fontWeight: 700 }}
+                style={{ padding: '0.65rem 1rem', fontWeight: 700, fontSize: '0.85rem' }}
               >
                 {layer.name}
               </button>
               {index < ARCH_LAYERS.length - 1 && (
                 <span style={{ display: 'flex', alignItems: 'center', opacity: 0.5 }}>
-                  <ArrowRight size={18} />
+                  <ArrowRight size={16} />
                 </span>
               )}
             </React.Fragment>
@@ -245,18 +444,18 @@ export const BackendChallengeScreen: React.FC<BackendChallengeScreenProps> = ({
         <div className="glass-card" style={{ padding: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
             <div>
-              <h3 style={{ fontSize: '1.15rem' }}>{activeLayer.name}</h3>
-              <p className="text-muted">{activeLayer.role}</p>
+              <h3 style={{ fontSize: '1.2rem' }}>{activeLayer.name}</h3>
+              <p className="text-muted" style={{ marginTop: '0.2rem' }}>{activeLayer.role}</p>
             </div>
-            <span className="status-pill passed" style={{ fontFamily: 'monospace' }}>
+            <span className="status-pill passed" style={{ fontFamily: 'monospace', alignSelf: 'flex-start' }}>
               {activeLayer.folder}
             </span>
           </div>
 
-          <div className="cards-grid two-cols" style={{ marginBottom: '1rem' }}>
-            <div className="glass-card" style={{ borderLeft: '4px solid #10b981' }}>
+          <div className="cards-grid two-cols" style={{ marginBottom: '1.25rem' }}>
+            <div className="glass-card" style={{ borderLeft: '4px solid #10b981', padding: '1rem' }}>
               <strong style={{ color: '#10b981', display: 'block', marginBottom: '0.5rem' }}>
-                ✅ O que DEVE fazer:
+                ✅ O que DEVE fazer nesta camada:
               </strong>
               <ul style={{ paddingLeft: '1.2rem', fontSize: '0.88rem', lineHeight: 1.6 }}>
                 {activeLayer.mustDo.map((item, i) => (
@@ -265,9 +464,9 @@ export const BackendChallengeScreen: React.FC<BackendChallengeScreenProps> = ({
               </ul>
             </div>
 
-            <div className="glass-card" style={{ borderLeft: '4px solid #ef4444' }}>
+            <div className="glass-card" style={{ borderLeft: '4px solid #ef4444', padding: '1rem' }}>
               <strong style={{ color: '#ef4444', display: 'block', marginBottom: '0.5rem' }}>
-                🚫 O que NÃO DEVE fazer:
+                🚫 O que NÃO DEVE fazer nesta camada:
               </strong>
               <ul style={{ paddingLeft: '1.2rem', fontSize: '0.88rem', lineHeight: 1.6 }}>
                 {activeLayer.mustNotDo.map((item, i) => (
@@ -277,23 +476,62 @@ export const BackendChallengeScreen: React.FC<BackendChallengeScreenProps> = ({
             </div>
           </div>
 
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+            <span className="text-muted" style={{ fontSize: '0.78rem', fontFamily: 'monospace' }}>
+              Código de Referência • SUTINF Padrão Oficial
+            </span>
+          </div>
           <pre className="code-block">
             <code>{activeLayer.codeSample}</code>
           </pre>
         </div>
       </section>
 
-      {/* Sequência Guiada de Ficheiros a serem criados */}
+      {/* Seção Explicativa: Autenticação JWT & Documentação Swagger */}
+      <section className="section-card">
+        <div className="cards-grid two-cols">
+          <div className="glass-card" style={{ padding: '1.25rem', borderLeft: '4px solid #8b5cf6' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem' }}>
+              <Key size={18} color="#8b5cf6" /> Autenticação JWT no SISMOB
+            </h3>
+            <p className="text-muted" style={{ fontSize: '0.88rem', marginTop: '0.5rem', lineHeight: 1.6 }}>
+              No ecossistema da SEMOB, requisições de consulta pública (leitura de linhas e frotas) não exigem token. Porém, <strong>operações de mutação (POST /veiculos, PUT, DELETE)</strong> alteram a base cadastral de transporte e DEVEM ser protegidas:
+            </p>
+            <ul style={{ paddingLeft: '1.2rem', fontSize: '0.85rem', lineHeight: 1.6, marginTop: '0.5rem' }}>
+              <li>Utilize o decorador <code>@UseGuards(JwtAuthGuard)</code> no controller de Veículos;</li>
+              <li>A requisição deve enviar o cabeçalho <code>Authorization: Bearer &lt;token&gt;</code>;</li>
+              <li>O token é gerado pelo <code>AuthModule</code> presente no boilerplate da SEMOB;</li>
+              <li>Em caso de token ausente ou expirado, a API deve retornar <code>401 Unauthorized</code> automaticamente.</li>
+            </ul>
+          </div>
+
+          <div className="glass-card" style={{ padding: '1.25rem', borderLeft: '4px solid #0ea5e9' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem' }}>
+              <FileText size={18} color="#0ea5e9" /> Documentação OpenAPI Swagger
+            </h3>
+            <p className="text-muted" style={{ fontSize: '0.88rem', marginTop: '0.5rem', lineHeight: 1.6 }}>
+              Toda API governamental da SEMOB deve ser auto-documentada para consumo de outras secretarias e aplicativos mobile:
+            </p>
+            <ul style={{ paddingLeft: '1.2rem', fontSize: '0.85rem', lineHeight: 1.6, marginTop: '0.5rem' }}>
+              <li>Decore a classe do controller com <code>@ApiTags('Veículos')</code>;</li>
+              <li>Decore cada endpoint com <code>@ApiOperation(&#123; summary: '...' &#125;)</code> e <code>@ApiResponse()</code>;</li>
+              <li>Nas rotas protegidas por JWT, adicione <code>@ApiBearerAuth()</code>;</li>
+              <li>Verifique a documentação gerada em tempo real acessando <code>http://localhost:3333/api/docs</code>.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* Sequência Guiada de Criação dos 7 Arquivos */}
       <section className="section-card">
         <div className="section-header-row">
           <div>
             <h2>
               <Code2 size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
-              Sequência Recomendada de Criação dos Ficheiros
+              Sequência Guiada de Criação dos 7 Arquivos
             </h2>
             <p className="text-muted">
-              Siga esta ordem de baixo para cima (Model → Repository → Service → Controller → Routes)
-              e marque cada etapa concluída.
+              Siga a ordem arquitetural de baixo para cima (Entity → DTO → Repository → Service → Controller → Module → AppModule) e marque o seu progresso:
             </p>
           </div>
         </div>
@@ -329,22 +567,27 @@ export const BackendChallengeScreen: React.FC<BackendChallengeScreenProps> = ({
         </div>
       </section>
 
-      {/* Contrato das 6 Rotas da API */}
+      {/* Contrato dos Endpoints do Módulo de Veículos */}
       <section className="section-card">
         <h2>
           <Terminal size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
-          Contrato dos 6 Endpoints Obrigatórios
+          Contrato da API REST de Veículos (/veiculos)
         </h2>
         <div className="cards-grid two-cols" style={{ marginTop: '1rem' }}>
           {API_ENDPOINTS.map((ep, idx) => (
             <div key={idx} className="glass-card" style={{ padding: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.3rem' }}>
                 <span className="status-pill passed" style={{ fontFamily: 'monospace', fontWeight: 700 }}>
                   {ep.method} {ep.path}
                 </span>
-                <span className="text-muted" style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>
-                  {ep.status}
-                </span>
+                <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                  <span className={`status-pill ${ep.auth.includes('JWT') ? 'active' : 'pending'}`} style={{ fontSize: '0.72rem' }}>
+                    {ep.auth}
+                  </span>
+                  <span className="text-muted" style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>
+                    {ep.status}
+                  </span>
+                </div>
               </div>
               <p className="text-muted" style={{ fontSize: '0.85rem' }}>
                 {ep.desc}
@@ -357,18 +600,22 @@ export const BackendChallengeScreen: React.FC<BackendChallengeScreenProps> = ({
       {/* Submissão Padronizada e Checklist de Pull Request */}
       <ChallengeSubmissionPanel
         challengeId="challenge-backend-api"
-        title="Entrega do Repositório & Checklist de Arquitetura Backend"
-        subtitle="Valide a qualidade do seu código e cole o link do seu repositório Git com a API implementada."
+        title="Entrega do Repositório & Checklist de Arquitetura Backend SUTINF"
+        subtitle="Valide o cumprimento dos 7 arquivos e cole o link do seu Merge Request / Repositório Git."
         requireRepoUrl={true}
+        existingSubmission={submission}
+        onSaveSubmission={onSaveSubmission}
         prChecklist={[
-          'Criei os ficheiros seguindo a separação estrita: Model, Repository, Service, Controller e Routes?',
-          'A rota estática GET /linhas/resumo foi declarada antes da rota dinâmica GET /linhas/:cd_linha?',
-          'O Controller não possui nenhuma lógica de banco de dados nem regras de cálculo direto?',
-          'Todas as buscas, atualizações e remoções no Repository utilizam cláusula WHERE segura?',
-          'Adicionei validação de entrada (tarifa positiva, campos obrigatórios) retornando HTTP 400 quando inválido?',
+          'Clonei o boilerplate, rodei o Docker Compose e validei o funcionamento prévio do módulo /linhas?',
+          'Criei os 7 arquivos do módulo de Veículos: Entity, DTO, Repository, Service, Controller, Module e AppModule?',
+          'O DTO valida placa padrão Mercosul com regex e ano de fabricação positivo com class-validator?',
+          'O Service valida unicidade de placa lançando ConflictException (409) e trata inexistência com NotFoundException (404)?',
+          'As rotas de mutação (POST, PUT, DELETE) estão devidamente protegidas com @UseGuards(JwtAuthGuard)?',
+          'Todos os endpoints e DTOs foram documentados com decoradores OpenAPI Swagger?',
         ]}
       />
     </div>
   );
 };
 export default BackendChallengeScreen;
+

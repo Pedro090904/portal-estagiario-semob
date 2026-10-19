@@ -1,17 +1,25 @@
-import { QuizAttempt, StudentProgress, ChallengeSubmission } from '../types';
-import { brandConfig } from '../config/brand';
+import {
+  ChallengeSubmission,
+  QuizAttempt,
+  StudentProgress,
+} from '../types';
 import {
   CURRENT_SCHEMA_VERSION,
+  CURRENT_TRACK_VERSION,
+  PASSING_PERCENTAGE,
+  normalizeModuleId,
   recordQuizAttemptInProgress,
 } from './progressEngine';
+import { brandConfig } from '../config/brand';
 
-const STORAGE_KEY = 'semob_intern_portal_progress_v1';
-const LEGACY_STORAGE_KEY = 'semob_portal_student_progress_v1';
-const THEME_KEY = 'semob_portal_theme_mode';
+const ACTIVE_STORAGE_KEY = `${brandConfig.storageKeyPrefix}_progress_v1`;
+const LEGACY_STORAGE_KEY = 'semob_intern_portal_progress_v1';
+const THEME_KEY = `${brandConfig.storageKeyPrefix}_theme_mode`;
 
 const createInitialProgress = (): StudentProgress => ({
   schemaVersion: CURRENT_SCHEMA_VERSION,
   studentName: '',
+  studentRole: 'ALUNO',
   completedModules: [],
   completedChecklists: {},
   quizScores: {},
@@ -19,13 +27,11 @@ const createInitialProgress = (): StudentProgress => ({
   challengeSubmissions: {},
   moduleNotes: {},
   startedAt: new Date().toISOString(),
-  quizAttempts: {},
-  completedChallenges: [],
-  notes: {},
 });
 
 /**
- * Higieniza e migra dados legados salvos no localStorage sem perder progresso.
+ * Higieniza e migra dados legados deduplicando IDs antigos ('git' -> 'mod-2-git')
+ * e aplicando a nota de corte oficial de 70% (C2).
  */
 export function sanitizeAndMigrateProgress(raw: unknown): StudentProgress {
   const initial = createInitialProgress();
@@ -33,74 +39,96 @@ export function sanitizeAndMigrateProgress(raw: unknown): StudentProgress {
     return initial;
   }
 
-  const parsed = raw as Partial<StudentProgress> & {
-    quizAttempts?: Record<string, QuizAttempt>;
-    notes?: Record<string, string>;
-    completedChallenges?: string[];
-  };
+  const parsed = raw as Partial<StudentProgress>;
 
-  const quizScores =
-    parsed.quizScores && typeof parsed.quizScores === 'object'
-      ? { ...parsed.quizScores }
-      : (parsed.quizAttempts && typeof parsed.quizAttempts === 'object'
-        ? { ...parsed.quizAttempts }
-        : {});
-
-  // Migração automática: se existia quizScores mas não existia quizHistory, popula com a tentativa existente
-  const rawHistory =
-    parsed.quizHistory && typeof parsed.quizHistory === 'object'
-      ? { ...parsed.quizHistory }
-      : {};
-
-  Object.entries(quizScores).forEach(([moduleId, attempt]) => {
-    if (attempt && (!rawHistory[moduleId] || rawHistory[moduleId].length === 0)) {
-      rawHistory[moduleId] = [{ ...attempt, attemptNumber: 1 }];
-    }
-  });
-
-  const moduleNotes =
-    parsed.moduleNotes && typeof parsed.moduleNotes === 'object'
-      ? { ...parsed.moduleNotes }
-      : (parsed.notes && typeof parsed.notes === 'object' ? { ...parsed.notes } : {});
-
-  const completedChallenges = Array.isArray(parsed.completedChallenges)
-    ? parsed.completedChallenges
+  // 1. Deduplica e normaliza completedModules
+  const rawCompleted = Array.isArray(parsed.completedModules)
+    ? parsed.completedModules.filter((id): id is string => typeof id === 'string')
     : [];
+  const completedModules = Array.from(
+    new Set(rawCompleted.map((id) => normalizeModuleId(id)))
+  );
 
-  const result: StudentProgress = {
+  // 2. Migra e deduplica quizScores e quizHistory para IDs canónicos
+  const migratedScores: Record<string, QuizAttempt> = {};
+  const migratedHistory: Record<string, QuizAttempt[]> = {};
+
+  if (parsed.quizHistory && typeof parsed.quizHistory === 'object') {
+    Object.entries(parsed.quizHistory).forEach(([rawKey, list]) => {
+      if (!Array.isArray(list)) return;
+      const canonicalKey = normalizeModuleId(rawKey);
+      const existingList = migratedHistory[canonicalKey] || [];
+      const normalizedAttempts = list.map((att, idx) => ({
+        ...att,
+        moduleId: canonicalKey,
+        passed: att.percentage >= PASSING_PERCENTAGE,
+        attemptNumber: idx + 1,
+        contentVersion: att.contentVersion || CURRENT_TRACK_VERSION,
+      }));
+      migratedHistory[canonicalKey] = [...existingList, ...normalizedAttempts];
+    });
+  }
+
+  if (parsed.quizScores && typeof parsed.quizScores === 'object') {
+    Object.entries(parsed.quizScores).forEach(([rawKey, attempt]) => {
+      if (!attempt || typeof attempt !== 'object') return;
+      const canonicalKey = normalizeModuleId(rawKey);
+      const normalizedAttempt: QuizAttempt = {
+        ...attempt,
+        moduleId: canonicalKey,
+        passed: attempt.percentage >= PASSING_PERCENTAGE,
+        contentVersion: attempt.contentVersion || CURRENT_TRACK_VERSION,
+      };
+
+      const currentBest = migratedScores[canonicalKey];
+      if (!currentBest || normalizedAttempt.percentage >= currentBest.percentage) {
+        migratedScores[canonicalKey] = normalizedAttempt;
+      }
+
+      if (!migratedHistory[canonicalKey] || migratedHistory[canonicalKey].length === 0) {
+        migratedHistory[canonicalKey] = [{ ...normalizedAttempt, attemptNumber: 1 }];
+      }
+    });
+  }
+
+  return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
     studentName: typeof parsed.studentName === 'string' ? parsed.studentName : '',
-    completedModules: Array.isArray(parsed.completedModules)
-      ? parsed.completedModules.filter((id): id is string => typeof id === 'string')
-      : [],
+    studentEmail: typeof parsed.studentEmail === 'string' ? parsed.studentEmail : undefined,
+    studentRole: parsed.studentRole || 'ALUNO',
+    seiProcessNumber:
+      typeof parsed.seiProcessNumber === 'string' ? parsed.seiProcessNumber : undefined,
+    completedModules,
     completedChecklists:
       parsed.completedChecklists && typeof parsed.completedChecklists === 'object'
         ? parsed.completedChecklists
         : {},
-    quizScores,
-    quizHistory: rawHistory,
+    quizScores: migratedScores,
+    quizHistory: migratedHistory,
     challengeSubmissions:
       parsed.challengeSubmissions && typeof parsed.challengeSubmissions === 'object'
         ? parsed.challengeSubmissions
         : {},
-    moduleNotes,
+    moduleNotes:
+      parsed.moduleNotes && typeof parsed.moduleNotes === 'object'
+        ? parsed.moduleNotes
+        : {},
     startedAt:
       typeof parsed.startedAt === 'string' ? parsed.startedAt : initial.startedAt,
     completedAt: typeof parsed.completedAt === 'string' ? parsed.completedAt : undefined,
     certificateCode:
       typeof parsed.certificateCode === 'string' ? parsed.certificateCode : undefined,
-    quizAttempts: quizScores,
-    completedChallenges,
-    notes: moduleNotes,
+    certificateApproval: parsed.certificateApproval,
   };
-
-  return result;
 }
 
 export const storageService = {
   getProgress(): StudentProgress {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+      const raw =
+        localStorage.getItem(ACTIVE_STORAGE_KEY) ||
+        localStorage.getItem(LEGACY_STORAGE_KEY);
+
       if (!raw) {
         const initial = createInitialProgress();
         this.saveProgress(initial);
@@ -118,45 +146,52 @@ export const storageService = {
 
   saveProgress(progress: StudentProgress): void {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+      const serialized = JSON.stringify(progress);
+      localStorage.setItem(ACTIVE_STORAGE_KEY, serialized);
     } catch (error) {
       console.error('Erro ao salvar progresso no localStorage:', error);
     }
   },
 
-  updateStudentName(name: string): StudentProgress {
+  updateStudentName(name: string, seiProcessNumber?: string): StudentProgress {
     const current = this.getProgress();
-    const updated: StudentProgress = { ...current, studentName: name.trim() };
+    const updated: StudentProgress = {
+      ...current,
+      studentName: name.trim(),
+      seiProcessNumber:
+        seiProcessNumber !== undefined ? seiProcessNumber.trim() : current.seiProcessNumber,
+    };
     this.saveProgress(updated);
     return updated;
   },
 
   toggleModuleCompletion(moduleId: string): StudentProgress {
     const current = this.getProgress();
-    const exists = current.completedModules.includes(moduleId);
+    const canonicalId = normalizeModuleId(moduleId);
+    const exists = current.completedModules.includes(canonicalId);
     const completedModules = exists
-      ? current.completedModules.filter((id) => id !== moduleId)
-      : [...current.completedModules, moduleId];
+      ? current.completedModules.filter((id) => id !== canonicalId)
+      : [...current.completedModules, canonicalId];
 
     const updated: StudentProgress = { ...current, completedModules };
     this.saveProgress(updated);
     return updated;
   },
 
-  toggleChecklistItem(moduleId: string, itemIndex: string): StudentProgress {
+  toggleChecklistItem(scopeId: string, itemKey: string): StudentProgress {
     const current = this.getProgress();
-    const currentList = current.completedChecklists[moduleId] || [];
-    const exists = currentList.includes(itemIndex);
+    const currentList = current.completedChecklists[scopeId] || [];
+    const exists = currentList.includes(itemKey);
 
     const updatedList = exists
-      ? currentList.filter((item) => item !== itemIndex)
-      : [...currentList, itemIndex];
+      ? currentList.filter((item) => item !== itemKey)
+      : [...currentList, itemKey];
 
     const updated: StudentProgress = {
       ...current,
       completedChecklists: {
         ...current.completedChecklists,
-        [moduleId]: updatedList,
+        [scopeId]: updatedList,
       },
     };
     this.saveProgress(updated);
@@ -165,33 +200,20 @@ export const storageService = {
 
   saveQuizAttempt(attempt: QuizAttempt): StudentProgress {
     const current = this.getProgress();
-    const moduleId = attempt.moduleId || attempt.quizId || 'quiz';
-    const normalizedAttempt: QuizAttempt = {
-      ...attempt,
-      moduleId,
-      percentage: attempt.percentage ?? attempt.score ?? 0,
-    };
-    const updated = recordQuizAttemptInProgress(current, normalizedAttempt);
-
-    if (attempt.quizId && attempt.quizId !== moduleId) {
-      updated.quizScores[attempt.quizId] = updated.quizScores[moduleId];
-    }
-    updated.quizAttempts = updated.quizScores;
-
+    const updated = recordQuizAttemptInProgress(current, attempt);
     this.saveProgress(updated);
     return updated;
   },
 
   saveModuleNote(moduleId: string, note: string): StudentProgress {
     const current = this.getProgress();
-    const moduleNotes = {
-      ...current.moduleNotes,
-      [moduleId]: note,
-    };
+    const canonicalId = normalizeModuleId(moduleId);
     const updated: StudentProgress = {
       ...current,
-      moduleNotes,
-      notes: moduleNotes,
+      moduleNotes: {
+        ...current.moduleNotes,
+        [canonicalId]: note,
+      },
     };
     this.saveProgress(updated);
     return updated;
@@ -207,11 +229,19 @@ export const storageService = {
       checkedPrItems: [],
       checklistCompleted: false,
       sqlQueries: {},
+      reviewStatus: 'PENDENTE',
     };
+
+    const nextCompleted =
+      data.checklistCompleted !== undefined
+        ? data.checklistCompleted
+        : existing.checklistCompleted;
 
     const updatedSubmission: ChallengeSubmission = {
       ...existing,
       ...data,
+      checklistCompleted: nextCompleted,
+      reviewStatus: nextCompleted ? 'EM_REVISAO' : existing.reviewStatus,
       sqlQueries: {
         ...(existing.sqlQueries || {}),
         ...(data.sqlQueries || {}),
@@ -219,15 +249,8 @@ export const storageService = {
       completedAt: new Date().toISOString(),
     };
 
-    const isDone = Boolean(updatedSubmission.checklistCompleted);
-    const existingChallenges = current.completedChallenges || [];
-    const completedChallenges = isDone
-      ? Array.from(new Set([...existingChallenges, challengeId]))
-      : existingChallenges.filter((id) => id !== challengeId);
-
     const updated: StudentProgress = {
       ...current,
-      completedChallenges,
       challengeSubmissions: {
         ...(current.challengeSubmissions || {}),
         [challengeId]: updatedSubmission,
@@ -237,16 +260,51 @@ export const storageService = {
     return updated;
   },
 
-  issueCertificate(): StudentProgress {
+  /**
+   * Emite e persiste de forma imutável o código de verificação do certificado
+   * registrando processo SEI e aprovação do supervisor (Decisões C4, Q30, Q31 e Q66).
+   */
+  issueCertificate(
+    seiProcessNumber?: string,
+    supervisorName = 'Supervisor Técnico SUTINF'
+  ): StudentProgress {
     const current = this.getProgress();
-    if (current.certificateCode) return current;
+    const finalSei = seiProcessNumber?.trim() || current.seiProcessNumber || '00090-00000000/2026-00';
+
+    if (current.certificateCode) {
+      const updatedExisting: StudentProgress = {
+        ...current,
+        seiProcessNumber: finalSei,
+        certificateApproval: {
+          status: 'EMITIDO',
+          seiProcessNumber: finalSei,
+          approvedBySupervisor: supervisorName,
+          approvedAt: current.completedAt || new Date().toISOString(),
+          trackVersion: CURRENT_TRACK_VERSION,
+          totalWorkloadHours: 40,
+        },
+      };
+      this.saveProgress(updatedExisting);
+      return updatedExisting;
+    }
 
     const randomHash = Math.random().toString(36).substring(2, 8).toUpperCase();
     const year = new Date().getFullYear();
+    const nowIso = new Date().toISOString();
+
     const updated: StudentProgress = {
       ...current,
-      completedAt: new Date().toISOString(),
+      seiProcessNumber: finalSei,
+      completedAt: nowIso,
       certificateCode: `${brandConfig.certificatePrefix}-${year}-${randomHash}`,
+      certificateApproval: {
+        status: 'EMITIDO',
+        seiProcessNumber: finalSei,
+        approvedBySupervisor: supervisorName,
+        approvedAt: nowIso,
+        trackVersion: CURRENT_TRACK_VERSION,
+        totalWorkloadHours: 40,
+      },
     };
     this.saveProgress(updated);
     return updated;
@@ -277,50 +335,11 @@ export const storageService = {
     }
   },
 
-  // Aliases de compatibilidade legada
-  setStudentName(name: string): StudentProgress {
-    return this.updateStudentName(name);
-  },
-
-  toggleModuleCompleted(moduleId: string): StudentProgress {
-    return this.toggleModuleCompletion(moduleId);
-  },
-
+  // Helper de compatibilidade durante a migração
   toggleChallengeCompleted(challengeId: string): StudentProgress {
     const current = this.getProgress();
-    const currentChallenges = current.completedChallenges || [];
-    const exists = currentChallenges.includes(challengeId);
-    const updatedChallenges = exists
-      ? currentChallenges.filter((id) => id !== challengeId)
-      : [...currentChallenges, challengeId];
-
     const existing = current.challengeSubmissions?.[challengeId];
-
-    const updated: StudentProgress = {
-      ...current,
-      completedChallenges: updatedChallenges,
-      challengeSubmissions: {
-        ...(current.challengeSubmissions || {}),
-        [challengeId]: {
-          ...existing,
-          challengeId,
-          checkedPrItems: existing?.checkedPrItems || [],
-          checklistCompleted: !exists,
-          completedAt: new Date().toISOString(),
-        },
-      },
-    };
-    this.saveProgress(updated);
-    return updated;
-  },
-
-  saveNote(key: string, note: string): StudentProgress {
-    return this.saveModuleNote(key, note);
-  },
-
-  resetAllProgress(): StudentProgress {
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(LEGACY_STORAGE_KEY);
-    return this.resetProgress();
+    const isDone = !(existing && existing.checklistCompleted);
+    return this.saveChallengeSubmission(challengeId, { checklistCompleted: isDone });
   },
 };

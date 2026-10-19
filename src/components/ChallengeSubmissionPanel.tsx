@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { storageService } from '../services/storageService';
+import React, { useState, useEffect } from 'react';
+import { ChallengeSubmission } from '../types';
 
 interface ChallengeSubmissionPanelProps {
   challengeId: string;
@@ -7,6 +7,8 @@ interface ChallengeSubmissionPanelProps {
   subtitle: string;
   prChecklist: string[];
   requireRepoUrl?: boolean;
+  existingSubmission?: ChallengeSubmission;
+  onSaveSubmission: (challengeId: string, data: Partial<ChallengeSubmission>) => void;
   onUnlockGabarito?: () => void;
 }
 
@@ -16,37 +18,48 @@ export const ChallengeSubmissionPanel: React.FC<ChallengeSubmissionPanelProps> =
   subtitle,
   prChecklist,
   requireRepoUrl = true,
+  existingSubmission,
+  onSaveSubmission,
   onUnlockGabarito,
 }) => {
-  const existing = storageService.getProgress().challengeSubmissions?.[challengeId];
+  const [repoUrl, setRepoUrl] = useState(existingSubmission?.repositoryUrl || '');
+  const [checkedItems, setCheckedItems] = useState<number[]>(
+    existingSubmission?.checkedPrItems || []
+  );
+  const [isSubmitted, setIsSubmitted] = useState(
+    Boolean(existingSubmission?.checklistCompleted)
+  );
 
-  const [repoUrl, setRepoUrl] = useState(existing?.repositoryUrl || '');
-  const [checkedItems, setCheckedItems] = useState<number[]>(existing?.checkedPrItems || []);
-  const [isSubmitted, setIsSubmitted] = useState(Boolean(existing?.checklistCompleted));
+  useEffect(() => {
+    setRepoUrl(existingSubmission?.repositoryUrl || '');
+    setCheckedItems(existingSubmission?.checkedPrItems || []);
+    setIsSubmitted(Boolean(existingSubmission?.checklistCompleted));
+  }, [existingSubmission]);
 
   const allChecked = prChecklist.every((_, idx) => checkedItems.includes(idx));
-  const canSubmit = allChecked && (!requireRepoUrl || repoUrl.trim().length > 5);
+  const canSubmit = allChecked && (!requireRepoUrl || repoUrl.trim().length > 8);
 
   const toggleItem = (idx: number) => {
     const next = checkedItems.includes(idx)
       ? checkedItems.filter((i) => i !== idx)
       : [...checkedItems, idx];
     setCheckedItems(next);
-    storageService.saveChallengeSubmission(challengeId, {
+    setIsSubmitted(false);
+    onSaveSubmission(challengeId, {
       checkedPrItems: next,
-      repositoryUrl: repoUrl,
+      repositoryUrl: repoUrl.trim(),
       checklistCompleted: false,
     });
-    setIsSubmitted(false);
   };
 
   const handleConfirm = (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
-    storageService.saveChallengeSubmission(challengeId, {
+    onSaveSubmission(challengeId, {
       repositoryUrl: repoUrl.trim(),
       checkedPrItems: checkedItems,
       checklistCompleted: true,
+      reviewStatus: 'EM_REVISAO',
     });
     setIsSubmitted(true);
     if (onUnlockGabarito) onUnlockGabarito();
@@ -57,13 +70,15 @@ export const ChallengeSubmissionPanel: React.FC<ChallengeSubmissionPanelProps> =
       <div className="section-header-row">
         <div>
           <span className="hero-badge" style={{ marginBottom: '0.5rem' }}>
-            ✅ Definition of Done & Revisão de PR
+            ✅ Definition of Done & Submissão para Revisão
           </span>
           <h2>{title}</h2>
           <p className="text-muted">{subtitle}</p>
         </div>
         <span className={`status-pill ${isSubmitted ? 'passed' : 'pending'}`}>
-          {isSubmitted ? '✓ Entrega Validada' : `${checkedItems.length}/${prChecklist.length} itens verificados`}
+          {isSubmitted
+            ? '✓ Submetido para Revisão do Supervisor'
+            : `${checkedItems.length}/${prChecklist.length} critérios validados`}
         </span>
       </div>
 
@@ -90,14 +105,21 @@ export const ChallengeSubmissionPanel: React.FC<ChallengeSubmissionPanelProps> =
       <form onSubmit={handleConfirm} style={{ marginTop: '1.25rem' }}>
         {requireRepoUrl && (
           <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.4rem', fontSize: '0.9rem' }}>
-              🔗 Link do Repositório Git / Pull Request da sua entrega:
+            <label
+              style={{
+                display: 'block',
+                fontWeight: 600,
+                marginBottom: '0.4rem',
+                fontSize: '0.9rem',
+              }}
+            >
+              🦊 Link do Repositório de Entrega (GitLab SEMOB / Merge Request):
             </label>
             <input
               type="url"
               value={repoUrl}
               onChange={(e) => setRepoUrl(e.target.value)}
-              placeholder="https://github.com/seu-usuario/desafio-azimute"
+              placeholder="https://gitlab.semob.df.gov.br/estagio/seu-repositorio"
               className="sql-editor-textarea"
               style={{ minHeight: '44px', height: '44px', padding: '0.6rem 1rem' }}
               required={requireRepoUrl}
@@ -112,11 +134,12 @@ export const ChallengeSubmissionPanel: React.FC<ChallengeSubmissionPanelProps> =
             className="btn-primary"
             style={{ opacity: canSubmit ? 1 : 0.5 }}
           >
-            {isSubmitted ? '✓ Submissão Registada no Progresso' : '🚀 Validar Checklist e Registar Entrega'}
+            {isSubmitted
+              ? '✓ Entrega Registada no Progresso Global'
+              : '🚀 Validar Checklist e Submeter Entrega'}
           </button>
         </div>
       </form>
     </section>
   );
 };
-export default ChallengeSubmissionPanel;

@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ScreenType } from './types';
 import { useStudentProgress } from './hooks/useStudentProgress';
 import { useTheme } from './hooks/useTheme';
-import { MODULES, getModules } from './services/dataService';
+import { getModules } from './services/dataService';
+import { SCREEN_TO_PATH, modulePath, pathToScreen } from './config/routes';
+import { LibraryScreen } from './screens/LibraryScreen';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { HomeScreen } from './screens/HomeScreen';
@@ -13,9 +16,14 @@ import { SqlChallengeScreen } from './screens/SqlChallengeScreen';
 import { BackendChallengeScreen } from './screens/BackendChallengeScreen';
 import { FrontendChallengeScreen } from './screens/FrontendChallengeScreen';
 import { CertificateScreen } from './screens/CertificateScreen';
+import { CertificateValidationScreen } from './screens/CertificateValidationScreen';
 
 export const App: React.FC = () => {
-  const [currentScreen, setCurrentScreen] = useState<ScreenType>('home');
+  const location = useLocation();
+  const navigate = useNavigate();
+  // A URL é a fonte da verdade da tela atual: F5 e links diretos preservam a página (Q47)
+  const routedScreen = pathToScreen(location.pathname);
+  const currentScreen: ScreenType = routedScreen ?? 'home';
   const { theme, toggleTheme } = useTheme();
   const {
     progress,
@@ -25,32 +33,19 @@ export const App: React.FC = () => {
     toggleChecklist,
     recordQuizAttempt,
     recordNote,
+    saveChallenge,
     resetProgress,
     metrics,
   } = useStudentProgress();
 
   const handleNavigate = (screen: ScreenType) => {
-    setCurrentScreen(screen);
+    navigate(SCREEN_TO_PATH[screen] ?? '/');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenModule = (moduleId: string) => {
-    const id = moduleId.toLowerCase();
-    if (id.includes('ambiente') || id.includes('docker') || id.includes('setup')) {
-      handleNavigate('modulo-ambiente');
-    } else if (id.includes('sql') || id.includes('banco') || id.includes('dados')) {
-      handleNavigate('modulo-sql');
-    } else if (id.includes('backend') || id.includes('back')) {
-      handleNavigate('modulo-backend');
-    } else if (id.includes('frontend') || id.includes('front')) {
-      handleNavigate('modulo-frontend');
-    } else if (id.includes('git')) {
-      handleNavigate('modulo-git');
-    } else if (id.includes('gabarito')) {
-      handleNavigate('modulo-gabarito');
-    } else {
-      handleNavigate('roteiro');
-    }
+    navigate(modulePath(moduleId));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const renderCurrentScreen = () => {
@@ -72,7 +67,31 @@ export const App: React.FC = () => {
         );
 
       case 'roteiro':
-        return <IntegrationTrackScreen onNavigate={handleNavigate} />;
+        return (
+          <IntegrationTrackScreen
+            completedItems={progress.completedChecklists['integration-track'] || []}
+            onToggleItem={(key) => toggleChecklist('integration-track', key)}
+            onOpenModule={handleOpenModule}
+            onNavigateChallenge={(screen) => {
+              if (screen === 'sql-challenge') handleNavigate('desafio-sql');
+              if (screen === 'backend-challenge') handleNavigate('desafio-backend');
+              if (screen === 'frontend-challenge') handleNavigate('desafio-frontend');
+              if (screen === 'certificado') handleNavigate('certificado');
+            }}
+            onNavigate={handleNavigate}
+          />
+        );
+
+      case 'biblioteca':
+        return (
+          <LibraryScreen
+            modules={getModules()}
+            onOpenManual={(id) => {
+              navigate(modulePath(id));
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        );
 
       case 'modulo-ambiente':
       case 'modulo-git':
@@ -88,13 +107,18 @@ export const App: React.FC = () => {
           'modulo-backend': 'mod-4-backend',
           'modulo-frontend': 'mod-5-frontend',
         };
-        const moduleId = idMap[currentScreen] || 'mod-1-ambiente';
+        const urlModId = location.pathname.startsWith('/modulos/')
+          ? location.pathname.replace('/modulos/', '').trim()
+          : null;
+        const moduleId = (urlModId && urlModId !== 'gabarito-sql')
+          ? urlModId
+          : (idMap[currentScreen] || 'mod-1-ambiente');
         const allMods = getModules();
         const mod = allMods.find((m) => m.id === moduleId) || allMods[0];
         const quizKey = mod.quizId || mod.id;
         const attempt = progress.quizScores[quizKey];
         const history = progress.quizHistory[quizKey] || progress.quizHistory[mod.id] || [];
-        const note = progress.moduleNotes[mod.id] || progress.notes[mod.id] || '';
+        const note = progress.moduleNotes[mod.id] || '';
         const checklist = progress.completedChecklists[mod.id] || [];
 
         return (
@@ -110,17 +134,7 @@ export const App: React.FC = () => {
             onToggleChecklist={(id, itemKey) => toggleChecklist(id, itemKey)}
             onSaveQuiz={(att) => recordQuizAttempt(att)}
             onSaveNote={(id, noteText) => recordNote(id, noteText)}
-            onSelectModule={(id) => {
-              const reverseMap: Record<string, ScreenType> = {
-                'mod-1-ambiente': 'modulo-ambiente',
-                'mod-2-git': 'modulo-git',
-                'mod-3-banco-dados': 'modulo-sql',
-                'mod-4-backend': 'modulo-backend',
-                'mod-5-frontend': 'modulo-frontend',
-              };
-              const targetScreen = reverseMap[id] || (`modulo-${id}` as ScreenType);
-              handleNavigate(targetScreen);
-            }}
+            onSelectModule={(id) => handleOpenModule(id)}
             allModules={allMods}
           />
         );
@@ -129,7 +143,7 @@ export const App: React.FC = () => {
       case 'quizzes':
         return (
           <QuizCenterScreen
-            quizAttempts={progress.quizAttempts}
+            quizAttempts={progress.quizScores}
             onSaveQuizAttempt={recordQuizAttempt}
             onNavigate={handleNavigate}
             onResetProgress={resetProgress}
@@ -148,6 +162,8 @@ export const App: React.FC = () => {
             onToggleItem={(key) => {
               toggleChecklist('challenge-sql-relatorios', key);
             }}
+            submission={progress.challengeSubmissions?.['challenge-sql-relatorios']}
+            onSaveSubmission={saveChallenge}
             onOpenModule={handleOpenModule}
           />
         );
@@ -164,6 +180,8 @@ export const App: React.FC = () => {
             onToggleItem={(key) => {
               toggleChecklist('challenge-backend-api', key);
             }}
+            submission={progress.challengeSubmissions?.['challenge-backend-api']}
+            onSaveSubmission={saveChallenge}
             onOpenModule={handleOpenModule}
           />
         );
@@ -180,6 +198,8 @@ export const App: React.FC = () => {
             onToggleItem={(key) => {
               toggleChecklist('challenge-frontend-ui', key);
             }}
+            submission={progress.challengeSubmissions?.['challenge-frontend-ui']}
+            onSaveSubmission={saveChallenge}
             onOpenModule={handleOpenModule}
           />
         );
@@ -193,12 +213,17 @@ export const App: React.FC = () => {
             totalModules={metrics.totalModules}
             passedQuizzesCount={metrics.passedQuizzesCount}
             totalQuizzes={metrics.totalQuizzes}
+            completedChallengesCount={metrics.completedChallengesCount}
+            totalChallenges={metrics.totalChallenges}
             overallPercentage={metrics.overallPercentage}
             averageScore={metrics.averageQuizScore}
             isUnlocked={metrics.isCertificateUnlocked}
             onNavigate={handleNavigate}
           />
         );
+
+      case 'validar-certificado':
+        return <CertificateValidationScreen />;
 
       default:
         return (
@@ -217,6 +242,11 @@ export const App: React.FC = () => {
         );
     }
   };
+
+  // Rotas desconhecidas voltam para a Home em vez de renderizar silenciosamente outra tela
+  if (routedScreen === null) {
+    return <Navigate to="/" replace />;
+  }
 
   const isViewingManual = currentScreen.startsWith('modulo-');
 
