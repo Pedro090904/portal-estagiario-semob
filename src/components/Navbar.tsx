@@ -1,23 +1,24 @@
 import React, { useState } from 'react';
 import { ScreenType, ThemeMode } from '../types';
-import { 
-  Compass, 
-  BookOpen, 
-  CheckSquare, 
-  Terminal, 
-  Award, 
-  Moon, 
-  Sun, 
-  Menu, 
-  X, 
+import { brandConfig } from '../config/brand';
+import {
+  Compass,
+  CheckSquare,
+  Terminal,
+  Award,
+  Moon,
+  Sun,
+  Menu,
+  X,
   ChevronDown,
-  Layers,
   Database,
   GitBranch,
   Server,
   Layout,
   Home,
-  CheckCircle2
+  Library,
+  Boxes,
+  BookOpen,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -27,6 +28,34 @@ interface NavbarProps {
   onToggleTheme: () => void;
   overallPercentage: number;
 }
+
+// Ícone Vetorial de Alta Fidelidade — Azimute Dev / SUTINF
+const AzimuteLogo: React.FC<{ size?: number }> = ({ size = 36 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 36 36"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="brand-vector-logo"
+    style={{ flexShrink: 0 }}
+    aria-label="Logo Oficial Azimute Dev"
+  >
+    <rect width="36" height="36" rx="9" fill="url(#azimute-grad)" />
+    <circle cx="18" cy="18" r="10.5" stroke="rgba(255,255,255,0.25)" strokeWidth="1.2" strokeDasharray="2 2" />
+    <path d="M18 7.5L21.5 15L18 18L14.5 15L18 7.5Z" fill="#38bdf8" />
+    <path d="M18 28.5L14.5 21L18 18L21.5 21L18 28.5Z" fill="rgba(255,255,255,0.7)" />
+    <path d="M7.5 18L15 14.5L18 18L15 21.5L7.5 18Z" fill="rgba(255,255,255,0.5)" />
+    <path d="M28.5 18L21 21.5L18 18L21 14.5L28.5 18Z" fill="#818cf8" />
+    <circle cx="18" cy="18" r="2.2" fill="#ffffff" />
+    <defs>
+      <linearGradient id="azimute-grad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#0284c7" />
+        <stop offset="1" stopColor="#4338ca" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentScreen,
@@ -47,44 +76,77 @@ export const Navbar: React.FC<NavbarProps> = ({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const isManualActive = ['modulo-git', 'modulo-sql', 'modulo-gabarito', 'modulo-backend', 'modulo-frontend'].includes(currentScreen);
+  const isManualActive = [
+    'modulo-ambiente',
+    'modulo-git',
+    'modulo-sql',
+    'modulo-backend',
+    'modulo-frontend',
+  ].includes(currentScreen);
   const isChallengeActive = ['desafio-sql', 'desafio-backend', 'desafio-frontend'].includes(currentScreen);
 
   return (
     <>
       <header className="site-header no-print">
-        <div className="header-container">
-          {/* Brand / Logo */}
-          <div className="header-brand" onClick={() => handleNav('home')}>
-            <div className="brand-logo-icon">
-              <Layers className="icon-main" size={20} />
-            </div>
-            <div className="brand-texts">
-              <div className="brand-title">SEMOB<span className="brand-dot">.</span>DF</div>
-              <div className="brand-sub">SUTINF • DEV ACADEMY</div>
+        <div className="header-container" style={{ paddingLeft: '1rem' }}>
+          {/* Brand / Logo Oficial com Proteção Anti-Wrapping */}
+          <div
+            className="header-brand"
+            onClick={() => handleNav('home')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.65rem',
+              cursor: 'pointer',
+              flexShrink: 0,
+              userSelect: 'none',
+              minWidth: 'max-content',
+            }}
+          >
+            <AzimuteLogo size={36} />
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15, flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span className="brand-title" style={{ fontSize: '1.15rem', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                  Azimute
+                </span>
+                <span className="brand-dot" style={{ fontWeight: 800, color: 'var(--primary, #0ea5e9)' }}>Dev</span>
+              </div>
+              <span className="brand-sub" style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', whiteSpace: 'nowrap' }}>
+                Aceleração Técnica • SEMOB/DF
+              </span>
             </div>
           </div>
 
           {/* Desktop Nav */}
           <nav className="desktop-nav">
-            <button 
+            <button
               className={`nav-btn ${currentScreen === 'home' ? 'active' : ''}`}
               onClick={() => handleNav('home')}
             >
               Início
             </button>
 
-            <button 
+            <button
+              id="nav-trilha"
               className={`nav-btn ${currentScreen === 'roteiro' ? 'active' : ''}`}
               onClick={() => handleNav('roteiro')}
             >
               <Compass className="nav-icon" size={16} />
-              Roteiro de Integração
+              Trilha Guiada
+            </button>
+
+            <button
+              id="nav-biblioteca"
+              className={`nav-btn ${currentScreen === 'biblioteca' ? 'active' : ''}`}
+              onClick={() => handleNav('biblioteca')}
+            >
+              <Library className="nav-icon" size={16} />
+              Biblioteca
             </button>
 
             {/* Manuais Dropdown */}
             <div className="nav-dropdown-wrapper">
-              <button 
+              <button
                 className={`nav-btn dropdown-toggle ${isManualActive ? 'active' : ''}`}
                 onClick={() => {
                   setManualsDropdownOpen(!manualsDropdownOpen);
@@ -98,6 +160,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               {manualsDropdownOpen && (
                 <div className="dropdown-menu">
+                  <button onClick={() => handleNav('modulo-ambiente')} className="dropdown-item">
+                    <Boxes size={16} className="text-cyan" />
+                    <div>
+                      <div className="item-title">Setup & Ecossistema SISMOB</div>
+                      <div className="item-desc">Docker Compose, Linux & PostgreSQL</div>
+                    </div>
+                  </button>
                   <button onClick={() => handleNav('modulo-git')} className="dropdown-item">
                     <GitBranch size={16} className="text-sky" />
                     <div>
@@ -110,13 +179,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <div>
                       <div className="item-title">Bancos de Dados & SQL SEMOB</div>
                       <div className="item-desc">PostgreSQL, PostGIS e produção</div>
-                    </div>
-                  </button>
-                  <button onClick={() => handleNav('modulo-gabarito')} className="dropdown-item">
-                    <CheckCircle2 size={16} className="text-emerald" />
-                    <div>
-                      <div className="item-title">Gabarito Oficial SQL</div>
-                      <div className="item-desc">As 25 resoluções passo a passo</div>
                     </div>
                   </button>
                   <button onClick={() => handleNav('modulo-backend')} className="dropdown-item">
@@ -138,7 +200,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             {/* Central de Quizzes */}
-            <button 
+            <button
               className={`nav-btn ${currentScreen === 'quizzes' ? 'active' : ''}`}
               onClick={() => handleNav('quizzes')}
             >
@@ -148,7 +210,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Desafios Dropdown */}
             <div className="nav-dropdown-wrapper">
-              <button 
+              <button
                 className={`nav-btn dropdown-toggle ${isChallengeActive ? 'active' : ''}`}
                 onClick={() => {
                   setChallengesDropdownOpen(!challengesDropdownOpen);
@@ -188,20 +250,21 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             {/* Certificado */}
-            <button 
+            <button
               className={`nav-btn ${currentScreen === 'certificado' ? 'active' : ''}`}
               onClick={() => handleNav('certificado')}
             >
               <Award className="nav-icon" size={16} />
               Certificado
             </button>
+
           </nav>
 
           {/* Actions (Progress & Theme & Hamburger) */}
           <div className="header-actions">
             {/* Progress pill - adapts on mobile */}
-            <div 
-              className="progress-pill" 
+            <div
+              className="progress-pill"
               title="Seu progresso global na trilha de formação"
               onClick={() => handleNav('certificado')}
             >
@@ -213,19 +276,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             </div>
 
-            {/* Theme Toggle */}
-            <button 
-              className="theme-btn" 
-              onClick={onToggleTheme} 
+            {/* Theme Toggle com Sol Branco no modo escuro */}
+            <button
+              className="theme-btn"
+              onClick={onToggleTheme}
               title={`Alternar para tema ${theme === 'dark' ? 'claro' : 'escuro'}`}
               aria-label="Alternar tema"
             >
-              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+              {theme === 'dark' ? <Sun size={18} style={{ color: '#ffffff' }} /> : <Moon size={18} />}
             </button>
 
             {/* Mobile hamburger */}
-            <button 
-              className="mobile-hamburger" 
+            <button
+              className="mobile-hamburger"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Abrir menu de navegação"
             >
@@ -240,13 +303,13 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="mobile-drawer-overlay no-print" onClick={() => setMobileMenuOpen(false)}>
           <div className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
             <div className="drawer-header-row">
-              <div className="drawer-brand-wrap">
-                <Layers size={18} className="text-sky" />
-                <span className="drawer-brand-name">SEMOB<strong>.DF</strong></span>
+              <div className="drawer-brand-wrap flex items-center gap-2">
+                <span className="text-lg">🧭</span>
+                <span className="drawer-brand-name font-bold">{brandConfig.shortName}</span>
               </div>
-              <button 
-                onClick={() => setMobileMenuOpen(false)} 
-                className="btn-close-drawer" 
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="btn-close-drawer"
                 aria-label="Fechar menu"
               >
                 <X size={20} />
@@ -268,7 +331,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Home size={18} className="text-sky" /> Início
             </button>
             <button onClick={() => handleNav('roteiro')} className={`drawer-btn ${currentScreen === 'roteiro' ? 'active' : ''}`}>
-              <Compass size={18} className="text-emerald" /> Roteiro de Integração (PDF)
+              <Compass size={18} className="text-emerald" /> Trilha Guiada
+            </button>
+            <button onClick={() => handleNav('biblioteca')} className={`drawer-btn ${currentScreen === 'biblioteca' ? 'active' : ''}`}>
+              <Library size={18} className="text-sky" /> Biblioteca de Consulta
             </button>
             <button onClick={() => handleNav('quizzes')} className={`drawer-btn ${currentScreen === 'quizzes' ? 'active' : ''}`}>
               <CheckSquare size={18} className="text-amber" /> Central de Quizzes
@@ -276,16 +342,16 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button onClick={() => handleNav('certificado')} className={`drawer-btn ${currentScreen === 'certificado' ? 'active' : ''}`}>
               <Award size={18} className="text-indigo" /> Certificado Oficial
             </button>
-            
+
             <div className="drawer-section-title">Manuais Oficiais SUTINF</div>
+            <button onClick={() => handleNav('modulo-ambiente')} className={`drawer-btn ${currentScreen === 'modulo-ambiente' ? 'active' : ''}`}>
+              <Boxes size={16} className="text-cyan" /> Setup & Ecossistema SISMOB
+            </button>
             <button onClick={() => handleNav('modulo-git')} className={`drawer-btn ${currentScreen === 'modulo-git' ? 'active' : ''}`}>
               <GitBranch size={16} className="text-sky" /> Git & DevSecOps
             </button>
             <button onClick={() => handleNav('modulo-sql')} className={`drawer-btn ${currentScreen === 'modulo-sql' ? 'active' : ''}`}>
               <Database size={16} className="text-emerald" /> Banco de Dados & SQL
-            </button>
-            <button onClick={() => handleNav('modulo-gabarito')} className={`drawer-btn ${currentScreen === 'modulo-gabarito' ? 'active' : ''}`}>
-              <CheckCircle2 size={16} className="text-emerald" /> Gabarito Oficial SQL (25 Itens)
             </button>
             <button onClick={() => handleNav('modulo-backend')} className={`drawer-btn ${currentScreen === 'modulo-backend' ? 'active' : ''}`}>
               <Server size={16} className="text-indigo" /> Back-end NestJS (SISMOB)
@@ -310,40 +376,40 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Docked Mobile Bottom Navigation Bar (Thumb Friendly) */}
       <nav className="mobile-bottom-dock no-print">
-        <button 
-          onClick={() => handleNav('home')} 
+        <button
+          onClick={() => handleNav('home')}
           className={`dock-tab ${currentScreen === 'home' ? 'active' : ''}`}
         >
           <Home size={20} />
           <span>Início</span>
         </button>
 
-        <button 
-          onClick={() => handleNav('roteiro')} 
+        <button
+          onClick={() => handleNav('roteiro')}
           className={`dock-tab ${currentScreen === 'roteiro' ? 'active' : ''}`}
         >
           <Compass size={20} />
-          <span>Roteiro</span>
+          <span>Trilha</span>
         </button>
 
-        <button 
-          onClick={() => setMobileMenuOpen(true)} 
-          className={`dock-tab ${isManualActive ? 'active' : ''}`}
+        <button
+          onClick={() => handleNav('biblioteca')}
+          className={`dock-tab ${currentScreen === 'biblioteca' ? 'active' : ''}`}
         >
-          <BookOpen size={20} />
-          <span>Manuais</span>
+          <Library size={20} />
+          <span>Biblioteca</span>
         </button>
 
-        <button 
-          onClick={() => handleNav('quizzes')} 
+        <button
+          onClick={() => handleNav('quizzes')}
           className={`dock-tab ${currentScreen === 'quizzes' ? 'active' : ''}`}
         >
           <CheckSquare size={20} />
           <span>Quizzes</span>
         </button>
 
-        <button 
-          onClick={() => handleNav('certificado')} 
+        <button
+          onClick={() => handleNav('certificado')}
           className={`dock-tab ${currentScreen === 'certificado' ? 'active' : ''}`}
         >
           <Award size={20} />

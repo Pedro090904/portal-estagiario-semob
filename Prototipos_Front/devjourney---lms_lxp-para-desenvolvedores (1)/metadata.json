@@ -1,0 +1,6 @@
+{
+  "name": "DevJourney - LMS/LXP para Desenvolvedores",
+  "description": "Plataforma de aprendizagem adaptativa e escalável com trilhas de formação (Skill Tree), Player imersivo, Quizzes com bloqueio, Repositório de código e Fórum comunitário.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

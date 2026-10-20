@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ScreenType } from './types';
 import { useStudentProgress } from './hooks/useStudentProgress';
 import { useTheme } from './hooks/useTheme';
-import { MODULES } from './services/dataService';
+import { getModules } from './services/dataService';
+import { SCREEN_TO_PATH, modulePath, pathToScreen } from './config/routes';
+import { LibraryScreen } from './screens/LibraryScreen';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { HomeScreen } from './screens/HomeScreen';
@@ -13,23 +16,35 @@ import { SqlChallengeScreen } from './screens/SqlChallengeScreen';
 import { BackendChallengeScreen } from './screens/BackendChallengeScreen';
 import { FrontendChallengeScreen } from './screens/FrontendChallengeScreen';
 import { CertificateScreen } from './screens/CertificateScreen';
+import { CertificateValidationScreen } from './screens/CertificateValidationScreen';
 
 export const App: React.FC = () => {
-  const [currentScreen, setCurrentScreen] = useState<ScreenType>('home');
+  const location = useLocation();
+  const navigate = useNavigate();
+  // A URL é a fonte da verdade da tela atual: F5 e links diretos preservam a página (Q47)
+  const routedScreen = pathToScreen(location.pathname);
+  const currentScreen: ScreenType = routedScreen ?? 'home';
   const { theme, toggleTheme } = useTheme();
   const {
     progress,
     updateStudentName,
     toggleModule,
     toggleChallenge,
+    toggleChecklist,
     recordQuizAttempt,
     recordNote,
+    saveChallenge,
     resetProgress,
     metrics,
   } = useStudentProgress();
 
   const handleNavigate = (screen: ScreenType) => {
-    setCurrentScreen(screen);
+    navigate(SCREEN_TO_PATH[screen] ?? '/');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleOpenModule = (moduleId: string) => {
+    navigate(modulePath(moduleId));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -52,100 +67,75 @@ export const App: React.FC = () => {
         );
 
       case 'roteiro':
-        return <IntegrationTrackScreen onNavigate={handleNavigate} />;
-
-      case 'modulo-git': {
-        const mod = MODULES.find((m) => m.id === 'git') || MODULES[0];
-        const next = MODULES.find((m) => m.id === 'sql');
         return (
-          <ModuleViewerScreen
-            module={mod}
+          <IntegrationTrackScreen
+            completedItems={progress.completedChecklists['integration-track'] || []}
+            onToggleItem={(key) => toggleChecklist('integration-track', key)}
+            onOpenModule={handleOpenModule}
+            onNavigateChallenge={(screen) => {
+              if (screen === 'sql-challenge') handleNavigate('desafio-sql');
+              if (screen === 'backend-challenge') handleNavigate('desafio-backend');
+              if (screen === 'frontend-challenge') handleNavigate('desafio-frontend');
+              if (screen === 'certificado') handleNavigate('certificado');
+            }}
             onNavigate={handleNavigate}
-            isCompleted={progress.completedModules.includes(mod.id)}
-            onToggleComplete={toggleModule}
-            quizAttempt={progress.quizAttempts[mod.quizId]}
-            onSaveQuizAttempt={recordQuizAttempt}
-            nextModule={next}
-            userNotes={progress.notes[mod.id] || ''}
-            onSaveNotes={(noteText) => recordNote(mod.id, noteText)}
           />
         );
-      }
 
-      case 'modulo-sql': {
-        const mod = MODULES.find((m) => m.id === 'sql') || MODULES[1];
-        const prev = MODULES.find((m) => m.id === 'git');
-        const next = MODULES.find((m) => m.id === 'gabarito-sql');
+      case 'biblioteca':
         return (
-          <ModuleViewerScreen
-            module={mod}
-            onNavigate={handleNavigate}
-            isCompleted={progress.completedModules.includes(mod.id)}
-            onToggleComplete={toggleModule}
-            quizAttempt={progress.quizAttempts[mod.quizId]}
-            onSaveQuizAttempt={recordQuizAttempt}
-            prevModule={prev}
-            nextModule={next}
-            userNotes={progress.notes[mod.id] || ''}
-            onSaveNotes={(noteText) => recordNote(mod.id, noteText)}
+          <LibraryScreen
+            modules={getModules()}
+            onOpenManual={(id) => {
+              navigate(modulePath(id));
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
         );
-      }
 
-      case 'modulo-gabarito': {
-        const mod = MODULES.find((m) => m.id === 'gabarito-sql') || MODULES[2];
-        const prev = MODULES.find((m) => m.id === 'sql');
-        const next = MODULES.find((m) => m.id === 'backend');
-        return (
-          <ModuleViewerScreen
-            module={mod}
-            onNavigate={handleNavigate}
-            isCompleted={progress.completedModules.includes(mod.id)}
-            onToggleComplete={toggleModule}
-            quizAttempt={progress.quizAttempts[mod.quizId]}
-            onSaveQuizAttempt={recordQuizAttempt}
-            prevModule={prev}
-            nextModule={next}
-            userNotes={progress.notes[mod.id] || ''}
-            onSaveNotes={(noteText) => recordNote(mod.id, noteText)}
-          />
-        );
-      }
-
-      case 'modulo-backend': {
-        const mod = MODULES.find((m) => m.id === 'backend') || MODULES[3];
-        const prev = MODULES.find((m) => m.id === 'gabarito-sql');
-        const next = MODULES.find((m) => m.id === 'frontend');
-        return (
-          <ModuleViewerScreen
-            module={mod}
-            onNavigate={handleNavigate}
-            isCompleted={progress.completedModules.includes(mod.id)}
-            onToggleComplete={toggleModule}
-            quizAttempt={progress.quizAttempts[mod.quizId]}
-            onSaveQuizAttempt={recordQuizAttempt}
-            prevModule={prev}
-            nextModule={next}
-            userNotes={progress.notes[mod.id] || ''}
-            onSaveNotes={(noteText) => recordNote(mod.id, noteText)}
-          />
-        );
-      }
-
+      case 'modulo-ambiente':
+      case 'modulo-git':
+      case 'modulo-sql':
+      case 'modulo-gabarito':
+      case 'modulo-backend':
       case 'modulo-frontend': {
-        const mod = MODULES.find((m) => m.id === 'frontend') || MODULES[4];
-        const prev = MODULES.find((m) => m.id === 'backend');
+        const idMap: Record<string, string> = {
+          'modulo-ambiente': 'mod-1-ambiente',
+          'modulo-git': 'mod-2-git',
+          'modulo-sql': 'mod-3-banco-dados',
+          'modulo-gabarito': 'mod-3-banco-dados',
+          'modulo-backend': 'mod-4-backend',
+          'modulo-frontend': 'mod-5-frontend',
+        };
+        const urlModId = location.pathname.startsWith('/modulos/')
+          ? location.pathname.replace('/modulos/', '').trim()
+          : null;
+        const moduleId = (urlModId && urlModId !== 'gabarito-sql')
+          ? urlModId
+          : (idMap[currentScreen] || 'mod-1-ambiente');
+        const allMods = getModules();
+        const mod = allMods.find((m) => m.id === moduleId) || allMods[0];
+        const quizKey = mod.quizId || mod.id;
+        const attempt = progress.quizScores[quizKey];
+        const history = progress.quizHistory[quizKey] || progress.quizHistory[mod.id] || [];
+        const note = progress.moduleNotes[mod.id] || '';
+        const checklist = progress.completedChecklists[mod.id] || [];
+
         return (
           <ModuleViewerScreen
             module={mod}
-            onNavigate={handleNavigate}
             isCompleted={progress.completedModules.includes(mod.id)}
-            onToggleComplete={toggleModule}
-            quizAttempt={progress.quizAttempts[mod.quizId]}
-            onSaveQuizAttempt={recordQuizAttempt}
-            prevModule={prev}
-            userNotes={progress.notes[mod.id] || ''}
-            onSaveNotes={(noteText) => recordNote(mod.id, noteText)}
+            completedChecklist={checklist}
+            quizAttempt={attempt}
+            quizHistory={history}
+            moduleNote={note}
+            onBack={() => handleNavigate('roteiro')}
+            onToggleComplete={(id) => toggleModule(id)}
+            onToggleChecklist={(id, itemKey) => toggleChecklist(id, itemKey)}
+            onSaveQuiz={(att) => recordQuizAttempt(att)}
+            onSaveNote={(id, noteText) => recordNote(id, noteText)}
+            onSelectModule={(id) => handleOpenModule(id)}
+            allModules={allMods}
           />
         );
       }
@@ -153,7 +143,7 @@ export const App: React.FC = () => {
       case 'quizzes':
         return (
           <QuizCenterScreen
-            quizAttempts={progress.quizAttempts}
+            quizAttempts={progress.quizScores}
             onSaveQuizAttempt={recordQuizAttempt}
             onNavigate={handleNavigate}
             onResetProgress={resetProgress}
@@ -161,31 +151,56 @@ export const App: React.FC = () => {
         );
 
       case 'desafio-sql':
+      case 'sql-challenge':
         return (
           <SqlChallengeScreen
-            completedChallenges={progress.completedChallenges}
-            onToggleChallenge={toggleChallenge}
-            notes={progress.notes}
-            onSaveNote={recordNote}
-            onNavigate={handleNavigate}
+            completedItems={
+              progress.completedChecklists['challenge-sql-relatorios'] ||
+              progress.completedChecklists['sql-challenge'] ||
+              []
+            }
+            onToggleItem={(key) => {
+              toggleChecklist('challenge-sql-relatorios', key);
+            }}
+            submission={progress.challengeSubmissions?.['challenge-sql-relatorios']}
+            onSaveSubmission={saveChallenge}
+            onOpenModule={handleOpenModule}
           />
         );
 
       case 'desafio-backend':
+      case 'backend-challenge':
         return (
           <BackendChallengeScreen
-            isCompleted={progress.completedChallenges.includes('backend-challenge')}
-            onToggleComplete={() => toggleChallenge('backend-challenge')}
-            onNavigate={handleNavigate}
+            completedItems={
+              progress.completedChecklists['challenge-backend-api'] ||
+              progress.completedChecklists['backend-challenge'] ||
+              []
+            }
+            onToggleItem={(key) => {
+              toggleChecklist('challenge-backend-api', key);
+            }}
+            submission={progress.challengeSubmissions?.['challenge-backend-api']}
+            onSaveSubmission={saveChallenge}
+            onOpenModule={handleOpenModule}
           />
         );
 
       case 'desafio-frontend':
+      case 'frontend-challenge':
         return (
           <FrontendChallengeScreen
-            isCompleted={progress.completedChallenges.includes('frontend-challenge')}
-            onToggleComplete={() => toggleChallenge('frontend-challenge')}
-            onNavigate={handleNavigate}
+            completedItems={
+              progress.completedChecklists['challenge-frontend-ui'] ||
+              progress.completedChecklists['frontend-challenge'] ||
+              []
+            }
+            onToggleItem={(key) => {
+              toggleChecklist('challenge-frontend-ui', key);
+            }}
+            submission={progress.challengeSubmissions?.['challenge-frontend-ui']}
+            onSaveSubmission={saveChallenge}
+            onOpenModule={handleOpenModule}
           />
         );
 
@@ -198,12 +213,17 @@ export const App: React.FC = () => {
             totalModules={metrics.totalModules}
             passedQuizzesCount={metrics.passedQuizzesCount}
             totalQuizzes={metrics.totalQuizzes}
+            completedChallengesCount={metrics.completedChallengesCount}
+            totalChallenges={metrics.totalChallenges}
             overallPercentage={metrics.overallPercentage}
             averageScore={metrics.averageQuizScore}
             isUnlocked={metrics.isCertificateUnlocked}
             onNavigate={handleNavigate}
           />
         );
+
+      case 'validar-certificado':
+        return <CertificateValidationScreen />;
 
       default:
         return (
@@ -222,6 +242,11 @@ export const App: React.FC = () => {
         );
     }
   };
+
+  // Rotas desconhecidas voltam para a Home em vez de renderizar silenciosamente outra tela
+  if (routedScreen === null) {
+    return <Navigate to="/" replace />;
+  }
 
   const isViewingManual = currentScreen.startsWith('modulo-');
 

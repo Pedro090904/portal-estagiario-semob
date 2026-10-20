@@ -1,0 +1,416 @@
+/* ==========================================================================
+   AZIMUTE DEV — EXTENSÕES & REFINAMENTOS DE INTERFACE (UX/UI)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. CARD EM DESTAQUE: "CONTINUAR DE ONDE PAROU" (Home Screen)
+   -------------------------------------------------------------------------- */
+.continue-step-spotlight-section {
+  margin-top: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.continue-step-spotlight-card {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  padding: 1.75rem 2rem;
+  border-radius: var(--radius-lg, 16px);
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(30, 41, 59, 0.7) 100%);
+  border: 1px solid rgba(14, 165, 233, 0.35);
+  box-shadow: 0 12px 32px -8px rgba(14, 165, 233, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(8px);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.continue-step-spotlight-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(14, 165, 233, 0.6);
+  box-shadow: 0 18px 40px -10px rgba(14, 165, 233, 0.25), 0 0 0 1px rgba(56, 189, 248, 0.2);
+}
+
+[data-theme="light"] .continue-step-spotlight-card {
+  background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%);
+  border-color: #bae6fd;
+  box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.12), 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.continue-step-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.continue-step-header-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary, #0ea5e9);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.6rem;
+}
+
+.continue-tag-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+  animation: pulse-dot 1.8s infinite;
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.35); opacity: 1; box-shadow: 0 0 14px #38bdf8; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.continue-badge-order {
+  background: rgba(14, 165, 233, 0.18);
+  color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+[data-theme="light"] .continue-badge-order {
+  background: #e0f2fe;
+  color: #0369a1;
+  border-color: #7dd3fc;
+}
+
+.continue-step-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-main, #f8fafc);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  margin: 0 0 0.5rem 0;
+}
+
+[data-theme="light"] .continue-step-title {
+  color: #0f172a;
+}
+
+.continue-step-description {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--text-muted, #94a3b8);
+  margin: 0 0 1rem 0;
+  max-width: 780px;
+}
+
+[data-theme="light"] .continue-step-description {
+  color: #475569;
+}
+
+.continue-step-meta-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  background: var(--surface-elevated, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  color: var(--text-muted, #94a3b8);
+}
+
+[data-theme="light"] .meta-chip {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #475569;
+}
+
+.meta-chip.chip-type {
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.25);
+  background: rgba(14, 165, 233, 0.08);
+}
+
+.continue-step-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  align-items: stretch;
+  flex-shrink: 0;
+  min-width: 220px;
+}
+
+.continue-btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.8rem 1.4rem;
+  border-radius: 10px;
+}
+
+.continue-btn-secondary {
+  text-align: center;
+  font-size: 0.82rem;
+  padding: 0.55rem 1rem;
+}
+
+@media (max-width: 860px) {
+  .continue-step-spotlight-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.25rem;
+    gap: 1.25rem;
+  }
+  .continue-step-actions {
+    min-width: 100%;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. CERTIFICADO: BARRA DE CONTROLE FRENTE / VERSO & AÇÕES
+   -------------------------------------------------------------------------- */
+.cert-control-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  background: var(--surface, #1e293b);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-radius: 14px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] .cert-control-toolbar {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.cert-view-segmented-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--surface-elevated, rgba(15, 23, 42, 0.6));
+  padding: 0.25rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+}
+
+[data-theme="light"] .cert-view-segmented-tabs {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+}
+
+.cert-segment-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted, #94a3b8);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cert-segment-tab:hover {
+  color: var(--text-main, #f8fafc);
+}
+
+.cert-segment-tab.active {
+  background: var(--primary, #0ea5e9);
+  color: #090d16;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.35);
+}
+
+.cert-toolbar-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.cert-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.95rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cert-action-print {
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .cert-control-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cert-view-segmented-tabs {
+    width: 100%;
+    justify-content: stretch;
+  }
+  .cert-segment-tab {
+    flex: 1;
+    justify-content: center;
+  }
+  .cert-toolbar-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+  .cert-action-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3. MANUAIS: BLOCO DE NOTAS & TOOLBAR DE SNIPPETS SEM SCROLLBAR HORIZONTAL
+   -------------------------------------------------------------------------- */
+.notes-quick-toolbar {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 0.45rem !important;
+  padding: 0.65rem 1rem !important;
+  background: var(--surface) !important;
+  border-bottom: 1px solid var(--border-light) !important;
+  overflow: visible !important;
+  white-space: normal !important;
+}
+
+.snippet-tag-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  border: 1px solid var(--border-light);
+  background: var(--surface-elevated);
+  color: var(--text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.snippet-tag-btn:hover {
+  background: var(--primary-glow);
+  color: var(--primary);
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.notes-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.notes-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.notes-header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   4. TEMA ESCURO: ÍCONE DO SOL SEMPRE BRANCO VISÍVEL
+   -------------------------------------------------------------------------- */
+[data-theme="dark"] .theme-btn,
+[data-theme="dark"] .theme-toggle-btn {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .theme-btn svg,
+[data-theme="dark"] .theme-toggle-btn svg,
+.theme-btn svg.lucide-sun,
+.theme-toggle-btn svg.lucide-sun {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. QUIZZES: CARROSSEL & STEPPER DE QUESTÕES
+   -------------------------------------------------------------------------- */
+.quiz-carousel-wrapper {
+  margin-top: 1rem;
+}
+
+.quiz-stepper-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.quiz-carousel-slide {
+  transition: opacity 0.2s ease;
+}
+
+.quiz-carousel-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+/* --------------------------------------------------------------------------
+   6. IMPRESSÃO DO CERTIFICADO
+   -------------------------------------------------------------------------- */
+@media print {
+  .no-print, header, nav, .site-header, .mobile-bottom-dock, footer {
+    display: none !important;
+  }
+  body, main {
+    background: white !important;
+    color: black !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Plataforma de Trilhas e Conteúdos SEMOB",
+  "description": "Guia de conteúdos, ambiente de ensino integrado e biblioteca técnica permanente para estagiários, desenvolvedores e equipes institucionais.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

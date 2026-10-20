@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ScreenType } from '../types';
+import { brandConfig } from '../config/brand';
 import confetti from 'canvas-confetti';
 import { 
   Award, 
@@ -13,7 +14,8 @@ import {
   Check,
   QrCode,
   FileCheck,
-  FileText
+  FileText,
+  Layers,
 } from 'lucide-react';
 
 interface CertificateScreenProps {
@@ -23,6 +25,8 @@ interface CertificateScreenProps {
   totalModules: number;
   passedQuizzesCount: number;
   totalQuizzes: number;
+  completedChallengesCount?: number;
+  totalChallenges?: number;
   overallPercentage: number;
   averageScore: number;
   isUnlocked: boolean;
@@ -170,6 +174,8 @@ export const CertificateScreen: React.FC<CertificateScreenProps> = ({
   totalModules,
   passedQuizzesCount,
   totalQuizzes,
+  completedChallengesCount = 0,
+  totalChallenges = 3,
   overallPercentage,
   averageScore,
   isUnlocked,
@@ -178,10 +184,20 @@ export const CertificateScreen: React.FC<CertificateScreenProps> = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(studentName);
 
+  // Controle de Frente e Verso do Certificado (Inspirado no protótipo SEMOB)
+  const [lado, setLado] = useState<'frente' | 'verso'>('frente');
+  const [copiado, setCopiado] = useState(false);
+
   // Estado do Processo Administrativo SEI preenchível
   const [seiProcess, setSeiProcess] = useState('00090-00012485/2026-11');
   const [isEditingSei, setIsEditingSei] = useState(false);
   const [seiInput, setSeiInput] = useState('00090-00012485/2026-11');
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(certificateCode);
+    setCopiado(true);
+    setTimeout(() => setCopiado(false), 2000);
+  };
 
   const handleTriggerVisualEffect = () => {
     confetti({
@@ -228,8 +244,8 @@ export const CertificateScreen: React.FC<CertificateScreenProps> = ({
   const hexHash = Math.abs(rawHash).toString(16).toUpperCase().padStart(8, '0');
   const verificationCRC = `${hexHash.substring(0, 4)}-${hexHash.substring(4, 8)}`;
   const certSequential = (Math.abs(rawHash) % 9000 + 1000).toString();
-  const certificateCode = `GDF-SEMOB-SUTINF-${cleanId}-${new Date().getFullYear()}-${certSequential}`;
-  const validationUrl = `https://portaldodesenvolvedor.semob.df.gov.br/validar?cert=${certificateCode}&crc=${verificationCRC}`;
+  const certificateCode = `${brandConfig.certificatePrefix}-${cleanId}-${new Date().getFullYear()}-${certSequential}`;
+  const validationUrl = `${window.location.origin}/certificados/validar/${certificateCode}?crc=${verificationCRC}`;
   
   const emissionDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
@@ -245,9 +261,9 @@ export const CertificateScreen: React.FC<CertificateScreenProps> = ({
           <Award size={16} />
           <span>CERTIFICAÇÃO OFICIAL DE CAPACITAÇÃO TÉCNICA</span>
         </div>
-        <h1 className="page-title">Certificado de Capacitação Técnica — SUTINF</h1>
+        <h1 className="page-title">Certificado de Capacitação Técnica — {brandConfig.shortName}</h1>
         <p className="page-subtitle">
-          Documento oficial comprobatório de integração institucional, fluxo colaborativo e conformidade com as diretrizes arquiteturais da Secretaria de Estado de Transporte e Mobilidade do Distrito Federal.
+          {brandConfig.footerDisclaimer}
         </p>
       </div>
 
@@ -270,7 +286,7 @@ export const CertificateScreen: React.FC<CertificateScreenProps> = ({
         <div className="reqs-grid">
           <div className="req-item">
             <div className="req-icon">
-              {completedModulesCount >= 3 ? (
+              {completedModulesCount >= totalModules ? (
                 <CheckCircle2 size={18} className="text-emerald" />
               ) : (
                 <XCircle size={18} className="text-amber" />
@@ -278,21 +294,35 @@ export const CertificateScreen: React.FC<CertificateScreenProps> = ({
             </div>
             <div>
               <strong>Manuais Técnicos Obrigatórios:</strong>
-              <p>{completedModulesCount} de {totalModules} estudados e convalidados (mínimo de 3 exigido)</p>
+              <p>{completedModulesCount} de {totalModules} estudados e convalidados (100% obrigatório)</p>
             </div>
           </div>
 
           <div className="req-item">
             <div className="req-icon">
-              {passedQuizzesCount >= 4 ? (
+              {passedQuizzesCount >= totalQuizzes ? (
                 <CheckCircle2 size={18} className="text-emerald" />
               ) : (
                 <XCircle size={18} className="text-amber" />
               )}
             </div>
             <div>
-              <strong>Avaliações Técnicas de Suficiência (≥ 75%):</strong>
-              <p>{passedQuizzesCount} de {totalQuizzes} aprovadas (mínimo de 4 exigido)</p>
+              <strong>Avaliações Técnicas de Suficiência (≥ 70%):</strong>
+              <p>{passedQuizzesCount} de {totalQuizzes} aprovadas (100% obrigatório)</p>
+            </div>
+          </div>
+
+          <div className="req-item">
+            <div className="req-icon">
+              {completedChallengesCount >= totalChallenges ? (
+                <CheckCircle2 size={18} className="text-emerald" />
+              ) : (
+                <XCircle size={18} className="text-amber" />
+              )}
+            </div>
+            <div>
+              <strong>Desafios Práticos de Engenharia:</strong>
+              <p>{completedChallengesCount} de {totalChallenges} submetidos e validados (100% obrigatório)</p>
             </div>
           </div>
         </div>
@@ -345,136 +375,292 @@ export const CertificateScreen: React.FC<CertificateScreenProps> = ({
         )}
       </div>
 
+      {/* Barra de Controle de Frente e Verso Oficial */}
+      <div className="cert-control-toolbar no-print">
+        <div className="cert-view-segmented-tabs">
+          <button
+            type="button"
+            onClick={() => setLado('frente')}
+            className={`cert-segment-tab ${lado === 'frente' ? 'active' : ''}`}
+          >
+            <FileText size={15} />
+            <span>Frente (Certificado Oficial)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setLado('verso')}
+            className={`cert-segment-tab ${lado === 'verso' ? 'active' : ''}`}
+          >
+            <Layers size={15} />
+            <span>Verso (Ementa & Competências)</span>
+          </button>
+        </div>
+
+        <div className="cert-toolbar-actions">
+          <button
+            type="button"
+            onClick={handleCopyCode}
+            className="btn-secondary cert-action-btn"
+            title="Copiar código autenticador"
+          >
+            {copiado ? <Check size={14} className="text-emerald" /> : <ShieldCheck size={14} />}
+            <span>{copiado ? 'Código Copiado!' : 'Copiar Código'}</span>
+          </button>
+
+          <a
+            href={`/certificados/validar/${certificateCode}?crc=${verificationCRC}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-secondary cert-action-btn"
+            title="Abrir página pública de validação oficial"
+          >
+            <ShieldCheck size={14} />
+            <span>Página Pública</span>
+          </a>
+
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="btn-primary cert-action-btn cert-action-print"
+            title="Imprimir ou Salvar em formato PDF oficial"
+          >
+            <Printer size={15} />
+            <span>Imprimir / Salvar PDF</span>
+          </button>
+        </div>
+      </div>
+
       {/* Documento Oficial Imprimível (Strict 1-Page Landscape) */}
       <div className="certificate-outer-wrapper">
         <div className="certificate-sheet">
           {/* Moldura Clássica de Certidão Oficial */}
           <div className="cert-border-inner">
-            {/* Cabeçalho Governamental com Brasão */}
-            <div className="cert-header">
-              <div className="cert-gdf-emblem">
-                <BrasaoDistritoFederal size={74} />
-              </div>
-              <div className="cert-gov-badge">
-                <div className="gov-titles">
-                  <h2>GOVERNO DO DISTRITO FEDERAL</h2>
-                  <h3>SECRETARIA DE ESTADO DE TRANSPORTE E MOBILIDADE</h3>
-                  <h4>Subsecretaria de Tecnologia da Informação — SUTINF</h4>
-                  <h5>Coordenação de Desenvolvimento de Sistemas e Inovação</h5>
-                </div>
-              </div>
-              <div className="cert-seal">
-                <ShieldCheck size={38} className="text-sky" />
-                <span className="seal-text">DOCUMENTO OFICIAL</span>
-                <span className="seal-sub">PADRÃO SEI-GDF</span>
-              </div>
-            </div>
-
-            {/* Título Oficial */}
-            <div className="cert-title-section">
-              <h1 className="cert-main-title">CERTIFICADO DE CAPACITAÇÃO E NIVELAMENTO TÉCNICO</h1>
-              <div className="cert-sei-ref-wrapper">
-                {isEditingSei ? (
-                  <div className="sei-inline-editor no-print">
-                    <span>Processo Administrativo SEI nº </span>
-                    <input
-                      type="text"
-                      value={seiInput}
-                      onChange={(e) => setSeiInput(e.target.value)}
-                      className="sei-inline-input"
-                      autoFocus
-                    />
-                    <button onClick={handleSaveSei} className="btn-icon-check" title="Salvar">
-                      <Check size={14} />
-                    </button>
+            {lado === 'frente' ? (
+              <>
+                {/* Cabeçalho do Documento de Certificado */}
+                {brandConfig.id === 'azimute' ? (
+                  <div className="certificate-header text-center mb-6">
+                    <span className="text-xs font-mono uppercase tracking-widest text-slate-400">
+                      {brandConfig.organizationName}
+                    </span>
+                    <h2 className="text-3xl font-extrabold mt-1 text-slate-900 dark:text-white">
+                      Certificado de Capacitação Técnica
+                    </h2>
+                    <p className="text-sm text-slate-500 mt-1">{brandConfig.productName}</p>
                   </div>
                 ) : (
-                  <div
-                    className="cert-sei-ref"
-                    onClick={() => {
-                      setSeiInput(seiProcess);
-                      setIsEditingSei(true);
-                    }}
-                    title="Clique para editar o Processo SEI"
-                  >
-                    <span>Processo Administrativo SEI nº <strong>{seiProcess}</strong></span>
-                    <button className="btn-edit-inline no-print" title="Editar processo SEI">
-                      <Edit2 size={12} />
-                    </button>
+                  <div className="cert-header">
+                    <div className="cert-gdf-emblem">
+                      <BrasaoDistritoFederal size={74} />
+                    </div>
+                    <div className="cert-gov-badge">
+                      <div className="gov-titles">
+                        <h2>GOVERNO DO DISTRITO FEDERAL</h2>
+                        <h3>SECRETARIA DE ESTADO DE TRANSPORTE E MOBILIDADE</h3>
+                        <h4>Subsecretaria de Tecnologia da Informação — SUTINF</h4>
+                        <h5>Coordenação de Desenvolvimento de Sistemas e Inovação</h5>
+                      </div>
+                    </div>
+                    <div className="cert-seal">
+                      <ShieldCheck size={38} className="text-sky" />
+                      <span className="seal-text">DOCUMENTO OFICIAL</span>
+                      <span className="seal-sub">PADRÃO SEI-GDF</span>
+                    </div>
                   </div>
                 )}
-              </div>
-            </div>
 
-            {/* Texto de Certificação */}
-            <p className="cert-intro">
-              O Subsecretário de Tecnologia da Informação da Secretaria de Estado de Transporte e Mobilidade do Distrito Federal (SEMOB-DF), no uso de suas atribuições regimentais, e em consonância com o Programa Oficial de Estágio Supervisionado e Acolhimento Técnico, CERTIFICA que
-            </p>
-
-            {/* Nome do Estagiário */}
-            <div className="cert-recipient-box">
-              {isEditingName ? (
-                <div className="recipient-edit no-print">
-                  <input
-                    type="text"
-                    value={nameInput}
-                    onChange={(e) => setNameInput(e.target.value)}
-                    className="recipient-input"
-                    placeholder="Nome completo para registro formal"
-                    autoFocus
-                  />
-                  <button onClick={handleSaveName} className="btn-icon-check" title="Salvar alteração">
-                    <Check size={18} />
-                  </button>
+                {/* Título Oficial */}
+                <div className="cert-title-section">
+                  <h1 className="cert-main-title">CERTIFICADO DE CAPACITAÇÃO E NIVELAMENTO TÉCNICO</h1>
+                  <div className="cert-sei-ref-wrapper">
+                    {isEditingSei ? (
+                      <div className="sei-inline-editor no-print">
+                        <span>Processo Administrativo SEI nº </span>
+                        <input
+                          type="text"
+                          value={seiInput}
+                          onChange={(e) => setSeiInput(e.target.value)}
+                          className="sei-inline-input"
+                          autoFocus
+                        />
+                        <button onClick={handleSaveSei} className="btn-icon-check" title="Salvar">
+                          <Check size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div
+                        className="cert-sei-ref"
+                        onClick={() => {
+                          setSeiInput(seiProcess);
+                          setIsEditingSei(true);
+                        }}
+                        title="Clique para editar o Processo SEI"
+                      >
+                        <span>Processo Administrativo SEI nº <strong>{seiProcess}</strong></span>
+                        <button className="btn-edit-inline no-print" title="Editar processo SEI">
+                          <Edit2 size={12} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <div className="recipient-display" onClick={() => setIsEditingName(true)}>
-                  <span className="recipient-name">{studentName}</span>
-                  <button className="btn-edit-inline no-print" title="Editar nome para o certificado">
-                    <Edit2 size={16} />
-                  </button>
+
+                {/* Texto de Certificação */}
+                <p className="cert-intro">
+                  O Subsecretário de Tecnologia da Informação da Secretaria de Estado de Transporte e Mobilidade do Distrito Federal (SEMOB-DF), no uso de suas atribuições regimentais, e em consonância com o Programa Oficial de Estágio Supervisionado e Acolhimento Técnico, CERTIFICA que
+                </p>
+
+                {/* Nome do Estagiário */}
+                <div className="cert-recipient-box">
+                  {isEditingName ? (
+                    <div className="recipient-edit no-print">
+                      <input
+                        type="text"
+                        value={nameInput}
+                        onChange={(e) => setNameInput(e.target.value)}
+                        className="recipient-input"
+                        placeholder="Nome completo para registro formal"
+                        autoFocus
+                      />
+                      <button onClick={handleSaveName} className="btn-icon-check" title="Salvar alteração">
+                        <Check size={18} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="recipient-display" onClick={() => setIsEditingName(true)}>
+                      <span className="recipient-name">{studentName}</span>
+                      <button className="btn-edit-inline no-print" title="Editar nome para o certificado">
+                        <Edit2 size={16} />
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            {/* Corpo do Texto Jurídico-Institucional */}
-            <p className="cert-body-text">
-              concluiu com êxito a <strong>Trilha Oficial de Formação, Integração e Nivelamento em Engenharia de Software da SUTINF</strong>, demonstrando proficiência nos fluxos colaborativos e regulatórios de controle de versão (<strong>GitLab Flow e Pipelines de CI/CD</strong>), modelagem geoespacial e consultas avançadas em banco de dados relacional (<strong>PostgreSQL com extensão espacial PostGIS</strong>), padrões arquiteturais de serviços e microsserviços em camadas com <strong>NestJS, TypeORM e Docker</strong>, e boas práticas de desenvolvimento front-end reativo com <strong>React 18, TypeScript rígido e empacotamento móvel</strong>, cumprindo carga horária estimada de <strong>40 (quarenta) horas</strong> de estudos dirigidos e implementação de desafios práticos, tendo alcançado média global de rendimento de <strong>{averageScore || 85}%</strong>.
-            </p>
+                {/* Corpo do Texto Jurídico-Institucional */}
+                <p className="cert-body-text">
+                  concluiu com êxito a <strong>Trilha Oficial de Formação, Integração e Nivelamento em Engenharia de Software da SUTINF</strong>, demonstrando proficiência nos fluxos colaborativos e regulatórios de controle de versão (<strong>GitLab Flow e Pipelines de CI/CD</strong>), modelagem geoespacial e consultas avançadas em banco de dados relacional (<strong>PostgreSQL com extensão espacial PostGIS</strong>), padrões arquiteturais de serviços e microsserviços em camadas com <strong>NestJS, TypeORM e Docker</strong>, e boas práticas de desenvolvimento front-end reativo com <strong>React 18, TypeScript rígido e empacotamento móvel</strong>, cumprindo carga horária estimada de <strong>40 (quarenta) horas</strong> de estudos dirigidos e implementação de desafios práticos, tendo alcançado média global de rendimento de <strong>{averageScore || 85}%</strong>.
+                </p>
 
-            {/* Quadro de Validação e Assinaturas Formais */}
-            <div className="cert-footer">
-              <div className="cert-signature-box">
-                <div className="sig-line"></div>
-                <strong>Coordenação de Desenvolvimento de Sistemas</strong>
-                <span>CODSYS / SUTINF / SEMOB-DF</span>
-                <span className="sig-cargo">Supervisor Técnico de Estágio</span>
-              </div>
+                {/* Quadro de Validação e Assinaturas Formais */}
+                <div className="cert-footer">
+                  <div className="cert-signature-box">
+                    <div className="sig-line"></div>
+                    <strong>Coordenação de Desenvolvimento de Sistemas</strong>
+                    <span>CODSYS / SUTINF / SEMOB-DF</span>
+                    <span className="sig-cargo">Supervisor Técnico de Estágio</span>
+                  </div>
 
-              <div className="cert-validation-box">
-                <div className="qr-container">
-                  <AuthenticQrCode value={validationUrl} size={56} />
+                  <div className="cert-validation-box">
+                    <div className="qr-container">
+                      <AuthenticQrCode value={validationUrl} size={56} />
+                    </div>
+                    <div className="val-hash">{certificateCode}</div>
+                    <div className="val-crc">Código Verificador: <strong>{cleanId}-2026</strong> | CRC: <strong>{verificationCRC}</strong></div>
+                    <div className="val-date">Brasília - DF, {emissionDate}</div>
+                  </div>
+
+                  <div className="cert-signature-box">
+                    <div className="sig-line"></div>
+                    <strong>Subsecretaria de Tecnologia da Informação</strong>
+                    <span>SUTINF / SEMOB-DF</span>
+                    <span className="sig-cargo">Titular da Pasta Tecnológica</span>
+                  </div>
                 </div>
-                <div className="val-hash">{certificateCode}</div>
-                <div className="val-crc">Código Verificador: <strong>{cleanId}-2026</strong> | CRC: <strong>{verificationCRC}</strong></div>
-                <div className="val-date">Brasília - DF, {emissionDate}</div>
-              </div>
 
-              <div className="cert-signature-box">
-                <div className="sig-line"></div>
-                <strong>Subsecretaria de Tecnologia da Informação</strong>
-                <span>SUTINF / SEMOB-DF</span>
-                <span className="sig-cargo">Titular da Pasta Tecnológica</span>
-              </div>
-            </div>
+                {/* Nota de rodapé padrão SEI-GDF */}
+                <div className="cert-sei-legal-footer">
+                  <FileText size={12} />
+                  <span>
+                    Documento emitido eletronicamente conforme diretrizes do Decreto Distrital nº 36.756/2015 e Lei Federal nº 11.788/2008 (Lei do Estágio). A conferência de veracidade e comprovação de horas acadêmicas pode ser instruída mediante apresentação deste atestado de formação ao setor de Recursos Humanos e Coordenação Curricular.
+                  </span>
+                </div>
 
-            {/* Nota de rodapé padrão SEI-GDF */}
-            <div className="cert-sei-legal-footer">
-              <FileText size={12} />
-              <span>
-                Documento emitido eletronicamente conforme diretrizes do Decreto Distrital nº 36.756/2015 e Lei Federal nº 11.788/2008 (Lei do Estágio). A conferência de veracidade e comprovação de horas acadêmicas pode ser instruída mediante apresentação deste atestado de formação ao setor de Recursos Humanos e Coordenação Curricular.
-              </span>
-            </div>
+                {/* Rodapé do Certificado */}
+                <div className="certificate-footer mt-8 pt-4 border-t border-slate-200 dark:border-slate-700 text-center text-xs text-slate-400">
+                  <p>
+                    Código de Autenticação Local: <strong className="font-mono text-slate-700 dark:text-slate-200">{certificateCode}</strong>
+                  </p>
+                  <p className="mt-0.5">
+                    Trilha de capacitação emitida através do motor educacional {brandConfig.productName}.
+                  </p>
+                </div>
+              </>
+            ) : (
+              /* Verso do Certificado Oficial */
+              <div className="cert-verso-content space-y-6">
+                <div className="border-b border-slate-300/40 dark:border-slate-700/60 pb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <span className="text-xs uppercase tracking-wider text-slate-400 font-semibold block">
+                      Verso do Certificado Oficial de Conclusão
+                    </span>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                      Ementa Curricular & Competências Validadas em Produção
+                    </h3>
+                  </div>
+                  <span className="font-mono text-xs text-sky font-semibold">
+                    Processo SEI: {seiProcess}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    As etapas abaixo foram cumpridas integralmente pelo estudante com avaliação prática de código revisada por orientador técnico da SEMOB-DF:
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                    <div className="p-3.5 bg-slate-100/60 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-1">
+                      <strong className="text-sky block font-semibold">Módulo 1 • Setup & Infraestrutura SISMOB (8h)</strong>
+                      <p className="text-slate-600 dark:text-slate-300">
+                        Configuração de ambiente Linux, containers Docker Compose, PostgreSQL com PostGIS e gestão segura de variáveis de ambiente.
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 bg-slate-100/60 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-1">
+                      <strong className="text-sky block font-semibold">Módulo 2 • Git & DevSecOps no GitLab (8h)</strong>
+                      <p className="text-slate-600 dark:text-slate-300">
+                        As 4 zonas do Git, convenção GitLab Flow institucional, Merge Requests com checklist de revisão e pipelines de CI/CD.
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 bg-slate-100/60 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-1">
+                      <strong className="text-sky block font-semibold">Módulo 3 • Bancos de Dados & SQL SEMOB (8h)</strong>
+                      <p className="text-slate-600 dark:text-slate-300">
+                        Resolução das 25 questões analíticas do STPC/DF no schema dados_mobilidade (linhas 0.111, 0.170, bacias e operadoras).
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 bg-slate-100/60 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-1">
+                      <strong className="text-sky block font-semibold">Módulo 4 • Back-end NestJS em 3 Camadas (8h)</strong>
+                      <p className="text-slate-600 dark:text-slate-300">
+                        Implementação do recurso Veículos no SISMOB Boilerplate: Controller, Service e Repository parametrizado com TypeORM.
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 bg-slate-100/60 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700/60 md:col-span-2 space-y-1">
+                      <strong className="text-sky block font-semibold">Módulo 5 • Front-end React 18 & Acessibilidade (8h)</strong>
+                      <p className="text-slate-600 dark:text-slate-300">
+                        Desenvolvimento do painel InfoÔnibus com busca dinâmica, itinerários espaciais, regra das 50 linhas para hooks e conformidade WCAG/e-MAG.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Disposição Legal */}
+                <div className="p-4 bg-sky-500/10 rounded-2xl border border-sky-500/20 text-xs text-slate-700 dark:text-slate-300 space-y-1">
+                  <span className="font-semibold text-sky block">
+                    Disposição Legal e Rastreabilidade Institucional:
+                  </span>
+                  <p>
+                    Este certificado possui validade institucional permanente no âmbito do Governo do Distrito Federal e atesta aptidão para atuação em microsserviços do Sistema Integrado de Transporte (SIT). Sua autenticidade pode ser conferida publicamente a qualquer momento no portal oficial ou via leitura do QR Code presente no anverso deste documento.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap justify-between items-center text-[11px] text-muted pt-3 border-t border-slate-300/40 dark:border-slate-700/60 font-mono">
+                  <span>Data de Homologação: {emissionDate}</span>
+                  <span>Processo SEI: {seiProcess}</span>
+                  <span>Autenticação: {certificateCode}</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -490,6 +676,15 @@ export const CertificateScreen: React.FC<CertificateScreenProps> = ({
           <Award size={18} />
           Efeito Visual de Conclusão
         </button>
+
+        <a
+          href={`/certificados/validar/${certificateCode}?crc=${verificationCRC}`}
+          className="btn-secondary"
+          style={{ textDecoration: 'none' }}
+        >
+          <ShieldCheck size={18} />
+          Validar Autenticidade Pública
+        </a>
       </div>
     </div>
   );

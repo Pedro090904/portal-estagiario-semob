@@ -1,15 +1,23 @@
-# Dependências
-/node_modules
-/.pnp
-.pnp.js
+# Logs e dependências
+logs
+*.log
+npm-debug.log*
+node_modules
+dist
+dist-ssr
+*.local
 
-# Testes
-/coverage
+# Arquivos temporários de editores e SO
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea
 
-# Build / Produção (Vite, Next, Create React App)
-/build
-/dist
-/out
+# Cobertura de testes
+coverage
 
 # Variáveis de Ambiente (NUNCA comite estes arquivos)
 .env
@@ -18,35 +26,19 @@
 .env.test.local
 .env.production.local
 
-# Logs de pacotes
-npm-debug.log*
+# Logs de outros pacotes
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 .npm/
 
-# Configurações de Editores e IDEs
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
-.idea
+# Caches e outros arquivos temporários
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-
-# Arquivos do Sistema Operacional
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Caches e arquivos temporários
 .eslintcache
 .stylelintcache
 *.zip

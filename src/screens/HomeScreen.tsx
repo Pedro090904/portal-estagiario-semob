@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ScreenType } from '../types';
+import { brandConfig } from '../config/brand';
 import { MODULES } from '../services/dataService';
 import { 
   Compass, 
@@ -17,7 +18,7 @@ import {
   BookOpen, 
   Sparkles,
   Edit2,
-  Check
+  Check,
 } from 'lucide-react';
 
 interface HomeScreenProps {
@@ -55,6 +56,36 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     setIsEditingName(false);
   };
 
+  // Lógica dinâmica do "Continuar de Onde Parou" (Inspirada na plataforma-semob)
+  const nextModule = MODULES.find((m) => !completedModules.includes(m.id)) || null;
+
+  const continueStep = nextModule
+    ? {
+        title: `${nextModule.order ? `Módulo 0${nextModule.order}: ` : ''}${nextModule.shortTitle || nextModule.title}`,
+        description: nextModule.description,
+        type: 'MANUAL & LAB TÉCNICO',
+        time: nextModule.duration || nextModule.estimatedTime || '25 min',
+        screen: nextModule.screenKey || ('modulo-ambiente' as ScreenType),
+        orderBadge: `Etapa Recomendada #${nextModule.order || 1}`,
+      }
+    : completedChallengesCount < totalChallenges
+    ? {
+        title: 'Desafios Práticos de Engenharia SUTINF',
+        description: 'Você concluiu os 5 manuais oficiais! Agora implemente os desafios práticos de SQL, NestJS e React.',
+        type: 'DESAFIO PRÁTICO',
+        time: '45 min',
+        screen: 'desafio-sql' as ScreenType,
+        orderBadge: 'Etapa Prática Final',
+      }
+    : {
+        title: 'Formação Concluída — Homologação SEI',
+        description: 'Parabéns! Todos os requisitos pedagógicos foram atingidos. Seu certificado oficial está disponível para emissão e validação.',
+        type: 'CERTIFICAÇÃO OFICIAL',
+        time: '40 Horas',
+        screen: 'certificado' as ScreenType,
+        orderBadge: 'Certificado Disponível',
+      };
+
   const getModuleIcon = (id: string) => {
     switch (id) {
       case 'git': return <GitBranch className="text-sky" size={24} />;
@@ -71,17 +102,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-container">
-          <div className="hero-badge">
+          <div className="hero-badge inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 mb-4">
             <span className="pulse-dot"></span>
-            <span>PROGRAMA OFICIAL DE FORMAÇÃO • SUTINF / SEMOB-DF</span>
+            <span>{brandConfig.heroBadge}</span>
           </div>
 
-          <h1 className="hero-title">
-            Do Zero a Desenvolvedor Júnior na <span className="gradient-text">SEMOB-DF</span>
+          <h1 className="hero-title text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
+            {brandConfig.heroTitle}
           </h1>
 
-          <p className="hero-description">
-            Plataforma interativa unificada com todos os manuais oficiais, diretrizes arquiteturais, desafios práticos de SQL e APIs, e quizzes de validação de conhecimento para a equipe de tecnologia dos transportes de Brasília.
+          <p className="hero-description mt-4 text-lg text-slate-600 dark:text-slate-300 max-w-3xl leading-relaxed">
+            {brandConfig.heroSubtitle}
           </p>
 
           {/* Student Welcome Card */}
@@ -116,15 +147,61 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </div>
 
             <div className="hero-ctas">
-              <button onClick={() => onNavigate('roteiro')} className="btn-primary">
+              <button onClick={() => onNavigate(continueStep.screen)} className="btn-primary">
                 <Compass size={18} />
-                Iniciar Roteiro de Integração
+                Continuar de Onde Parou
               </button>
               <button onClick={() => onNavigate('quizzes')} className="btn-secondary">
                 <Sparkles size={18} />
                 Central de Quizzes
               </button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Primary Highlighted Card: Continuar de Onde Parou */}
+      <section className="continue-step-spotlight-section">
+        <div className="continue-step-spotlight-card">
+          <div className="continue-step-content">
+            <div className="continue-step-header-tag">
+              <span className="continue-tag-pulse" />
+              <Clock size={15} />
+              <span>Sua Próxima Etapa Recomendada</span>
+              <span className="continue-badge-order">{continueStep.orderBadge}</span>
+            </div>
+
+            <h2 className="continue-step-title">
+              {continueStep.title}
+            </h2>
+
+            <p className="continue-step-description">
+              {continueStep.description}
+            </p>
+
+            <div className="continue-step-meta-chips">
+              <span className="meta-chip chip-type">{continueStep.type}</span>
+              <span className="meta-chip chip-time">
+                <Clock size={13} /> {continueStep.time}
+              </span>
+              <span className="meta-chip chip-version">Versão Pedagógica 2.4.0</span>
+            </div>
+          </div>
+
+          <div className="continue-step-actions">
+            <button
+              onClick={() => onNavigate(continueStep.screen)}
+              className="btn-primary continue-btn-action"
+            >
+              <span>Continuar Esta Etapa</span>
+              <ArrowRight size={17} />
+            </button>
+            <button
+              onClick={() => onNavigate('roteiro')}
+              className="btn-secondary continue-btn-secondary"
+            >
+              Ver mapa completo da trilha
+            </button>
           </div>
         </div>
       </section>
@@ -215,13 +292,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <div key={module.id} className={`module-card ${isCompleted ? 'module-done' : ''}`}>
                 <div className="module-card-top">
                   <div className="module-step-badge">Módulo 0{index + 1}</div>
-                  <div className="module-duration">{module.duration}</div>
+                  <div className="module-duration">{module.duration || module.estimatedTime}</div>
                 </div>
 
                 <div className="module-header-block">
                   <div className="module-icon-box">{getModuleIcon(module.id)}</div>
                   <div>
-                    <h3 className="module-title">{module.shortTitle}</h3>
+                    <h3 className="module-title">{module.shortTitle || module.title}</h3>
                     <span className="module-category">{module.category}</span>
                   </div>
                 </div>
@@ -229,7 +306,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <p className="module-desc">{module.description}</p>
 
                 <div className="module-topics-list">
-                  {module.topics.map((topic, i) => (
+                  {(module.topics || []).map((topic, i) => (
                     <span key={i} className="module-topic-chip">
                       • {topic}
                     </span>
@@ -238,7 +315,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
                 <div className="module-card-footer">
                   <button 
-                    onClick={() => onNavigate(module.screenKey)} 
+                    onClick={() => onNavigate(module.screenKey || 'roteiro')} 
                     className="btn-primary btn-sm"
                   >
                     Estudar Manual <ArrowRight size={14} />

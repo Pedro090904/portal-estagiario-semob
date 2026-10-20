@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScreenType } from '../types';
-import { ShieldCheck, GitBranch, Terminal, Heart, Code2 } from 'lucide-react';
+import { brandConfig } from '../config/brand';
+import { ShieldCheck } from 'lucide-react';
 
 interface FooterProps {
   onNavigate: (screen: ScreenType) => void;
@@ -8,19 +9,19 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   return (
-    <footer className="site-footer no-print">
+    <footer className="site-footer no-print border-t border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 py-8 px-6 mt-16">
       <div className="footer-container">
         <div className="footer-col brand-col">
           <div className="footer-brand">
             <span className="brand-dot-pulse"></span>
-            <strong>SEMOB-DF</strong> • SUTINF
+            <strong>{brandConfig.productName}</strong> • {brandConfig.shortName}
           </div>
           <p className="footer-desc">
-            Portal Oficial de Formação e Padronização Técnica da Subsecretaria de Tecnologia da Informação da Secretaria de Transporte e Mobilidade do Distrito Federal.
+            {brandConfig.footerDisclaimer}
           </p>
           <div className="footer-badge">
             <ShieldCheck size={16} />
-            <span>Padrão DevSecOps & Governo Digital</span>
+            <span>{brandConfig.heroBadge}</span>
           </div>
         </div>
 
@@ -47,7 +48,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         </div>
 
         <div className="footer-col">
-          <div className="footer-col-title">Ecossistema SUTINF</div>
+          <div className="footer-col-title">Ecossistema & Governança</div>
           <div className="stack-tags">
             <span className="tag">NestJS</span>
             <span className="tag">React 18</span>
@@ -55,9 +56,9 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             <span className="tag">PostgreSQL 15</span>
             <span className="tag">PostGIS</span>
             <span className="tag">Docker</span>
-            <span className="tag">GitLab CI/CD</span>
+            <span className="tag">CI/CD</span>
             <span className="tag">Capacitor</span>
-            <span className="tag">Qlik BI</span>
+            <span className="tag">Clean Arch</span>
           </div>
           <p className="footer-micro">
             "A branch principal é sagrada. Nunca comitamos direto na main."
@@ -65,12 +66,18 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      <div className="footer-bottom">
-        <div className="footer-bottom-container">
-          <p>© {new Date().getFullYear()} SEMOB-DF • Subsecretaria de Tecnologia da Informação. Todos os direitos reservados.</p>
-          <p className="footer-credit">
-            Desenvolvido com <Code2 size={14} className="inline-icon" /> para a formação de novos talentos da mobilidade.
-          </p>
+      <div className="footer-bottom mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-500 dark:text-slate-400">
+          <div>
+            <p className="font-semibold text-slate-800 dark:text-slate-200">
+              {brandConfig.productName} &copy; {new Date().getFullYear()} — {brandConfig.organizationName}
+            </p>
+            <p className="text-xs mt-1">{brandConfig.footerDisclaimer}</p>
+          </div>
+          <div className="flex items-center gap-2 text-xs bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>{brandConfig.tagline}</span>
+          </div>
         </div>
       </div>
     </footer>

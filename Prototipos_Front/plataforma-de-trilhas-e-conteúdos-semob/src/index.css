@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --brand-primary: #1d4ed8;
+    --brand-primary-hover: #1e40af;
+    --brand-light: #eff6ff;
+    --brand-dark: #172554;
+    --brand-accent: #d97706;
+    --org-name: "SEMOB - Secretaria de Mobilidade";
+    --org-short: "SEMOB";
+  }
+
+  .theme-azimute {
+    --brand-primary: #059669;
+    --brand-primary-hover: #047857;
+    --brand-light: #ecfdf5;
+    --brand-dark: #064e3b;
+    --brand-accent: #0284c7;
+    --org-name: "Azimute Dev Academy";
+    --org-short: "Azimute";
+  }
+
+  .theme-novagov {
+    --brand-primary: #4f46e5;
+    --brand-primary-hover: #4338ca;
+    --brand-light: #eef2ff;
+    --brand-dark: #312e81;
+    --brand-accent: #ea580c;
+    --org-name: "NovaGov Instituto Tecnológico";
+    --org-short: "NovaGov";
+  }
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+code, pre, kbd, .font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Accessible focus visible rings */
+:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* Custom scrollbar for clean technical interfaces */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
