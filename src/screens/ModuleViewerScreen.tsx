@@ -131,12 +131,12 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
           <button
             type="button"
             onClick={toggleTheme}
-            className="theme-toggle-btn"
+            className="theme-btn"
             style={{ width: '38px', height: '38px', padding: 0 }}
             aria-label="Alternar tema"
             title={`Mudar para tema ${theme === 'dark' ? 'claro' : 'escuro'}`}
           >
-            {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+            {theme === 'dark' ? <Sun size={17} style={{ color: '#ffffff' }} /> : <Moon size={17} />}
           </button>
 
           <button
@@ -634,15 +634,7 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
         </section>
       )}
 
-      {/* Bloco de Anotações Pessoais (Visível no rodapé e disponível como Sidebar) */}
-      <section style={{ marginBottom: '2rem' }}>
-        <ModuleNotesPanel
-          moduleId={module.id}
-          moduleTitle={module.title}
-          initialNote={moduleNote}
-          onSaveNote={onSaveNote}
-        />
-      </section>
+
 
       {/* Histórico de Tentativas do Estudante */}
       {quizHistory.length > 0 && (
@@ -747,8 +739,8 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
             className="notes-drawer-container"
             onClick={(e) => e.stopPropagation()}
             style={{
-              width: '490px',
-              maxWidth: '92vw',
+              width: '560px',
+              maxWidth: '94vw',
               height: '100%',
               background: 'var(--surface)',
               borderLeft: '1px solid var(--border-light)',

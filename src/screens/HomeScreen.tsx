@@ -18,7 +18,7 @@ import {
   BookOpen, 
   Sparkles,
   Edit2,
-  Check
+  Check,
 } from 'lucide-react';
 
 interface HomeScreenProps {
@@ -55,6 +55,36 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     }
     setIsEditingName(false);
   };
+
+  // Lógica dinâmica do "Continuar de Onde Parou" (Inspirada na plataforma-semob)
+  const nextModule = MODULES.find((m) => !completedModules.includes(m.id)) || null;
+
+  const continueStep = nextModule
+    ? {
+        title: `${nextModule.order ? `Módulo 0${nextModule.order}: ` : ''}${nextModule.shortTitle || nextModule.title}`,
+        description: nextModule.description,
+        type: 'MANUAL & LAB TÉCNICO',
+        time: nextModule.duration || nextModule.estimatedTime || '25 min',
+        screen: nextModule.screenKey || ('modulo-ambiente' as ScreenType),
+        orderBadge: `Etapa Recomendada #${nextModule.order || 1}`,
+      }
+    : completedChallengesCount < totalChallenges
+    ? {
+        title: 'Desafios Práticos de Engenharia SUTINF',
+        description: 'Você concluiu os 5 manuais oficiais! Agora implemente os desafios práticos de SQL, NestJS e React.',
+        type: 'DESAFIO PRÁTICO',
+        time: '45 min',
+        screen: 'desafio-sql' as ScreenType,
+        orderBadge: 'Etapa Prática Final',
+      }
+    : {
+        title: 'Formação Concluída — Homologação SEI',
+        description: 'Parabéns! Todos os requisitos pedagógicos foram atingidos. Seu certificado oficial está disponível para emissão e validação.',
+        type: 'CERTIFICAÇÃO OFICIAL',
+        time: '40 Horas',
+        screen: 'certificado' as ScreenType,
+        orderBadge: 'Certificado Disponível',
+      };
 
   const getModuleIcon = (id: string) => {
     switch (id) {
@@ -117,15 +147,61 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </div>
 
             <div className="hero-ctas">
-              <button onClick={() => onNavigate('roteiro')} className="btn-primary">
+              <button onClick={() => onNavigate(continueStep.screen)} className="btn-primary">
                 <Compass size={18} />
-                Iniciar Roteiro de Integração
+                Continuar de Onde Parou
               </button>
               <button onClick={() => onNavigate('quizzes')} className="btn-secondary">
                 <Sparkles size={18} />
                 Central de Quizzes
               </button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Primary Highlighted Card: Continuar de Onde Parou */}
+      <section className="continue-step-spotlight-section">
+        <div className="continue-step-spotlight-card">
+          <div className="continue-step-content">
+            <div className="continue-step-header-tag">
+              <span className="continue-tag-pulse" />
+              <Clock size={15} />
+              <span>Sua Próxima Etapa Recomendada</span>
+              <span className="continue-badge-order">{continueStep.orderBadge}</span>
+            </div>
+
+            <h2 className="continue-step-title">
+              {continueStep.title}
+            </h2>
+
+            <p className="continue-step-description">
+              {continueStep.description}
+            </p>
+
+            <div className="continue-step-meta-chips">
+              <span className="meta-chip chip-type">{continueStep.type}</span>
+              <span className="meta-chip chip-time">
+                <Clock size={13} /> {continueStep.time}
+              </span>
+              <span className="meta-chip chip-version">Versão Pedagógica 2.4.0</span>
+            </div>
+          </div>
+
+          <div className="continue-step-actions">
+            <button
+              onClick={() => onNavigate(continueStep.screen)}
+              className="btn-primary continue-btn-action"
+            >
+              <span>Continuar Esta Etapa</span>
+              <ArrowRight size={17} />
+            </button>
+            <button
+              onClick={() => onNavigate('roteiro')}
+              className="btn-secondary continue-btn-secondary"
+            >
+              Ver mapa completo da trilha
+            </button>
           </div>
         </div>
       </section>

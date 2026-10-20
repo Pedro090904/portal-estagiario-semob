@@ -1,0 +1,6 @@
+{
+  "name": "Nexora — Plataforma de Aprendizagem & Capacitação Técnica",
+  "description": "Ambiente de aprendizagem corporativa e técnica com trilhas estruturadas, desafios de SQL, backend e frontend, supervisão e certificação de competências.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

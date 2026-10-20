@@ -1,0 +1,902 @@
+# PROMPT MESTRE — CONSTRUÇÃO DO FRONT-END COMPLETO DA PLATAFORMA DE APRENDIZAGEM
+
+## 1. PAPEL E OBJETIVO
+
+Atue como um time sênior multidisciplinar composto por:
+
+- Senior Front-end Engineer especializado em React e TypeScript.
+- Product Designer especializado em UX/UI para plataformas SaaS.
+- UX Researcher com experiência em produtos educacionais.
+- Design System Engineer.
+- Especialista em acessibilidade digital.
+- Product Manager especializado em aprendizagem baseada em competências.
+
+Sua missão é transformar o front-end existente em uma plataforma web completa de aprendizagem, capacitação profissional, desafios técnicos e gestão do conhecimento.
+
+Não construa apenas um dashboard visual. Construa uma aplicação coerente, navegável, responsiva, acessível e preparada para integração com um back-end real.
+
+O produto deve transmitir profissionalismo, clareza, confiança, evolução e competência técnica.
+
+A interface deve ser suficientemente intuitiva para alguém que está tendo o primeiro contato com programação, mas também eficiente para profissionais que utilizam a plataforma como referência técnica no dia a dia.
+
+## 2. CONTEXTO DO PRODUTO
+
+A plataforma nasceu de uma trilha de onboarding para estagiários desenvolvedores, mas sua visão é mais ampla: tornar-se um ambiente de aprendizagem multidisciplinar, capaz de ensinar conhecimentos técnicos e não técnicos por meio de conteúdos estruturados, exercícios, desafios, projetos e avaliação de competências.
+
+A primeira experiência real deve contemplar:
+
+1. Trilha de desenvolvimento para estagiários.
+2. Conteúdos e manuais técnicos.
+3. Desafio de banco de dados / SQL.
+4. Desafio de desenvolvimento back-end.
+5. Desafio de desenvolvimento front-end.
+6. Acompanhamento de progresso.
+7. Avaliações e resultados.
+8. Supervisão de alunos.
+9. Gestão de conteúdo.
+10. Conclusão da trilha e fluxo de certificação.
+
+A arquitetura visual deve permitir a expansão futura para outras áreas, como dados, inteligência artificial, gestão, negócios, design e outras competências.
+
+Não limite a plataforma à programação nem a uma única organização.
+
+O produto precisa ter identidade própria, sem parecer uma cópia genérica de um LMS tradicional.
+
+## 3. PRIMEIRA ETAPA OBRIGATÓRIA: AUDITORIA DO PROJETO EXISTENTE
+
+Antes de alterar qualquer código:
+
+1. Inspecione a estrutura de diretórios e os arquivos existentes.
+2. Identifique as tecnologias, dependências, rotas, componentes, estilos e padrões já utilizados.
+3. Identifique as telas e funcionalidades que já estão implementadas.
+4. Verifique o funcionamento atual da autenticação, navegação e persistência.
+5. Identifique integrações existentes com APIs e contratos de dados.
+6. Localize componentes duplicados, inconsistências visuais e problemas de arquitetura.
+7. Identifique o que está funcional, parcialmente funcional, simulado ou quebrado.
+
+Preserve as funcionalidades que já funcionam.
+
+Não substitua indiscriminadamente a arquitetura existente, não apague dados, não reescreva arquivos de configuração sem necessidade e não migre de biblioteca apenas por preferência pessoal.
+
+A stack atual esperada é React + TypeScript + Vite. Confirme isso no repositório antes de decidir qualquer alteração.
+
+Se já existir uma biblioteca de componentes, um sistema de rotas ou uma solução de estilização consolidada, avalie seu reaproveitamento antes de instalar alternativas.
+
+Ao concluir a auditoria, apresente um diagnóstico breve com:
+
+- Estado atual do front-end.
+- Principais problemas de UX/UI.
+- Funcionalidades que podem ser preservadas.
+- Funcionalidades que precisam ser implementadas.
+- Plano de execução por etapas.
+
+Em seguida, prossiga para a implementação. Não encerre o trabalho apenas com um relatório ou uma proposta de telas.
+
+## 4. PRINCÍPIOS DE UX/UI
+
+### 4.1. Clareza antes de decoração
+
+O aluno deve compreender rapidamente:
+
+- Onde está.
+- Qual trilha está realizando.
+- O que precisa fazer agora.
+- O que já concluiu.
+- Como será avaliado.
+- Qual é o próximo passo.
+
+Evite interfaces visualmente impressionantes, mas difíceis de utilizar.
+
+Não transforme cada informação em um card. Utilize hierarquia tipográfica, espaçamento, divisores, agrupamentos e tabelas quando forem mais eficientes.
+
+### 4.2. Redução da carga cognitiva
+
+A plataforma atende iniciantes que podem se sentir perdidos diante de muitos termos técnicos.
+
+Utilize linguagem direta, instruções claras e progressão gradual.
+
+Não exiba todas as informações avançadas de uma vez. Utilize detalhes expansíveis, dicas contextuais, exemplos e explicações progressivas quando apropriado.
+
+Não esconda informações essenciais em tooltips.
+
+### 4.3. Aprendizagem orientada à ação
+
+Cada tela deve oferecer uma próxima ação clara.
+
+Exemplos:
+
+- Continuar estudando.
+- Iniciar uma atividade.
+- Retomar uma tentativa.
+- Consultar um manual.
+- Revisar uma competência.
+- Executar uma consulta.
+- Enviar uma solução.
+- Solicitar avaliação.
+- Consultar o resultado.
+
+### 4.4. Feedback confiável
+
+Diferencie visualmente:
+
+- Conteúdo concluído.
+- Atividade em andamento.
+- Resposta correta.
+- Resposta incorreta.
+- Avaliação pendente.
+- Competência validada.
+- Falha técnica.
+- Certificado disponível.
+
+Nunca utilize apenas cores para comunicar estados. Combine cor, texto e ícones.
+
+### 4.5. Consistência
+
+Crie um sistema visual unificado para todas as áreas da aplicação.
+
+Botões, formulários, modais, menus, alertas, tabelas, indicadores de progresso e estados vazios devem seguir os mesmos padrões.
+
+Não crie uma identidade visual diferente para cada módulo.
+
+## 5. DIREÇÃO VISUAL
+
+Crie uma identidade de SaaS educacional moderno, profissional e acolhedor.
+
+A interface deve transmitir uma combinação de:
+
+- Conhecimento estruturado.
+- Tecnologia.
+- Desenvolvimento profissional.
+- Aprendizagem prática.
+- Confiabilidade institucional.
+
+### Paleta sugerida
+
+Utilize como ponto de partida:
+
+- Azul-marinho profundo para elementos institucionais e navegação.
+- Índigo ou azul-violeta para ações primárias e elementos interativos.
+- Fundo cinza muito claro ou branco quente.
+- Superfícies brancas para conteúdo e formulários.
+- Cinza neutro para bordas e elementos secundários.
+- Verde para sucesso e validação.
+- Âmbar para atenção.
+- Vermelho para erros e situações críticas.
+
+Defina as cores em tokens reutilizáveis. Não espalhe valores hexadecimais arbitrários pelos componentes.
+
+A paleta é uma proposta inicial. Faça ajustes para garantir contraste, consistência e boa legibilidade.
+
+### Tipografia
+
+Escolha uma família tipográfica adequada para interfaces profissionais, como Inter ou uma alternativa já utilizada no projeto.
+
+Estabeleça uma escala consistente para:
+
+- Títulos de página.
+- Títulos de seção.
+- Títulos de componentes.
+- Texto principal.
+- Texto auxiliar.
+- Rótulos de formulário.
+- Código e dados técnicos.
+
+Evite excesso de fontes, pesos, tamanhos e estilos.
+
+### Layout
+
+Utilize:
+
+- Sidebar consistente nas áreas autenticadas.
+- Cabeçalho com título contextual, busca quando relevante e menu do usuário.
+- Área principal com largura confortável para leitura.
+- Grids responsivos para conteúdo visual.
+- Layouts específicos para leitura e execução de desafios.
+- Navegação clara entre trilhas, conteúdos, atividades e resultados.
+
+Não force a mesma composição para todas as páginas. Uma tela de leitura, um editor SQL e um painel administrativo possuem necessidades diferentes.
+
+### Identidade de marca
+
+Centralize nome, logotipo, cores de marca e informações institucionais em uma configuração reutilizável.
+
+Utilize inicialmente um nome provisório, como Nexora, somente se não houver identidade já estabelecida no projeto.
+
+Não invente logotipos de terceiros, selos institucionais, certificações oficiais ou marcas de organizações.
+
+## 6. ARQUITETURA DE NAVEGAÇÃO
+
+Organize a experiência em três áreas principais.
+
+### Área do aluno
+
+- Visão geral.
+- Minhas trilhas.
+- Catálogo de aprendizagem.
+- Biblioteca técnica.
+- Desafios.
+- Projetos.
+- Competências.
+- Histórico de avaliações.
+- Certificados.
+- Perfil e preferências.
+
+### Área do supervisor
+
+- Visão geral da equipe.
+- Alunos sob acompanhamento.
+- Progresso individual.
+- Resultados e tentativas.
+- Projetos para revisão.
+- Pendências de avaliação.
+- Solicitações de certificação.
+- Relatórios.
+
+### Área administrativa
+
+- Visão geral administrativa.
+- Usuários e papéis.
+- Organizações.
+- Trilhas.
+- Conteúdos.
+- Atividades e avaliações.
+- Competências.
+- Publicações e versões.
+- Configurações.
+- Auditoria, quando suportada pelo back-end.
+
+As áreas devem compartilhar componentes e identidade visual, mas apresentar apenas as funcionalidades autorizadas para cada perfil.
+
+Não crie três aplicações independentes se uma única aplicação com módulos bem separados resolver o problema.
+
+## 7. TELAS QUE DEVEM SER IMPLEMENTADAS
+
+### 7.1. Autenticação
+
+Implemente:
+
+- Login.
+- Recuperação de senha, caso exista suporte no back-end.
+- Estados de carregamento.
+- Mensagens de erro compreensíveis.
+- Validação de formulários.
+- Retorno seguro à página originalmente solicitada após o login.
+- Tratamento de sessão expirada.
+- Entrada institucional, se houver integração disponível.
+
+Não simule autenticação institucional como se estivesse funcionando.
+
+Não armazene tokens sensíveis em LocalStorage por conveniência.
+
+### 7.2. Dashboard do aluno
+
+Esta deve ser uma das telas mais bem resolvidas da plataforma.
+
+No topo, apresente:
+
+- Saudação contextual.
+- Uma mensagem curta de orientação.
+- A ação prioritária do aluno.
+- A trilha em andamento.
+- Progresso geral e progresso por etapa.
+
+Em seguida, apresente:
+
+- Botão para continuar de onde parou.
+- Trilhas em andamento.
+- Trilhas disponíveis.
+- Próximas atividades.
+- Competências já validadas.
+- Atividades que precisam ser revisadas.
+- Histórico recente de aprendizagem.
+
+Não transforme o dashboard em um painel de dezenas de gráficos.
+
+O elemento mais importante é a próxima ação, não a quantidade de informações exibidas.
+
+Se o aluno ainda não começou nenhuma trilha, apresente um estado inicial que explique como começar e indique uma recomendação apropriada.
+
+Não invente rankings, estatísticas pessoais ou atividades recentes quando os dados não existirem.
+
+### 7.3. Catálogo de aprendizagem
+
+Implemente uma página para explorar as trilhas disponíveis.
+
+Inclua:
+
+- Campo de busca.
+- Filtros por área, nível, formato e situação.
+- Ordenação.
+- Cards consistentes.
+- Objetivos da trilha.
+- Pré-requisitos.
+- Quantidade de módulos ou etapas, quando disponível.
+- Estimativa de duração, somente se configurada.
+- Estado de matrícula.
+- Ação para iniciar ou continuar.
+
+O catálogo precisa funcionar com poucas trilhas e continuar organizado quando houver dezenas ou centenas.
+
+Não exiba filtros que não possuam dados ou comportamento real.
+
+### 7.4. Página de detalhes da trilha
+
+Apresente:
+
+- Nome e descrição.
+- Objetivos de aprendizagem.
+- Competências trabalhadas.
+- Pré-requisitos.
+- Etapas e módulos.
+- Progresso do aluno.
+- Critérios de conclusão.
+- Projeto final, quando aplicável.
+- Informações sobre avaliação e certificação, se configuradas.
+
+Utilize uma estrutura visual que deixe clara a progressão entre fundamentos, prática e aplicação.
+
+O aluno deve saber quais etapas são obrigatórias, opcionais, concluídas, bloqueadas ou disponíveis.
+
+Não bloqueie etapas por regras visuais inventadas. A disponibilidade deve respeitar os requisitos reais da trilha.
+
+### 7.5. Experiência de leitura e estudo
+
+Crie uma interface de leitura dedicada.
+
+Layout recomendado:
+
+- Navegação lateral com módulos e etapas.
+- Conteúdo principal com largura adequada.
+- Indicador de progresso da etapa.
+- Ações para etapa anterior e próxima.
+- Sumário interno para materiais longos.
+- Blocos de código com destaque de sintaxe, quando suportado.
+- Botão de copiar código.
+- Tabelas, diagramas e imagens responsivos.
+- Blocos de observação, atenção e exemplo.
+- Links para referências e materiais relacionados.
+- Exercícios associados ao conteúdo.
+
+Permita ao aluno consultar um conteúdo sem perder sua posição na trilha.
+
+Evite parágrafos excessivamente largos, textos com pouco espaçamento e excesso de elementos fixos que reduzam a área útil.
+
+A marcação de leitura deve representar o comportamento definido pelo produto. Não trate a simples abertura da página como prova de domínio.
+
+### 7.6. Biblioteca técnica
+
+Crie uma experiência independente de consulta rápida.
+
+Inclua:
+
+- Busca global dentro da biblioteca.
+- Filtros por categoria e tipo de material.
+- Artigos, manuais, referências rápidas e exemplos.
+- Navegação por categorias.
+- Conteúdos relacionados.
+- Data ou versão de atualização, quando disponível.
+- Links diretos para materiais.
+- Estado de conteúdo indisponível ou arquivado.
+
+A biblioteca deve ser útil para quem precisa resolver um problema no trabalho sem percorrer uma trilha inteira.
+
+Quando um material também fizer parte de uma trilha, reutilize a mesma fonte de conteúdo sempre que a arquitetura permitir.
+
+### 7.7. Desafios técnicos
+
+Implemente uma página de catálogo e páginas específicas para os desafios de banco de dados, back-end e front-end.
+
+Cada desafio deve apresentar:
+
+- Objetivo.
+- Contexto do problema.
+- Requisitos funcionais.
+- Restrições relevantes.
+- Critérios de aceitação.
+- Instruções.
+- Dicas, se permitidas.
+- Tentativas anteriores.
+- Estado da atividade.
+- Área de execução ou submissão.
+- Resultado da avaliação.
+- Próximos passos.
+
+Não utilize a mesma interface de execução para SQL, back-end e front-end quando os fluxos técnicos forem diferentes.
+
+#### Desafio de banco de dados / SQL
+
+Construa uma interface de laboratório com:
+
+- Enunciado em painel próprio.
+- Esquema das tabelas.
+- Colunas e tipos de dados.
+- Dados de exemplo, se disponíveis.
+- Editor SQL com destaque de sintaxe.
+- Botão para executar consulta.
+- Área de resultados tabulares.
+- Mensagens de execução.
+- Informações de avaliação.
+- Histórico de tentativas, caso disponível.
+
+Em telas grandes, utilize uma composição com instruções e editor lado a lado. Permita redimensionar painéis se isso puder ser feito sem comprometer a usabilidade.
+
+Em telas pequenas, transforme os painéis em seções organizadas verticalmente.
+
+A execução e a correção devem ser chamadas ao back-end ou a um serviço isolado. O navegador não deve simular resultados de consultas como se fossem reais.
+
+Se o executor ainda não existir, implemente a interface e uma camada de integração claramente identificada como pendente. Não apresente resultados falsos como avaliações aprovadas.
+
+#### Desafio de back-end
+
+Apresente:
+
+- Contexto e requisitos da API.
+- Contratos de entrada e saída.
+- Regras de negócio.
+- Exemplos de requisição e resposta.
+- Critérios de aceitação.
+- Área de envio de solução ou link de repositório.
+- Resultado de testes automatizados.
+- Feedback por requisito.
+
+Quando houver execução automatizada, diferencie testes aprovados, testes reprovados, falhas de compilação e falhas de infraestrutura.
+
+Não mostre resultados de testes que não foram executados.
+
+#### Desafio de front-end
+
+Apresente:
+
+- Requisitos visuais e funcionais.
+- Referências ou assets fornecidos.
+- Critérios de responsividade.
+- Requisitos de acessibilidade.
+- Área para submissão do repositório ou solução.
+- Resultado da avaliação.
+- Feedback técnico.
+
+Se existir um sistema de preview ou sandbox, utilize-o por meio da integração disponível. Não execute código arbitrário dentro do contexto privilegiado da aplicação principal.
+
+### 7.8. Resultado de avaliação
+
+Crie uma página ou painel de resultados que mostre:
+
+- Resultado geral.
+- Critérios avaliados.
+- Itens aprovados.
+- Itens que precisam de correção.
+- Feedback explicativo.
+- Tentativa realizada.
+- Próxima ação recomendada.
+
+Diferencie uma falha do aluno de uma falha técnica da plataforma.
+
+Se o avaliador estiver indisponível, mostre que o resultado ainda não foi obtido. Não classifique automaticamente a tentativa como reprovada.
+
+O feedback deve ser específico e útil, evitando mensagens genéricas como "resposta incorreta" quando houver detalhes disponíveis.
+
+### 7.9. Competências
+
+Crie uma área para apresentar as competências trabalhadas pelo aluno.
+
+Cada competência pode possuir:
+
+- Nome.
+- Descrição.
+- Área de conhecimento.
+- Atividades relacionadas.
+- Estado de desenvolvimento.
+- Evidências de avaliação.
+- Data da última validação.
+- Recomendações de revisão.
+
+Diferencie claramente:
+
+- Ainda não avaliada.
+- Em desenvolvimento.
+- Validada.
+- Precisa de reavaliação, quando essa regra existir.
+
+Não invente um índice de domínio ou porcentagem de competência sem uma metodologia definida pelo produto.
+
+### 7.10. Projetos
+
+Crie uma área para projetos vinculados às trilhas.
+
+Apresente:
+
+- Objetivo.
+- Requisitos.
+- Etapas de execução.
+- Entregáveis.
+- Critérios de avaliação.
+- Estado da submissão.
+- Feedback.
+- Histórico de versões ou tentativas, quando disponível.
+
+Permita que o aluno compreenda o projeto antes de começar e acompanhe o que falta entregar.
+
+### 7.11. Certificados
+
+Implemente:
+
+- Lista de certificados emitidos.
+- Estado da solicitação.
+- Detalhes da trilha relacionada.
+- Data de emissão.
+- Download do documento, se disponível.
+- Mensagem clara quando ainda não houver certificados.
+
+O front-end deve respeitar o fluxo de autorização do back-end.
+
+O aluno não deve conseguir emitir ou aprovar o próprio certificado manipulando a interface.
+
+### 7.12. Painel do supervisor
+
+Crie uma experiência administrativa orientada à tomada de decisão.
+
+Apresente:
+
+- Alunos acompanhados.
+- Trilhas em andamento.
+- Pendências de avaliação.
+- Projetos aguardando revisão.
+- Solicitações de certificação.
+- Histórico de acompanhamento.
+- Indicadores de progresso.
+
+Implemente uma tabela de alunos com busca, filtros, paginação e estados vazios.
+
+A página individual do aluno deve permitir analisar progresso, tentativas, resultados e pendências conforme as permissões concedidas.
+
+Não exiba dados de pessoas que o supervisor não esteja autorizado a consultar.
+
+### 7.13. Administração de conteúdos
+
+Crie uma interface para gerenciar:
+
+- Trilhas.
+- Módulos.
+- Etapas.
+- Materiais.
+- Quizzes.
+- Desafios.
+- Competências associadas.
+- Critérios de avaliação.
+- Status de publicação.
+- Versões.
+
+Permita criar, editar, visualizar, publicar e arquivar conteúdos conforme as permissões existentes.
+
+Para a primeira versão, um formulário estruturado e um editor Markdown podem ser suficientes. Não implemente um editor visual complexo se isso atrasar o fluxo principal.
+
+Implemente uma pré-visualização antes da publicação.
+
+Apresente estados claros para rascunho, revisão, publicação e arquivamento, se suportados pelo modelo de dados.
+
+A publicação deve exigir as validações necessárias e nunca sobrescrever silenciosamente uma versão já utilizada por alunos.
+
+### 7.14. Usuários e configurações
+
+Implemente, conforme o escopo e as APIs disponíveis:
+
+- Perfil.
+- Preferências.
+- Gestão de usuários.
+- Papéis e permissões.
+- Organizações.
+- Configurações da plataforma.
+- Auditoria de ações relevantes.
+
+Não exponha opções administrativas para usuários sem autorização.
+
+Não construa uma tela funcional apenas visualmente quando o back-end não possuir a operação correspondente.
+
+## 8. DESIGN SYSTEM
+
+Crie um conjunto reutilizável de componentes.
+
+No mínimo:
+
+- Button.
+- IconButton.
+- Input.
+- Select.
+- Textarea.
+- Checkbox.
+- RadioGroup.
+- FormField.
+- Card.
+- Badge.
+- Tooltip.
+- DropdownMenu.
+- Dialog.
+- Drawer.
+- Tabs.
+- Accordion.
+- Table.
+- Pagination.
+- Breadcrumbs.
+- ProgressBar.
+- Skeleton.
+- Alert.
+- Toast.
+- EmptyState.
+- ErrorState.
+- LoadingState.
+- CodeBlock.
+- ChallengeStatus.
+- PageHeader.
+- Sidebar.
+- Topbar.
+
+Utilize componentes semânticos e padrões de interação consistentes.
+
+Não crie variantes de componentes sem necessidade. Prefira poucas variantes bem definidas e reutilizadas.
+
+Centralize os tokens de cor, tipografia, espaçamento, bordas, sombras, raios e camadas.
+
+## 9. RESPONSIVIDADE E ACESSIBILIDADE
+
+A aplicação deve funcionar em:
+
+- Desktop.
+- Notebook.
+- Tablet.
+- Smartphone.
+
+Priorize a experiência desktop para os laboratórios técnicos, mas garanta que leitura, navegação, acompanhamento e formulários funcionem bem em dispositivos móveis.
+
+Requisitos:
+
+- Layout adaptável, sem rolagem horizontal indevida.
+- Sidebar que se transforme em navegação compacta em telas pequenas.
+- Áreas de toque adequadas.
+- Navegação por teclado.
+- Foco visível.
+- Labels associados aos campos.
+- Mensagens de erro acessíveis.
+- Contraste adequado.
+- Hierarquia correta de títulos.
+- Uso semântico de botões, links, tabelas e formulários.
+- Compatibilidade com tecnologias assistivas.
+- Estados que não dependam apenas de cor.
+
+Busque conformidade com WCAG 2.2 nível AA, dentro do escopo validável do projeto.
+
+Não use animações excessivas, parallax ou efeitos que atrapalhem a concentração.
+
+## 10. REGRAS DE INTEGRAÇÃO COM O BACK-END
+
+O front-end deve ter uma camada de serviços separada dos componentes de interface.
+
+Crie módulos de integração para:
+
+- Autenticação.
+- Usuários.
+- Organizações.
+- Trilhas.
+- Conteúdos.
+- Matrículas e progresso.
+- Atividades.
+- Submissões.
+- Resultados.
+- Competências.
+- Projetos.
+- Certificados.
+- Administração.
+
+Reaproveite os endpoints e contratos existentes.
+
+Não invente endpoints silenciosamente. Caso uma operação necessária não exista, documente a lacuna e mantenha a interface preparada para integração.
+
+Centralize tratamento de erros, estados de carregamento e serialização de dados.
+
+Use validação de formulários apropriada à stack existente.
+
+Não duplique regras de autorização no front-end como se fossem uma barreira de segurança. A autorização definitiva pertence ao servidor.
+
+### Estratégia para dados indisponíveis
+
+Se o back-end estiver incompleto:
+
+1. Identifique os recursos sem integração.
+2. Crie interfaces e tipos explícitos para os dados.
+3. Utilize adaptadores ou fixtures de demonstração isolados.
+4. Marque claramente os dados demonstrativos durante o desenvolvimento.
+5. Evite misturar dados simulados com dados reais.
+6. Facilite a substituição dos adaptadores por serviços reais.
+7. Documente o que ainda precisa ser implementado no back-end.
+
+Nunca apresente dados fictícios como se fossem estatísticas reais de usuários.
+
+## 11. ESTADOS E TRATAMENTO DE FALHAS
+
+Toda tela que depende de dados externos deve contemplar:
+
+- Carregamento inicial.
+- Carregamento de uma ação.
+- Sucesso.
+- Ausência de dados.
+- Erro de validação.
+- Falha de rede.
+- Sessão expirada.
+- Falta de permissão.
+- Recurso inexistente.
+- Resultado ainda pendente.
+
+Implemente estados vazios úteis, com explicações e ações possíveis.
+
+Não deixe telas inteiras em branco quando uma API falhar.
+
+Não utilize alertas nativos do navegador como padrão para todas as interações. Prefira componentes consistentes, acessíveis e contextualizados.
+
+Ações destrutivas devem ter confirmação apropriada.
+
+Evite modais para processos simples que podem ser resolvidos diretamente na página.
+
+## 12. ARQUITETURA DE CÓDIGO
+
+Organize o front-end por domínios funcionais, mantendo separação entre:
+
+- Rotas e layouts.
+- Páginas.
+- Componentes reutilizáveis.
+- Componentes específicos de domínio.
+- Hooks.
+- Tipos.
+- Serviços de API.
+- Validação.
+- Utilitários.
+- Tokens e estilos.
+- Testes.
+
+Evite:
+
+- Componentes gigantes.
+- Lógica de negócio duplicada.
+- Chamadas HTTP diretamente espalhadas pelas telas.
+- Tipos excessivamente genéricos.
+- Uso indiscriminado de `any`.
+- Dependências desnecessárias.
+- Estado global para informações que pertencem a uma página.
+- Componentes que misturam apresentação, persistência e avaliação.
+
+Não adicione uma biblioteca de estado global se os mecanismos existentes forem suficientes.
+
+Escolha novas dependências somente quando houver benefício claro.
+
+## 13. PERFORMANCE
+
+A experiência deve permanecer rápida conforme o catálogo e o histórico de aprendizagem crescerem.
+
+Considere:
+
+- Carregamento sob demanda das rotas administrativas e dos laboratórios.
+- Paginação em listas extensas.
+- Debounce na busca quando apropriado.
+- Evitar requisições duplicadas.
+- Otimizar renderizações desnecessárias.
+- Carregamento adequado de imagens.
+- Divisão do bundle quando necessário.
+- Preservação do conteúdo durante transições.
+- Tratamento de operações demoradas.
+
+Não introduza otimizações complexas sem evidência de necessidade.
+
+## 14. TESTES OBRIGATÓRIOS
+
+Implemente testes proporcionais à criticidade das funcionalidades.
+
+### Testes unitários
+
+Validar componentes, hooks, regras de apresentação e transformações de dados relevantes.
+
+### Testes de integração
+
+Validar formulários, navegação, carregamento de dados, estados de erro e comunicação com os serviços.
+
+### Testes de ponta a ponta
+
+Cobrir ao menos estes fluxos:
+
+1. Login e entrada na área do aluno.
+2. Abertura de uma trilha.
+3. Estudo de um conteúdo.
+4. Resposta a um quiz.
+5. Acesso a um desafio SQL.
+6. Submissão de um desafio de back-end.
+7. Submissão de um desafio de front-end.
+8. Visualização de resultados.
+9. Retomada de uma trilha após atualizar a página.
+10. Acesso do supervisor a um aluno autorizado.
+11. Tentativa de acesso a uma funcionalidade administrativa sem permissão.
+12. Fluxo de conclusão e certificação, quando a API estiver disponível.
+
+Os testes não devem depender exclusivamente de dados fictícios para declarar que uma integração real está funcionando.
+
+## 15. CRITÉRIOS DE ACEITAÇÃO
+
+O trabalho só pode ser considerado concluído quando:
+
+- O projeto inicia conforme as instruções do repositório.
+- As rotas principais funcionam.
+- A navegação é consistente.
+- A trilha de estagiário está representada de ponta a ponta.
+- Os três desafios possuem experiências específicas e coerentes.
+- A biblioteca é consultável.
+- O progresso possui estados claros e utiliza a integração disponível.
+- O painel do supervisor respeita as permissões.
+- A administração de conteúdos possui um fluxo coerente.
+- Formulários possuem validação e mensagens úteis.
+- Não existem botões principais sem comportamento definido.
+- Não existem links quebrados ou rotas principais sem conteúdo.
+- Estados de carregamento, erro e ausência de dados foram implementados.
+- A interface funciona em desktop e dispositivos móveis.
+- A navegação por teclado foi verificada.
+- Os testes relevantes foram executados.
+- Não existem erros críticos de compilação ou execução.
+- As lacunas de back-end estão documentadas.
+- O projeto continua compatível com a arquitetura e as integrações já existentes.
+
+## 16. MÉTODO DE EXECUÇÃO
+
+Não tente construir toda a plataforma em uma única alteração gigantesca.
+
+Execute em etapas:
+
+### Etapa A — Auditoria
+Entenda o repositório e identifique o que existe.
+
+### Etapa B — Fundação visual
+Implemente tokens, layout principal, navegação e componentes compartilhados.
+
+### Etapa C — Fluxo do aluno
+Implemente dashboard, catálogo, detalhes de trilha, leitura e progresso.
+
+### Etapa D — Laboratórios técnicos
+Implemente os três desafios, cada um com sua interface e camada de integração.
+
+### Etapa E — Supervisão e administração
+Implemente acompanhamento, gestão de conteúdos e os fluxos administrativos essenciais.
+
+### Etapa F — Qualidade
+Revise responsividade, acessibilidade, estados de falha, testes e integração.
+
+Após cada etapa:
+
+1. Execute a aplicação.
+2. Rode os testes disponíveis.
+3. Verifique os fluxos implementados.
+4. Corrija regressões.
+5. Registre arquivos alterados e limitações encontradas.
+6. Continue para a próxima etapa.
+
+Se houver restrições de tempo, priorize um fluxo completo e confiável em vez de muitas telas incompletas.
+
+Não interrompa o trabalho após produzir wireframes ou protótipos estáticos. Implemente a aplicação real.
+
+## 17. RESULTADO ESPERADO
+
+Entregue um front-end que pareça um produto SaaS educacional maduro, mas mantenha a simplicidade necessária para um projeto em evolução.
+
+O produto deve permitir que um aluno compreenda sua jornada, estude, pratique e acompanhe sua evolução; que um supervisor identifique necessidades de acompanhamento; e que um administrador mantenha conteúdos e trilhas organizados.
+
+O código deve ser modular, legível, testável e preparado para a expansão futura para outras áreas do conhecimento.
+
+Ao final, apresente:
+
+- Resumo das funcionalidades implementadas.
+- Principais decisões de UX/UI.
+- Arquitetura adotada.
+- Rotas criadas.
+- Componentes compartilhados.
+- Testes executados e respectivos resultados.
+- Integrações reais concluídas.
+- Integrações ainda pendentes.
+- Problemas conhecidos.
+- Próximas prioridades recomendadas.
+
+Comece pela auditoria do repositório e execute o plano até obter a melhor implementação funcional possível dentro do escopo existente.
+
+**Princípio central: construir uma plataforma que ajude as pessoas a aprender e demonstrar competências, não apenas uma interface que organize conteúdos.**

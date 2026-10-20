@@ -282,3 +282,152 @@ export interface ChallengeDefinition {
   referenceGuideUrl?: string;
   referenceSolutionUrl?: string;
 }
+
+// ==========================================
+// Comunidade & Fórum de Dúvidas (devjourney)
+// ==========================================
+export interface ForumComment {
+  id: string;
+  authorName: string;
+  authorAvatar?: string;
+  authorRole: 'Aluno' | 'Monitor' | 'Supervisor' | 'Instrutor';
+  content: string;
+  createdAt: string;
+  isSolution?: boolean;
+}
+
+export interface ForumThread {
+  id: string;
+  title: string;
+  content: string;
+  moduleId: string;
+  moduleTitle: string;
+  authorName: string;
+  authorAvatar?: string;
+  createdAt: string;
+  tags: string[];
+  upvotes: number;
+  userHasUpvoted?: boolean;
+  solved: boolean;
+  commentsCount: number;
+  comments: ForumComment[];
+}
+
+export interface ForumFaq {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+}
+
+// ==========================================
+// Ofensivas & Heatmap estilo GitHub (devjourney)
+// ==========================================
+export interface HeatmapDay {
+  date: string;
+  count: number; // 0 a 4+
+  lessonsCompleted: number;
+  minutesSpent: number;
+}
+
+// ==========================================
+// Mapa de Competências & Perfil (devjourney)
+// ==========================================
+export interface SkillScore {
+  skill: string;
+  score: number;
+  fullMark: number;
+  category: string;
+  description: string;
+}
+
+export interface AchievementBadge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  unlocked: boolean;
+  unlockedAt?: string;
+  progressPercent: number;
+}
+
+// ==========================================
+// Painel do Supervisor (plataforma-semob)
+// ==========================================
+export type SupervisorDecision = 'aprovada' | 'aprovada_com_ajustes' | 'precisa_de_correcao';
+
+export interface SubmissionReviewItem {
+  id: string;
+  submissionId: string;
+  studentName: string;
+  studentEmail: string;
+  challengeId: string;
+  challengeTitle: string;
+  submittedAt: string;
+  waitingHours: number;
+  repositoryUrl: string;
+  deployUrl?: string;
+  status: ReviewStatus;
+  checkedPrItems: number[];
+  sqlQueriesCount?: number;
+  supervisorFeedback?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+}
+
+export interface CertificateHomologationItem {
+  id: string;
+  studentName: string;
+  studentEmail: string;
+  seiProcessNumber: string;
+  trackTitle: string;
+  workloadHours: number;
+  completedModulesCount: number;
+  totalModulesCount: number;
+  averageScore: number;
+  status: 'ELEGIVEL' | 'HOMOLOGADO' | 'ANULADO';
+  requestedAt: string;
+  certificateCode?: string;
+}
+
+export interface InternProgressOverview {
+  id: string;
+  name: string;
+  email: string;
+  area: string;
+  completedSteps: number;
+  totalSteps: number;
+  quizAverage: number;
+  lastAccess: string;
+  status: 'em_dia' | 'revisao_pendente' | 'atencao' | 'concluido';
+}
+
+// ==========================================
+// Administração de Trilhas & Usuários (nexora)
+// ==========================================
+export type PublishingStatus = 'draft' | 'in_review' | 'published' | 'archived';
+
+export interface ManagedTrack {
+  id: string;
+  title: string;
+  shortDescription: string;
+  fullDescription: string;
+  area: string;
+  level: 'Iniciante' | 'Intermediário' | 'Avançado';
+  estimatedHours: number;
+  publishingStatus: PublishingStatus;
+  version: string;
+  enrolledStudentsCount: number;
+  lastUpdatedAt: string;
+}
+
+export interface ManagedUser {
+  id: string;
+  name: string;
+  email: string;
+  title: string;
+  role: UserRole;
+  organizationName: string;
+  joinedAt: string;
+  avatarUrl?: string;
+}

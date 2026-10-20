@@ -1,0 +1,487 @@
+# Prompt: Front-end React com UX/UI para a Plataforma de Trilhas e Conteúdos
+
+> Use este prompt em qualquer modelo de IA capaz de gerar código e design (ou com um desenvolvedor humano como briefing).
+> Ele descreve a plataforma completa: o que existe, o que é MVP e o que é fase futura. Cada tela e função tem uma marcação de fase, para que a proposta possa ser avaliada por etapa.
+> Recomenda-se enviar o prompt inteiro e pedir a entrega em partes (ver a seção "Formato da entrega").
+
+---
+
+## 0. Como você deve trabalhar
+
+Você é um time sênior de produto, UX e front-end. Sua tarefa é propor **o melhor front-end possível** para a plataforma descrita abaixo, com decisões de design justificadas, telas prontas para avaliação e código React funcional para o núcleo do MVP.
+
+Regras de trabalho:
+
+1. **Não faça perguntas antes de começar.** Quando houver lacunas, assuma o padrão mais razoável, declare a suposição em uma linha e siga em frente.
+2. **Sempre diferencie** o que é **[MVP]** (entrega até 01/12/2026), **[FASE 2]** (depois do MVP) e **[FUTURO]** (fase 3 ou posterior). Telas de FASE 2 e FUTURO devem ser propostas em wireframe, sem código completo.
+3. **Pense mobile primeiro.** A plataforma precisa funcionar perfeitamente no celular, pois o estudo acontece em casa. Qualquer tela que não funcione em 360px de largura está incorreta.
+4. **Priorize clareza sobre enfeite.** O público inicial não tem experiência em TI. Cada tela deve deixar claro onde o usuário está, o que já fez, o que falta e qual é o próximo passo.
+5. **Acessibilidade é critério de aceite**, não acabamento. Adote WCAG 2.1 nível AA.
+6. **Escreva toda a interface em português do Brasil**, com linguagem simples e direta. Termos técnicos devem ser explicados na primeira ocorrência.
+
+---
+
+## 1. Contexto da plataforma
+
+### 1.1 Propósito
+
+Plataforma que serve de **guia de conteúdos com ambiente de ensino integrado** para a SEMOB (Secretaria de Mobilidade). Seu objetivo principal é acelerar a integração de novos integrantes técnicos: estagiários e júniores que chegam sem repertório devem sair do zero e chegar ao nível de desenvolvedor júnior aplicado aos sistemas da SEMOB.
+
+Ela também funciona como **biblioteca permanente** para desenvolvedores já contratados, que consultam manuais, tutoriais e procedimentos (POPs) durante o trabalho.
+
+O projeto nasce para uso interno, mas deve ser pensado para replicação por outras organizações (white-label por configuração).
+
+### 1.2 Diferencial
+
+Não é apenas um LMS. O diferencial é: conteúdo técnico específico da organização, avaliação prática com execução real de SQL e correção de entregas de código, e certificado institucional com número de processo SEI e assinaturas.
+
+### 1.3 Público e perfis
+
+| Perfil | Quem é | O que faz na plataforma |
+|---|---|---|
+| **Aluno** | Estagiário ou júnior em trilha de ingresso | Segue a trilha, lê manuais, faz quizzes e desafios, envia entregas, recebe certificado |
+| **Desenvolvedor** | Profissional já contratado | Consulta a biblioteca (Git, Docker, back-end, POPs) e pode fazer trilhas avulsas |
+| **Supervisor** | Orientador de estágio | Acompanha alunos, revisa entregas, aprova certificados, vê relatórios |
+| **Administrador** | Mantenedor de conteúdo | Cria e publica trilhas e aulas, gerencia usuários e configurações |
+| **Servidor** [FUTURO] | Servidor público em trilha própria (ex.: secretaria, agendas, processos SEI, POPs) | Segue trilha de sua área |
+
+Um mesmo usuário pode ter mais de um perfil e pertencer a mais de uma área.
+
+### 1.4 Tipos de conteúdo
+
+- **Manuais**: texto estruturado com blocos (texto, destaque, tabela, código com cópia, diagrama, cenário, cartão de comando). Hoje em HTML puro, migrando para dados estruturados.
+- **Quizzes**: múltipla escolha, com explicação por alternativa e tentativas ilimitadas.
+- **Desafios SQL** [MVP]: o aluno escreve uma consulta, executa em banco de exemplo isolado e compara o resultado com o esperado.
+- **Entregas de código** [MVP]: back-end e front-end enviados por link de repositório GitLab, revisados pelo supervisor.
+- **Projetos** [MVP]: entrega maior, com revisão humana.
+- **Vídeos externos** [FASE 2]: links de YouTube ou similares, com progresso por resposta curta após o vídeo, não por reprodução.
+- **Diagramas** (Mermaid), **PDFs**, **podcasts**, **laboratórios** [FUTURO].
+
+### 1.5 Trilhas e biblioteca
+
+- **Trilha**: sequência ordenada de etapas obrigatórias (manuais, quizzes, desafios e projetos) que termina em certificado. Trilhas são independentes entre si. Possuem data de início e de conclusão, opcionais.
+- **Trilha de desenvolvedor** (MVP): SEMOB → tecnologias → banco de dados → manuais e desafios → Git → back-end → front-end → projetos.
+- **Trilha de secretaria** [FUTURO]: agendas, processos SEI, POPs e normas.
+- **Biblioteca** (MVP, parcial): manuais de consulta, modelos, POPs, curiosidades. Não tem obrigatoriedade. Tem busca e filtros.
+- **Trilhas avulsas**: trilhas de livre escolha, sem vínculo com obrigatoriedade institucional.
+
+### 1.6 Regras de conclusão e progresso
+
+- Uma etapa é concluída quando o aluno marca a aula como lida e responde a avaliação associada.
+- Uma trilha é concluída quando **todas as etapas obrigatórias forem concluídas e aprovadas**. Não existe conclusão pelo último item isoladamente.
+- A nota mínima para quizzes é 70%. Desafios são aprovados quando todos os critérios de verificação são atendidos.
+- O progresso é mostrado sempre como "etapas concluídas de total", nunca como percentual enganoso.
+- Se um conteúdo mudar durante o curso, o aluno deve ser avisado.
+
+### 1.7 Certificação
+
+- O aluno **não emite** o certificado. O sistema verifica elegibilidade, o supervisor aprova, e o sistema gera o documento.
+- O certificado contém: nome, número do processo SEI, carga horária da trilha, ementa no verso (o que foi aprendido e validado), assinatura do subsecretário e do supervisor.
+- Possui código de validação e página pública de consulta, acessível por QR code.
+- Não expira. Pode ser **anulado** com registro de motivo, sem apagar o original.
+- Um aluno pode ter vários certificados (um por trilha) e um histórico consolidado.
+
+### 1.8 Engajamento e feedback
+
+- Sequência de dias de estudo e pontos [MVP ou FASE 2, a definir na proposta]. **Sem selos.** Pontos vinculados à conclusão de etapas e à constância, não ao acerto em quizzes.
+- Feedback ao erro: explicação por alternativa no quiz [MVP]; análise de competências e padrões de erro para o aluno e para o supervisor [FASE 2].
+
+### 1.9 Restrições técnicas e de negócio
+
+- **Front-end**: React com TypeScript, Vite. Pode ser reestruturado.
+- **Back-end**: NestJS com PostgreSQL. Já definido, não muda.
+- **Autenticação**: login próprio no MVP [MVP]. Login SEMOB [FASE 2].
+- **Hospedagem**: front-end na Vercel. Backend e banco em nuvem própria.
+- **Conexão**: online. Offline não é requisito.
+- **Rotas por URL** são obrigatórias (compartilhar links, navegação do navegador).
+- **Idiomas**: português [MVP]. Inglês [FASE 2], por isso todos os textos devem vir de chaves de tradução.
+- **Marca**: configurada por variável de ambiente (nome, logotipo, cores, nome da organização). Cada instituição tem sua própria instância.
+- **Dados**: o backend é a fonte de verdade. Armazenamento local só para rascunhos e cache.
+- **Acesso**: a biblioteca pode ser lida sem login. Trilhas, progresso, desafios e certificados exigem login [MVP].
+- **Notificações**: e-mail transacional [MVP] para certificado e avisos de avaliação. Notificações dentro do sistema e lembretes [FASE 2].
+- **Suporte**: canal de chamados para dúvidas, reclamações e erros, com abertura por qualquer usuário [FASE 2].
+- **Conteúdo sem código**: o administrador cria conteúdo por tela de autoria [FASE 2]. No MVP, o conteúdo é versionado em arquivos estruturados.
+
+---
+
+## 2. Funções da plataforma
+
+Cada função traz a fase. Todas as telas listadas na seção 3 derivam destas funções.
+
+### 2.1 Acesso e conta
+
+- Cadastro e login próprios [MVP]
+- Recuperação de senha [MVP]
+- Login SEMOB [FASE 2]
+- Perfil: dados pessoais, área, idioma, tema claro ou escuro [MVP]
+- Preferências de notificação [MVP parcial, completo na FASE 2]
+- Exportação e exclusão de dados pessoais, conforme LGPD [FASE 2, mas o termo de uso e a finalidade dos dados são [MVP]]
+- Encerramento de sessão [MVP]
+
+### 2.2 Início e acompanhamento do aluno
+
+- Painel inicial com a próxima etapa em destaque [MVP]
+- Progresso da trilha por etapas concluídas [MVP]
+- Sequência de dias e pontos [MVP ou FASE 2]
+- Prazos e datas de início e conclusão da trilha [MVP]
+- Avisos do sistema e do supervisor [MVP parcial]
+- Central de notificações [FASE 2]
+
+### 2.3 Trilhas
+
+- Lista de trilhas disponíveis para o perfil [MVP]
+- Página da trilha, com mapa de etapas, obrigatórias e opcionais, e estimativa de tempo [MVP]
+- Visualização da ordem recomendada [MVP]
+- Trilhas por área (secretaria, desenvolvimento) [FASE 2 para secretaria, MVP para desenvolvimento]
+- Trilhas avulsas [FASE 2]
+
+### 2.4 Leitor de aula (manuais)
+
+- Índice lateral ou de topo, com navegação anterior e próxima [MVP]
+- Marcar como lida [MVP]
+- Blocos de conteúdo: texto, destaque, tabela, código com botão de copiar, cenário, cartão de comando, diagrama [MVP]
+- Glossário com termos explicados ao passar ou tocar [MVP]
+- Indicador de tempo estimado de leitura [MVP]
+- Versão do conteúdo e data de última revisão [MVP]
+- Vídeo externo com resposta de compreensão [FASE 2]
+- Anotações pessoais [FASE 2]
+- Pedido de ajuda sobre o trecho [FASE 2]
+- Sugestão de melhoria do conteúdo [FASE 2]
+
+### 2.5 Avaliações
+
+**Quiz** [MVP]
+- Uma pergunta por vez, com progresso visível
+- Feedback com explicação por alternativa
+- Resultado com nota, acertos e revisão das respostas
+- Tentativas ilimitadas, com melhor nota registrada
+- Banco de perguntas com sorteio e embaralhamento de alternativas
+
+**Desafio SQL** [MVP]
+- Enunciado, esquema das tabelas visível e consulta de exemplo
+- Editor de SQL com destaque de sintaxe
+- Botão para executar e tabela com o resultado
+- Comparação com o resultado esperado, com mensagem clara do que faltou
+- Dicas em etapas, reveladas sob demanda
+- Funcionamento aceitável no celular
+
+**Entrega de código (back-end, front-end)** [MVP]
+- Instruções e critérios de aceite
+- Campo para link do repositório GitLab, com validação de formato
+- Status da entrega: enviada, em revisão, aprovada, aprovada com ajustes, precisa de correção
+- Comentários do supervisor
+- Histórico de envios
+
+**Projeto** [MVP]
+- Igual à entrega de código, com critérios mais amplos e anexos opcionais
+
+**Análise de competências e padrões de erro** [FASE 2]
+- Painel do aluno com competências por cor e evolução
+- Painel do supervisor com erros mais frequentes
+
+### 2.6 Biblioteca
+
+- Busca global, acessível de qualquer tela (atalho de teclado e botão no celular) [MVP]
+- Filtros por tipo (manual, POP, modelo, curiosidade), área, tag e escopo (institucional ou geral) [MVP]
+- Cards com título, resumo, tempo estimado e data de revisão [MVP]
+- Página de conteúdo com índice e navegação [MVP]
+- Curiosidades e conteúdos gerais [MVP]
+- Favoritos [FASE 2]
+- Sugestões relacionadas [FASE 2]
+
+### 2.7 Certificados
+
+- Lista de certificados e de trilhas em andamento, com status: em andamento, aguardando aprovação, emitido, anulado [MVP]
+- Visualização do certificado em tela e download [MVP]
+- Envio por e-mail [MVP]
+- Página pública de validação, sem login, acessível por código ou QR code [MVP]
+- Histórico consolidado de trilhas concluídas [FASE 2]
+
+### 2.8 Painel do supervisor
+
+- Lista de alunos com progresso, último acesso e situação [MVP]
+- Detalhe do aluno: etapas, respostas, entregas, notas [MVP]
+- Fila de entregas para revisão, com ordenação por antiguidade [MVP]
+- Fila de certificados elegíveis para aprovação, com as etapas validadas e as pendentes [MVP]
+- Ação de aprovar, aprovar com ajustes ou devolver, com comentário obrigatório na devolução [MVP]
+- Relatórios: conclusão, abandono por etapa, aprovação na primeira tentativa, questões mais erradas [MVP parcial, completo na FASE 2]
+- Exportação de relatórios [FASE 2]
+- Painel de competências por aluno e por turma [FASE 2]
+
+### 2.9 Painel do administrador
+
+- Lista de trilhas e conteúdos, com status: rascunho, em revisão, publicado [MVP]
+- Visualização de prévia do conteúdo como o aluno vê [MVP]
+- Metadados: versão, data de revisão, escopo (institucional ou geral), audiência [MVP]
+- Gestão de usuários e perfis, com busca e filtros [MVP]
+- Configurações da instância: marca, nome da organização, notificações [MVP]
+- Editor de conteúdo por blocos, sem código [FASE 2]
+- Histórico de versões e reversão [FASE 2]
+- Gestão de chamados [FASE 2]
+- Gestão de banco de perguntas dos quizzes [FASE 2]
+
+### 2.10 Suporte e ajuda
+
+- Ajuda sobre a própria plataforma, com perguntas frequentes [MVP]
+- Abertura de chamado por qualquer usuário, com tipo (dúvida, reclamação, erro), anexo opcional e acompanhamento [FASE 2]
+- Pedido de ajuda sobre um trecho de conteúdo, com ligação ao conteúdo de origem [FASE 2]
+- Envio de artigo para virar conteúdo, com fluxo de aprovação [FASE 3]
+
+### 2.11 Busca e navegação
+
+- Busca global de conteúdos, trilhas e perguntas frequentes [MVP]
+- Menu por perfil: cada usuário vê apenas o que a sua audiência permite [MVP]
+- Trilha de migalhas ou indicador de localização em todas as telas [MVP]
+
+### 2.12 Estados e erros
+
+- Carregamento (skeleton, não spinner genérico) [MVP]
+- Vazio com instrução do próximo passo [MVP]
+- Erro de rede com botão de tentar novamente [MVP]
+- Sem permissão (403) e página não encontrada (404) [MVP]
+- Sessão expirada, com retorno ao ponto em que estava [MVP]
+- Sem conexão, com aviso claro [MVP]
+
+---
+
+## 3. Telas a propor
+
+Para cada tela, entregue: objetivo, usuário, principais elementos, ações, estados (vazio, carregando, erro), versão mobile e versão desktop. Marque a fase.
+
+### 3.1 Acesso
+1. Entrada e login [MVP]
+2. Cadastro [MVP]
+3. Recuperação de senha [MVP]
+4. Login SEMOB (placeholder) [FASE 2]
+
+### 3.2 Aluno
+5. Início: próxima etapa, progresso, sequência de dias, avisos [MVP]
+6. Lista de trilhas [MVP]
+7. Página da trilha, com mapa de etapas [MVP]
+8. Leitor de aula [MVP]
+9. Quiz, em andamento e resultado [MVP]
+10. Desafio SQL, com editor e resultado [MVP]
+11. Entrega de código, com status e histórico [MVP]
+12. Certificados e histórico [MVP]
+13. Perfil e preferências [MVP]
+14. Central de notificações [FASE 2]
+
+### 3.3 Biblioteca
+15. Biblioteca: busca, filtros e cards [MVP]
+16. Página de conteúdo da biblioteca [MVP]
+17. Curiosidades [MVP]
+
+### 3.4 Supervisor
+18. Painel: alunos, filas e alertas [MVP]
+19. Detalhe do aluno [MVP]
+20. Revisão de entrega [MVP]
+21. Aprovação de certificado [MVP]
+22. Relatórios [MVP parcial]
+
+### 3.5 Administrador
+23. Lista de trilhas e conteúdos com status [MVP]
+24. Prévia de conteúdo [MVP]
+25. Metadados do conteúdo [MVP]
+26. Gestão de usuários [MVP]
+27. Configurações da instância [MVP]
+28. Editor de conteúdo por blocos [FASE 2]
+29. Gestão de chamados [FASE 2]
+
+### 3.6 Públicas e de sistema
+30. Validação pública de certificado [MVP]
+31. Ajuda e perguntas frequentes [MVP]
+32. Páginas de erro (403, 404, sem conexão) [MVP]
+
+### 3.7 Futuras (wireframe apenas)
+33. Trilha de secretaria [FASE 2]
+34. Painel de competências do aluno [FASE 2]
+35. Painel de competências do supervisor [FASE 2]
+36. Abertura de chamado [FASE 2]
+37. Envio de artigo [FASE 3]
+
+---
+
+## 4. Fluxos a desenhar
+
+Desenhe cada fluxo com os passos, as decisões e os estados de erro.
+
+1. **Primeiro acesso do estagiário**: cadastro, confirmação de e-mail, escolha de área, entrada na trilha, primeira aula.
+2. **Ciclo de uma etapa**: abrir aula, ler, marcar como lida, responder quiz, ver explicação, avançar.
+3. **Desafio SQL**: ler enunciado, consultar esquema, escrever consulta, executar, ver resultado, receber dica, aprovar.
+4. **Entrega de código**: ler critérios, enviar link do repositório, acompanhar status, receber comentário, corrigir e reenviar.
+5. **Emissão de certificado**: sistema detecta elegibilidade, supervisor é notificado, supervisor aprova, certificado é gerado, aluno recebe e-mail.
+6. **Anulação de certificado** (visão do supervisor): motivo obrigatório, confirmação, registro, aviso ao aluno.
+7. **Publicação de conteúdo** (administrador): criar rascunho, prévia, enviar para revisão, publicar, registrar versão.
+8. **Consulta de certificado por terceiro**: abrir link ou QR code, ver dados de validação, sem login.
+9. **Busca na biblioteca**: digitar termo, ver resultados, filtrar, abrir conteúdo.
+10. **Aviso de conteúdo atualizado durante a trilha**: como o aluno é informado e o que muda no progresso.
+
+---
+
+## 5. Direção de design
+
+### 5.1 Antes de desenhar, proponha duas direções
+
+Apresente **duas direções visuais** distintas, com justificativa, exemplo de tela inicial e tabela comparativa (clareza, sobriedade institucional, acessibilidade, custo de implementação). Recomende uma e explique por quê. Não escolha por padrão a mais bonita: escolha a que melhor serve a um público sem experiência em TI, em um contexto de órgão público.
+
+Exemplos de direções que podem ser exploradas (não são obrigatórias):
+- Institucional e sóbria, com muito contraste e hierarquia clara.
+- Moderna e de produto, com cartões e trilhas visuais, mais próxima de plataformas de aprendizado.
+
+### 5.2 Princípios de UX
+
+- **Sempre visível**: onde estou, o que já fiz, o que falta, qual é o próximo passo.
+- **Uma ação principal por tela**. Ações secundárias ficam em segundo plano.
+- **Progresso honesto**: etapas concluídas de total, nunca percentual que engane.
+- **Erro sem culpa**: o erro é tratado como parte do aprendizado, com explicação e caminho para corrigir.
+- **Sem vergonha de errar em quiz**: a tentativa é contada como esforço, não como fracasso.
+- **Aprender fazendo**: a prática (SQL, entrega) deve estar próxima da leitura, não em outra área.
+- **Linguagem simples**: frases curtas, verbos no imperativo, termos técnicos explicados.
+- **Mobile como padrão**: navegação com gesto e tela inferior fixa quando fizer sentido.
+- **Nada depende de cor sozinha**: status sempre tem texto ou ícone.
+
+### 5.3 Sistema de design
+
+Defina:
+- **Tokens de cor** (claro e escuro), com contraste mínimo WCAG AA para texto e componentes. Cores de marca vêm de variáveis, para que cada instituição possa trocá-las.
+- **Tipografia**: uma família para texto e uma para código (SQL e código-fonte). Escala de tamanhos legível em celular, com no mínimo 16px para corpo de texto.
+- **Espaçamento, raio, sombras e elevação**.
+- **Breakpoints**: 360px (celular pequeno), 768px (tablet), 1280px (desktop).
+- **Componentes**: botão, campo, seletor, cartão de trilha, cartão de etapa, badge de status, barra de progresso por etapas, aviso, modal, painel lateral, menu, abas, tabela responsiva, editor de código, tabela de resultado SQL, linha do tempo, gráfico simples, empty state, skeleton, toast.
+- **Estados** de todos os componentes: padrão, foco visível, desativado, carregando, erro, sucesso.
+- **Ícones** com rótulo em texto nas ações importantes.
+- **Movimento**: animações curtas e opcionais, respeitando a preferência de redução de movimento do sistema.
+
+### 5.4 Requisitos de acessibilidade (critérios de aceite)
+
+- Navegação completa por teclado, com ordem lógica e foco visível.
+- Leitores de tela: rótulos, regiões e títulos corretos, mensagens de status anunciadas.
+- Contraste mínimo de 4,5:1 para texto normal e 3:1 para componentes e textos grandes.
+- Alvos de toque de no mínimo 44 por 44 pixels.
+- Formulários com rótulos visíveis, mensagens de erro próximas ao campo e associadas a ele.
+- Conteúdo ampliável até 200% sem perda de função.
+- Tabelas de resultado e editor de SQL acessíveis, com alternativa textual.
+- Legendas e transcrições para qualquer vídeo [FASE 2].
+
+### 5.5 Requisitos específicos de mobile
+
+- Editor de SQL e de código deve ter uma versão utilizável no celular. Proponha a solução (por exemplo, editor simplificado, teclado com símbolos frequentes, ou modo de leitura com execução).
+- Tabelas largas devem ter alternativa em cartões ou rolagem horizontal contida.
+- Leitor de aula com tipografia confortável e controle para ajustar tamanho.
+- Navegação inferior com no máximo cinco destinos.
+
+### 5.6 Marca e white-label
+
+Mostre como o mesmo sistema seria apresentado com duas marcas diferentes (por exemplo, Azimute Dev e uma marca institucional fictícia), sem alterar o código, apenas as variáveis de marca.
+
+---
+
+## 6. Arquitetura de informação
+
+Entregue:
+1. **Mapa do site** completo, em árvore, com a fase de cada página.
+2. **Navegação por perfil**: o que cada perfil vê no menu.
+3. **Hierarquia de conteúdo**: trilha, etapa, aula, bloco, e onde a biblioteca se conecta.
+4. **Localização da busca, do perfil, das notificações e do suporte**.
+
+---
+
+## 7. Código React a produzir
+
+### 7.1 Stack
+- React 18 com TypeScript (modo estrito)
+- Vite
+- React Router para rotas por URL
+- Estado com hooks e contexto. Sem biblioteca de estado global se não for necessária.
+- Dados simulados em uma camada de serviço com a mesma interface que a API real terá (por exemplo, `api.trilhas.listar()`), para que a troca depois seja trivial.
+- Estilo: CSS com variáveis de design tokens. Se usar Tailwind, defina os tokens na configuração e não use valores soltos.
+- Gráficos: uma biblioteca leve (por exemplo, Recharts) apenas para os relatórios do supervisor.
+- Diagramas: Mermaid, carregado sob demanda.
+- Testes: Vitest e Testing Library para os componentes críticos (quiz, desafio SQL, entrega, certificado).
+
+### 7.2 O que implementar agora (MVP)
+
+Implemente, com dados simulados e componentes reutilizáveis:
+1. Estrutura de pastas e rotas, com proteção por perfil.
+2. Layout responsivo com navegação por perfil (lateral no desktop, inferior no celular).
+3. Tela de início do aluno.
+4. Lista e página de trilha.
+5. Leitor de aula, com blocos, glossário e marcação de leitura.
+6. Quiz completo, com feedback por alternativa e resultado.
+7. Desafio SQL com editor, execução simulada sobre dados de exemplo e comparação com o resultado esperado.
+8. Tela de entrega de código, com status e campo de link validado.
+9. Biblioteca com busca e filtros.
+10. Certificados: lista e página pública de validação.
+11. Painel do supervisor: fila de entregas e fila de certificados, com ações.
+12. Painel do administrador: lista de conteúdos com status e prévia.
+13. Estados de carregamento, vazio, erro, sem permissão e 404.
+14. Tema claro e escuro, e troca de marca por variáveis.
+
+### 7.3 Componentes essenciais de código
+
+- `ProgressoEtapas`: mostra etapas concluídas de total, com estado de cada etapa.
+- `BlocoConteudo`: renderiza cada tipo de bloco a partir de dados, com registro de renderizadores.
+- `QuizPerguntas`: uma pergunta por vez, com feedback e explicação.
+- `EditorSQL`: editor com destaque e tabela de resultado, acessível.
+- `StatusEntrega`: badge com texto e ícone para cada situação.
+- `CartaoCertificado`: visualização com código de validação.
+- `GlossarioTermo`: termo com explicação acessível por toque e teclado.
+- `BuscaGlobal`: campo de busca com atalho de teclado e resultados agrupados.
+- `ProtegidoPorPerfil`: controle de acesso por rota.
+
+### 7.4 Não implementar agora
+
+Telas de FASE 2 e FUTURO devem ser propostas em wireframe, com a estrutura de componentes indicada, mas sem código completo.
+
+---
+
+## 8. Formato da entrega
+
+Entregue na seguinte ordem, com uma pausa para revisão ao final de cada parte:
+
+**Parte 1: Estratégia**
+- Suposições assumidas (lista curta)
+- Duas direções visuais, com recomendação
+- Arquitetura de informação
+- Fluxos principais (seção 4)
+
+**Parte 2: Design**
+- Sistema de design (tokens, tipografia, componentes e estados)
+- Telas do aluno (MVP), em desktop e mobile
+- Telas do supervisor e do administrador (MVP)
+
+**Parte 3: Telas restantes**
+- Telas de biblioteca, acesso, públicas e de erro (MVP)
+- Wireframes das telas de FASE 2 e FUTURO
+
+**Parte 4: Código React**
+- Estrutura de pastas e configuração
+- Rotas, layout e proteção por perfil
+- Componentes essenciais (seção 7.3)
+- Páginas do MVP, com dados simulados
+- Testes dos componentes críticos
+
+**Parte 5: Validação**
+- Checklist de acessibilidade aplicado às telas
+- Métricas de UX a acompanhar (conclusão por etapa, abandono, tempo por aula, erros em quiz)
+- Riscos de UX identificados e como foram tratados
+- Decisões que dependem de validação com usuários reais
+
+Ao final de cada parte, pare e liste o que deve ser revisado pelo responsável antes de seguir.
+
+---
+
+## 9. Critérios de avaliação da proposta
+
+Uma boa entrega deve atender a todos os critérios abaixo:
+
+1. Um estagiário sem experiência em TI consegue saber, na primeira tela, o que fazer.
+2. O progresso é visível e honesto em todas as telas de trilha.
+3. O quiz, o desafio SQL e a entrega de código têm feedback claro sobre o que está certo e o que falta.
+4. A tela do celular é tão utilizável quanto a do desktop, sem perda de função.
+5. Todas as telas do MVP têm estados de carregamento, vazio, erro e sem permissão.
+6. O sistema pode ser aplicado a outra organização trocando apenas configurações de marca.
+7. A acessibilidade está prevista nos componentes, não aplicada depois.
+8. As telas de fase futura não bloqueiam nem complicam o MVP.
+9. O código do MVP compila, tem tipos estritos e tem dados simulados claramente separados da interface.
+10. A recomendação de direção visual é justificada pelo público e pelo contexto, não apenas pela estética.

@@ -3,7 +3,6 @@ import { ScreenType, ThemeMode } from '../types';
 import { brandConfig } from '../config/brand';
 import {
   Compass,
-  BookOpen,
   CheckSquare,
   Terminal,
   Award,
@@ -12,15 +11,14 @@ import {
   Menu,
   X,
   ChevronDown,
-  Layers,
   Database,
   GitBranch,
   Server,
   Layout,
   Home,
-  CheckCircle2,
   Library,
-  Boxes
+  Boxes,
+  BookOpen,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -40,6 +38,7 @@ const AzimuteLogo: React.FC<{ size?: number }> = ({ size = 36 }) => (
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     className="brand-vector-logo"
+    style={{ flexShrink: 0 }}
     aria-label="Logo Oficial Azimute Dev"
   >
     <rect width="36" height="36" rx="9" fill="url(#azimute-grad)" />
@@ -90,19 +89,30 @@ export const Navbar: React.FC<NavbarProps> = ({
     <>
       <header className="site-header no-print">
         <div className="header-container" style={{ paddingLeft: '1rem' }}>
-          {/* Brand / Logo Oficial */}
+          {/* Brand / Logo Oficial com Proteção Anti-Wrapping */}
           <div
-            className="header-brand flex items-center gap-3 cursor-pointer"
+            className="header-brand"
             onClick={() => handleNav('home')}
-            style={{ margin: 0, padding: 0 }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.65rem',
+              cursor: 'pointer',
+              flexShrink: 0,
+              userSelect: 'none',
+              minWidth: 'max-content',
+            }}
           >
-            <AzimuteLogo size={38} />
-            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
-              <span className="font-extrabold tracking-tight text-slate-900 dark:text-white" style={{ fontSize: '1.15rem' }}>
-                {brandConfig.productName}
-              </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                {brandConfig.departmentName}
+            <AzimuteLogo size={36} />
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15, flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span className="brand-title" style={{ fontSize: '1.15rem', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                  Azimute
+                </span>
+                <span className="brand-dot" style={{ fontWeight: 800, color: 'var(--primary, #0ea5e9)' }}>Dev</span>
+              </div>
+              <span className="brand-sub" style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', whiteSpace: 'nowrap' }}>
+                Aceleração Técnica • SEMOB/DF
               </span>
             </div>
           </div>
@@ -247,6 +257,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Award className="nav-icon" size={16} />
               Certificado
             </button>
+
           </nav>
 
           {/* Actions (Progress & Theme & Hamburger) */}
@@ -265,14 +276,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             </div>
 
-            {/* Theme Toggle */}
+            {/* Theme Toggle com Sol Branco no modo escuro */}
             <button
               className="theme-btn"
               onClick={onToggleTheme}
               title={`Alternar para tema ${theme === 'dark' ? 'claro' : 'escuro'}`}
               aria-label="Alternar tema"
             >
-              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+              {theme === 'dark' ? <Sun size={18} style={{ color: '#ffffff' }} /> : <Moon size={18} />}
             </button>
 
             {/* Mobile hamburger */}
