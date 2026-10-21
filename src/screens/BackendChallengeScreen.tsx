@@ -14,6 +14,9 @@ import {
   FileCode2,
   FileText,
   Boxes,
+  Clock,
+  MapPin,
+  Compass,
 } from 'lucide-react';
 import { ChallengeSubmissionPanel } from '../components/ChallengeSubmissionPanel';
 import { ChallengeSubmission } from '../types';
@@ -40,234 +43,323 @@ const ARCH_LAYERS: ArchLayer[] = [
   {
     id: 'entity',
     name: '1. Entity',
-    folder: 'src/veiculos/entities/veiculo.entity.ts',
-    role: 'Mapeamento ORM (TypeORM) que espelha fielmente a tabela do PostgreSQL com tipagem estrita de colunas e chaves.',
+    folder: 'src/entity/ItinerarioDescritivo.ts',
+    role: 'Mapeamento ORM (TypeORM) que espelha as tabelas reais tab_itinerario_descritivo e tab_horario com tipagem estrita de colunas no schema dados_mobilidade.',
     mustDo: [
-      'Decorar a classe com @Entity({ name: "tab_veiculo", schema: "dados_mobilidade" })',
-      'Definir @PrimaryGeneratedColumn("increment") para id_veiculo',
-      'Mapear nr_placa, nr_prefixo, ano_fabricacao, tp_combustivel e relacionar com id_linha via @ManyToOne',
+      'Decorar a classe com @Entity({ name: "tab_itinerario_descritivo", schema: "dados_mobilidade" })',
+      'Definir @PrimaryGeneratedColumn({ name: "id_itinerario" }) para a chave primária',
+      'Mapear colunas reais: nm_sequencia (int), nm_via (varchar), localidade (varchar)',
     ],
     mustNotDo: [
-      'NUNCA colocar lógica de negócio ou queries SQL dentro da Entity',
-      'NUNCA importar Request, Response ou decorators HTTP nesta camada',
+      'NUNCA colocar queries SQL ou lógica de negócio dentro da Entity',
+      'NUNCA esquecer o schema "dados_mobilidade" no decorator @Entity',
     ],
-    codeSample: `@Entity({ name: 'tab_veiculo', schema: 'dados_mobilidade' })
-export class VeiculoEntity {
-  @PrimaryGeneratedColumn()
-  id_veiculo: number;
+    codeSample: `import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
-  @Column({ length: 7, unique: true })
-  nr_placa: string;
+@Entity({ name: 'tab_itinerario_descritivo', schema: 'dados_mobilidade' })
+export class ItinerarioDescritivo {
+  @PrimaryGeneratedColumn({ name: 'id_itinerario' })
+  id: number;
 
-  @Column({ length: 8 })
-  nr_prefixo: string;
+  @Column({ name: 'nm_sequencia', type: 'int' })
+  sequencia: number;
 
-  @Column({ type: 'int' })
-  ano_fabricacao: number;
+  @Column({ name: 'nm_via', length: 150 })
+  nomeVia: string;
 
-  @Column({ default: true })
-  st_ativo: boolean;
+  @Column({ name: 'localidade', length: 100, nullable: true })
+  localidade: string;
+}
 
-  @ManyToOne(() => LinhaEntity, { nullable: false })
-  @JoinColumn({ name: 'id_linha' })
-  linha: LinhaEntity;
+// Entidade para o Quadro de Horários (tab_horario):
+@Entity({ name: 'tab_horario', schema: 'dados_mobilidade' })
+export class Horario {
+  @PrimaryGeneratedColumn({ name: 'id_horario' })
+  id: number;
+
+  @Column({ name: 'hr_prevista', length: 5 })
+  horario: string;
+
+  @Column({ name: 'sentido', length: 20 })
+  sentido: string;
+
+  @Column({ default: false }) segunda: boolean;
+  @Column({ default: false }) terca: boolean;
+  @Column({ default: false }) quarta: boolean;
+  @Column({ default: false }) quinta: boolean;
+  @Column({ default: false }) sexta: boolean;
+  @Column({ default: false }) sabado: boolean;
+  @Column({ default: false }) domingo: boolean;
 }`,
   },
   {
     id: 'dto',
     name: '2. DTO',
-    folder: 'src/veiculos/dto/create-veiculo.dto.ts',
-    role: 'Data Transfer Object para validação de entrada via class-validator e documentação OpenAPI Swagger.',
+    folder: 'src/dto/Linha.ts',
+    role: 'Data Transfer Object para validação de filtros de entrada via class-validator e documentação automática OpenAPI Swagger.',
     mustDo: [
-      'Validar formato de placa Mercosul com regex: @Matches(/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/)',
-      'Garantir ano de fabricação positivo com @Min(2000) e @Max(new Date().getFullYear() + 1)',
-      'Documentar cada campo com decorators do Swagger: @ApiProperty({ example: "ABC1D23" })',
+      'Validar parâmetro opcional tipoDia com @IsIn(["UTIL", "SABADO", "DOMINGO"])',
+      'Documentar cada campo com decorators do Swagger: @ApiPropertyOptional({ example: "UTIL" })',
+      'Definir DTO de atualização de status operacional com validações estritas',
     ],
     mustNotDo: [
-      'NUNCA permitir dados não tipados ou any no payload',
-      'NUNCA confiar no body sem aplicar ValidationPipe({ whitelist: true })',
+      'NUNCA permitir tipos genéricos ou any nos payloads de entrada',
+      'NUNCA deixar campos de query sem decorators de documentação OpenAPI',
     ],
-    codeSample: `import { IsString, IsNotEmpty, Matches, IsInt, Min, Max } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+    codeSample: `import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
+import { IsOptional, IsString, IsIn, IsBoolean } from 'class-validator';
 
-export class CreateVeiculoDto {
-  @ApiProperty({ description: 'Placa padrão Mercosul', example: 'BRA2E19' })
-  @IsString()
-  @IsNotEmpty()
-  @Matches(/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/, {
-    message: 'Placa deve seguir o padrão Mercosul (ex: ABC1D23)',
+export class FilterHorarioDto {
+  @ApiPropertyOptional({
+    description: 'Filtrar partidas por tipo de dia da operação',
+    enum: ['UTIL', 'SABADO', 'DOMINGO'],
+    example: 'UTIL',
   })
-  nr_placa: string;
-
-  @ApiProperty({ description: 'Prefixo operacional da operadora', example: '112450' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  nr_prefixo: string;
+  @IsIn(['UTIL', 'SABADO', 'DOMINGO'], {
+    message: 'tipoDia deve ser UTIL, SABADO ou DOMINGO',
+  })
+  tipoDia?: string;
+}
 
-  @ApiProperty({ description: 'Ano de fabricação do chassi', example: 2023 })
-  @IsInt()
-  @Min(2005)
-  ano_fabricacao: number;
+export class UpdateStatusLinhaDto {
+  @ApiProperty({ description: 'Indica se a linha está ativa operacionalmente', example: true })
+  @IsBoolean()
+  stAtivo: boolean;
 
-  @ApiProperty({ description: 'ID da Linha vinculada', example: 104 })
-  @IsInt()
-  id_linha: number;
+  @ApiPropertyOptional({ description: 'Motivo da alteração ou despacho da fiscalização' })
+  @IsOptional()
+  @IsString()
+  motivo?: string;
 }`,
   },
   {
     id: 'repository',
     name: '3. Repository',
-    folder: 'src/veiculos/veiculo.repository.ts',
-    role: 'Isolamento de persistência de dados. Executa queries com WHERE parametrizado e filtros operacionais.',
+    folder: 'src/repository/Linha.ts',
+    role: 'Isolamento de persistência SQL. Executa queries com WHERE parametrizado ($1, $2) conectando as tabelas dominadas no Desafio SQL.',
     mustDo: [
-      'Estender ou injetar Repository<VeiculoEntity> gerenciado pelo TypeORM',
-      'Implementar buscas parametrizadas garantindo WHERE cd_linha ou WHERE nr_placa',
-      'Tratar paginação e isolar consultas geoespaciais caso aplicável',
+      'Utilizar this.dataSource.query() com cláusulas WHERE parametrizadas ($1, $2)',
+      'Unir tab_linha, tab_itinerario e tab_itinerario_descritivo ordenando por d.nm_sequencia ASC',
+      'Unir tab_linha, tab_operadora_linha e tab_horario filtrando por dias da semana',
     ],
     mustNotDo: [
-      'NUNCA concatenar parâmetros em SQL bruto (risco crítico de SQL Injection)',
-      'NUNCA executar comandos de escrita (UPDATE/DELETE) sem filtro WHERE explícito',
+      'PROIBIDO concatenar variáveis em SQL com "+" ou "\${param}" (Risco crítico de SQL Injection)',
+      'NUNCA disparar exceções HTTP 404 dentro do repositório; retorne lista vazia ou null',
     ],
     codeSample: `@Injectable()
-export class VeiculoRepository {
-  constructor(
-    @InjectRepository(VeiculoEntity)
-    private readonly repo: Repository<VeiculoEntity>,
-  ) {}
+export class LinhaRepository {
+  constructor(private readonly dataSource: DataSource) {}
 
-  async findByPlaca(placa: string): Promise<VeiculoEntity | null> {
-    return this.repo.findOne({ where: { nr_placa: placa.toUpperCase() } });
+  // Consulta do Itinerário Descritivo (Tabelas do Desafio SQL)
+  async findItinerarioByCodigo(codigo: string): Promise<ItinerarioDescritivo[]> {
+    const sql = \`
+      SELECT 
+        d.nm_sequencia AS "sequencia",
+        d.nm_via AS "nomeVia",
+        d.localidade AS "localidade",
+        i.lin_sentido AS "sentido"
+      FROM dados_mobilidade.tab_linha l
+      INNER JOIN dados_mobilidade.tab_itinerario i ON l.id_linha = i.id_linha
+      INNER JOIN dados_mobilidade.tab_itinerario_descritivo d ON i.id_itinerario = d.id_itinerario
+      WHERE l.cd_linha = $1
+      ORDER BY d.nm_sequencia ASC
+    \`;
+    return this.dataSource.query(sql, [codigo]);
   }
 
-  async findByLinha(id_linha: number): Promise<VeiculoEntity[]> {
-    return this.repo.find({
-      where: { linha: { id_linha }, st_ativo: true },
-      relations: ['linha'],
-    });
+  // Consulta do Quadro de Horários Programados
+  async findHorariosByCodigo(codigo: string, tipoDia?: string): Promise<any[]> {
+    let sql = \`
+      SELECT 
+        h.hr_prevista AS "horario",
+        h.sentido AS "sentido",
+        h.segunda, h.terca, h.quarta, h.quinta, h.sexta, h.sabado, h.domingo
+      FROM dados_mobilidade.tab_linha l
+      INNER JOIN dados_mobilidade.tab_operadora_linha ol ON l.id_linha = ol.id_linha
+      INNER JOIN dados_mobilidade.tab_horario h ON ol.id_operadora_linha = h.id_operadora_linha
+      WHERE l.cd_linha = $1
+    \`;
+    const params: any[] = [codigo];
+
+    if (tipoDia === 'UTIL') {
+      sql += \` AND (h.segunda = true OR h.terca = true OR h.quarta = true OR h.quinta = true OR h.sexta = true)\`;
+    } else if (tipoDia === 'SABADO') {
+      sql += \` AND h.sabado = true\`;
+    } else if (tipoDia === 'DOMINGO') {
+      sql += \` AND h.domingo = true\`;
+    }
+
+    sql += \` ORDER BY h.hr_prevista ASC\`;
+    return this.dataSource.query(sql, params);
   }
 }`,
   },
   {
     id: 'service',
     name: '4. Service',
-    folder: 'src/veiculos/veiculo.service.ts',
-    role: 'Núcleo das regras de negócio. Valida unicidade de placa, idade máxima da frota da SEMOB e lança exceções semânticas.',
+    folder: 'src/service/Linha.ts',
+    role: 'Núcleo das regras de negócio. Valida se a linha existe no cadastro antes de buscar itinerários e lança exceções semânticas da SEMOB.',
     mustDo: [
-      'Verificar se a placa já existe antes de cadastrar e lançar ConflictException (409)',
-      'Validar idade máxima do ônibus (regra SEMOB: frota máxima de 10 anos para convencionais)',
-      'Lançar NotFoundException (404) quando o veículo ou a linha vinculada não existir',
+      'Verificar se a linha existe chamando this.linhaRepository.findOneByCodigo(codigo)',
+      'Lançar EntityNotFoundException("Linha", codigo) (404) quando o código não existir',
+      'Agrupar os horários por sentido (IDA / VOLTA) ou retornar formato amigável',
     ],
     mustNotDo: [
       'NUNCA manipular objetos HTTP req/res diretamente dentro do Service',
-      'NUNCA deixar passar erros de banco de dados sem encapsular em exceções de domínio',
+      'NUNCA retornar 200 OK com array vazio caso a linha sequer exista no cadastro',
     ],
     codeSample: `@Injectable()
-export class VeiculoService {
-  constructor(
-    private readonly veiculoRepo: VeiculoRepository,
-    private readonly linhaRepo: LinhaRepository,
-  ) {}
+export class LinhaService {
+  constructor(private readonly linhaRepo: LinhaRepository) {}
 
-  async criarVeiculo(dto: CreateVeiculoDto): Promise<VeiculoEntity> {
-    const existe = await this.veiculoRepo.findByPlaca(dto.nr_placa);
-    if (existe) {
-      throw new ConflictException('Veículo com esta placa já está cadastrado no SISMOB');
-    }
-
-    const linha = await this.linhaRepo.findById(dto.id_linha);
+  async obterItinerario(codigo: string): Promise<ItinerarioDescritivo[]> {
+    // 1. Regra de Negócio: a linha existe na base da SEMOB?
+    const linha = await this.linhaRepo.findOneByCodigo(codigo);
     if (!linha) {
-      throw new NotFoundException('Linha informada não existe');
+      throw new EntityNotFoundException('Linha', codigo); // HTTP 404
     }
 
-    return this.veiculoRepo.save({ ...dto, linha });
+    // 2. Busca o itinerário descritivo ordenado
+    const itinerario = await this.linhaRepo.findItinerarioByCodigo(codigo);
+    if (!itinerario || itinerario.length === 0) {
+      throw new NotFoundException(\`Itinerário ainda não cadastrado para a linha \${codigo}\`);
+    }
+
+    return itinerario;
+  }
+
+  async obterHorarios(codigo: string, tipoDia?: string): Promise<any> {
+    const linha = await this.linhaRepo.findOneByCodigo(codigo);
+    if (!linha) {
+      throw new EntityNotFoundException('Linha', codigo); // HTTP 404
+    }
+
+    const partidas = await this.linhaRepo.findHorariosByCodigo(codigo, tipoDia);
+    return {
+      linha: { codigo: linha.codigo, descricao: linha.descricao },
+      tipoDia: tipoDia || 'TODOS',
+      totalPartidas: partidas.length,
+      partidas,
+    };
   }
 }`,
   },
   {
     id: 'controller',
     name: '5. Controller',
-    folder: 'src/veiculos/veiculo.controller.ts',
-    role: 'Porta de entrada HTTP. Recebe payloads, valida tokens via Guards, anota rotas no Swagger e devolve respostas REST.',
+    folder: 'src/controller/Linha.ts',
+    role: 'Porta de entrada HTTP. Expõe endpoints REST semânticos, decora Swagger OpenAPI e protege rotas administrativas com JWT.',
     mustDo: [
-      'Anotar classe com @ApiTags("Veículos") e @Controller("veiculos")',
-      'Proteger rotas de mutação (POST, PUT, DELETE) com @UseGuards(JwtAuthGuard)',
-      'Retornar status HTTP semânticos (200 OK, 201 Created, 204 No Content)',
+      'Anotar rotas públicas @Get(":codigo/itinerario") e @Get(":codigo/horarios")',
+      'Proteger rota de alteração operacional com @UseGuards(JwtAuthGuard) e @ApiBearerAuth()',
+      'Documentar respostas HTTP com @ApiOperation e @ApiResponse para o Swagger',
     ],
     mustNotDo: [
-      'NUNCA colocar lógicas de cálculo ou queries dentro de métodos do controller',
-      'NUNCA deixar rotas sensíveis de gravação públicas sem autenticação JWT',
+      'NUNCA colocar queries SQL ou lógica de cálculo de trajeto dentro do Controller',
+      'NUNCA expor rotas de escrita (POST, PUT, DELETE) sem autenticação JWT',
     ],
-    codeSample: `@ApiTags('Veículos')
-@Controller('veiculos')
-export class VeiculoController {
-  constructor(private readonly veiculoService: VeiculoService) {}
+    codeSample: `@ApiTags('Linhas')
+@Controller('linhas')
+export class LinhaController {
+  constructor(private readonly linhaService: LinhaService) {}
 
-  @Get()
-  @ApiOperation({ summary: 'Listar frota de veículos com filtros' })
-  async listar(@Query('linhaId') linhaId?: number) {
-    return this.veiculoService.listar(linhaId);
+  @Get(':codigo/itinerario')
+  @ApiOperation({ summary: 'Obter trajeto descritivo sequencial de vias da linha' })
+  @ApiResponse({ status: 200, description: 'Sequência de vias retornada com sucesso' })
+  @ApiResponse({ status: 404, description: 'Linha ou itinerário não encontrado no SISMOB' })
+  async obterItinerario(@Param('codigo') codigo: string) {
+    return this.linhaService.obterItinerario(codigo);
   }
 
-  @Post()
+  @Get(':codigo/horarios')
+  @ApiOperation({ summary: 'Obter quadro de horários programados da linha' })
+  @ApiResponse({ status: 200, description: 'Quadro de partidas retornado com sucesso' })
+  @ApiResponse({ status: 404, description: 'Linha não cadastrada' })
+  async obterHorarios(
+    @Param('codigo') codigo: string,
+    @Query() filters: FilterHorarioDto,
+  ) {
+    return this.linhaService.obterHorarios(codigo, filters.tipoDia);
+  }
+
+  @Put(':codigo/status')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Cadastrar novo veículo no SISMOB (Apenas Fiscais Autenticados)' })
-  @HttpCode(HttpStatus.CREATED)
-  async criar(@Body() dto: CreateVeiculoDto) {
-    return this.veiculoService.criarVeiculo(dto);
+  @ApiOperation({ summary: 'Atualizar status operacional da linha (Requer JWT da SEMOB)' })
+  @ApiResponse({ status: 200, description: 'Status atualizado com sucesso' })
+  @ApiResponse({ status: 401, description: 'Não autorizado (Token JWT ausente ou expirado)' })
+  async atualizarStatus(
+    @Param('codigo') codigo: string,
+    @Body() dto: UpdateStatusLinhaDto,
+  ) {
+    return this.linhaService.atualizarStatus(codigo, dto);
   }
 }`,
   },
   {
     id: 'module',
     name: '6. Module',
-    folder: 'src/veiculos/veiculo.module.ts',
-    role: 'Módulo de injeção de dependências do NestJS que encapsula controllers, providers e exporta o service.',
+    folder: 'src/module/Linha.ts',
+    role: 'Módulo de injeção de dependências do NestJS que encapsula controllers, providers e registra as entidades no TypeORM.',
     mustDo: [
-      'Importar TypeOrmModule.forFeature([VeiculoEntity])',
-      'Registrar VeiculoController em controllers: [...]',
-      'Registrar VeiculoService e VeiculoRepository em providers: [...]',
-      'Exportar VeiculoService para que outros módulos (ex: Fiscalizacao) possam consumi-lo',
+      'Importar TypeOrmModule.forFeature([Linha, ItinerarioDescritivo, Horario])',
+      'Registrar LinhaController em controllers: [LinhaController]',
+      'Registrar LinhaService e LinhaRepository em providers: [LinhaService, LinhaRepository]',
+      'Exportar LinhaService para módulos integradores (como o futuro módulo de Telemetria/VOL)',
     ],
     mustNotDo: [
-      'NUNCA esquecer de registrar os repositories nos providers',
-      'NUNCA criar dependências circulares entre módulos sem forwardRef()',
+      'NUNCA esquecer de registrar o LinhaRepository nos providers do módulo',
+      'NUNCA criar imports circulares sem a função forwardRef()',
     ],
-    codeSample: `@Module({
+    codeSample: `import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Linha } from '../entity/Linha';
+import { ItinerarioDescritivo, Horario } from '../entity/ItinerarioDescritivo';
+import { LinhaController } from '../controller/Linha';
+import { LinhaService } from '../service/Linha';
+import { LinhaRepository } from '../repository/Linha';
+
+@Module({
   imports: [
-    TypeOrmModule.forFeature([VeiculoEntity]),
-    LinhasModule, // Importa dependência de validação de linhas
+    TypeOrmModule.forFeature([Linha, ItinerarioDescritivo, Horario]),
   ],
-  controllers: [VeiculoController],
-  providers: [VeiculoService, VeiculoRepository],
-  exports: [VeiculoService],
+  controllers: [LinhaController],
+  providers: [LinhaService, LinhaRepository],
+  exports: [LinhaService, LinhaRepository],
 })
-export class VeiculoModule {}`,
+export class LinhaModule {}`,
   },
   {
     id: 'appmodule',
-    name: '7. AppModule',
+    name: '7. AppModule & Swagger',
     folder: 'src/app.module.ts',
-    role: 'Raiz da aplicação NestJS. Agrega AuthModule (JWT), DatabaseModule, LinhasModule e o novo VeiculoModule.',
+    role: 'Raiz da aplicação NestJS. Agrega AuthModule (JWT), DatabaseModule e LinhaModule rodando no Docker na porta 8097.',
     mustDo: [
-      'Importar ConfigModule para variáveis de ambiente (.env)',
-      'Importar AuthModule com JwtStrategy e JwtAuthGuard global ou por rota',
-      'Adicionar VeiculoModule à lista principal de imports do sistema',
+      'Verificar se LinhaModule está importado no AppModule raiz',
+      'Validar se AuthModule está configurado para emitir e verificar tokens JWT',
+      'Testar todos os endpoints na interface gráfica Swagger em http://localhost:8097/api/docs',
     ],
     mustNotDo: [
-      'NUNCA deixar segredos de JWT hardcoded no app.module.ts',
-      'NUNCA subir a API sem registrar o módulo recém-criado na árvore raiz',
+      'NUNCA deixar segredos JWT em texto puro no código; use variáveis de ambiente (.env)',
+      'NUNCA considerar o desafio concluído sem testar os retornos 200, 401 e 404 no Swagger',
     ],
     codeSample: `@Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({ useClass: DatabaseConfigService }),
-    AuthModule,     // Provedor de JWT Tokens e Guards
-    LinhasModule,   // Módulo validado do ecossistema base
-    VeiculoModule,  // MÓDULO NOVO IMPLEMENTADO NO DESAFIO
+    AuthModule,    // Autenticação JWT (admin / sismob@2026)
+    LinhaModule,   // Módulo oficial com Itinerários e Horários
   ],
 })
-export class AppModule {}`,
+export class AppModule {}
+
+// No Swagger (http://localhost:8097/api/docs):
+// 1. Teste GET /api/linhas/0.111/itinerario -> 200 OK com sequência de vias
+// 2. Teste GET /api/linhas/0.111/horarios?tipoDia=UTIL -> 200 OK com quadro de partidas
+// 3. Teste GET /api/linhas/9.999/itinerario -> 404 Not Found
+// 4. Teste PUT /api/linhas/0.111/status sem token -> 401 Unauthorized`,
   },
 ];
 
@@ -275,61 +367,97 @@ const FILE_SEQUENCE_STEPS = [
   {
     key: 'back-step-1',
     order: '1º Arquivo',
-    file: 'src/veiculos/entities/veiculo.entity.ts',
-    title: 'Modelar a Entidade de Veículo (TypeORM Entity)',
-    desc: 'Mapeie as colunas da tabela dados_mobilidade.tab_veiculo, chaves primárias e o relacionamento com LinhaEntity.',
+    file: 'src/entity/ItinerarioDescritivo.ts',
+    title: 'Modelar Entidades de Itinerário e Horário (TypeORM)',
+    desc: 'Mapeie as tabelas dados_mobilidade.tab_itinerario_descritivo e tab_horario com colunas físicas e chaves primárias.',
   },
   {
     key: 'back-step-2',
     order: '2º Arquivo',
-    file: 'src/veiculos/dto/create-veiculo.dto.ts',
-    title: 'Definir DTOs com Validação Estrita (class-validator)',
-    desc: 'Crie os DTOs com decorators de validação (Regex de placa Mercosul, ano de fabricação) e documentação Swagger.',
+    file: 'src/dto/Linha.ts',
+    title: 'Criar DTOs de Filtro e Contratos OpenAPI (class-validator)',
+    desc: 'Crie FilterHorarioDto com validação @IsIn(["UTIL", "SABADO", "DOMINGO"]) e UpdateStatusLinhaDto com anotações Swagger.',
   },
   {
     key: 'back-step-3',
     order: '3º Arquivo',
-    file: 'src/veiculos/veiculo.repository.ts',
-    title: 'Implementar a Persistência (Custom Repository)',
-    desc: 'Isole as consultas ao banco: buscas por placa, filtros por linha e operações de escrita com cláusula WHERE explícita.',
+    file: 'src/repository/Linha.ts',
+    title: 'Implementar Queries Parametrizadas no Repository',
+    desc: 'Escreva as queries SQL unindo tab_linha, tab_itinerario, tab_itinerario_descritivo e tab_horario com proteção contra SQL Injection ($1).',
   },
   {
     key: 'back-step-4',
     order: '4º Arquivo',
-    file: 'src/veiculos/veiculo.service.ts',
-    title: 'Codificar as Regras de Domínio e Validações (Service)',
-    desc: 'Implemente regras de negócio da SEMOB: duplicidade de placa, limite de idade da frota (10 anos) e exceções semânticas.',
+    file: 'src/service/Linha.ts',
+    title: 'Codificar Regras de Negócio e HTTP 404 no Service',
+    desc: 'Implemente a checagem de existência da linha e dispare EntityNotFoundException caso o código não exista no SISMOB.',
   },
   {
     key: 'back-step-5',
     order: '5º Arquivo',
-    file: 'src/veiculos/veiculo.controller.ts',
-    title: 'Expor os Endpoints HTTP com Guards JWT (Controller)',
-    desc: 'Mapeie as rotas REST com status codes corretos, documentação OpenAPI Swagger e proteção @UseGuards(JwtAuthGuard).',
+    file: 'src/controller/Linha.ts',
+    title: 'Expor Endpoints REST e Proteger com Guards JWT',
+    desc: 'Mapeie GET :codigo/itinerario, GET :codigo/horarios e a rota administrativa PUT :codigo/status com @UseGuards(JwtAuthGuard).',
   },
   {
     key: 'back-step-6',
     order: '6º Arquivo',
-    file: 'src/veiculos/veiculo.module.ts',
-    title: 'Empacotar o Módulo NestJS (Dependency Injection)',
-    desc: 'Conecte Entity, Repository, Service e Controller no módulo independente de Veículos.',
+    file: 'src/module/Linha.ts',
+    title: 'Registrar Dependências no Módulo NestJS',
+    desc: 'Garanta que TypeOrmModule.forFeature inclua as novas entidades e que LinhaService e LinhaRepository estejam nos providers.',
   },
   {
     key: 'back-step-7',
     order: '7º Arquivo',
-    file: 'src/app.module.ts',
-    title: 'Acoplar na Raiz da Aplicação (AppModule)',
-    desc: 'Importe o VeiculoModule no módulo principal para disponibilizar os endpoints na API e na documentação Swagger.',
+    file: 'http://localhost:8097/api/docs',
+    title: 'Testar Endpoints de Ponta a Ponta no Swagger',
+    desc: 'Abra o Swagger, teste as rotas públicas, faça login com admin/sismob@2026, desbloqueie o Authorize e valide as respostas 200, 401 e 404.',
   },
 ];
 
 const API_ENDPOINTS = [
-  { method: 'GET', path: '/veiculos', auth: 'Público', status: '200 OK', desc: 'Lista veículos cadastrados com filtros opcionais (?linhaId=104&ano=2023)' },
-  { method: 'GET', path: '/veiculos/:id', auth: 'Público', status: '200 / 404', desc: 'Retorna dados completos de um veículo específico pelo ID ou código' },
-  { method: 'GET', path: '/veiculos/linha/:cd_linha', auth: 'Público', status: '200 OK', desc: 'Retorna toda a frota operacional alocada a uma linha específica (ex: 0.110)' },
-  { method: 'POST', path: '/veiculos', auth: 'Bearer JWT', status: '201 / 400 / 409', desc: 'Cadastra novo veículo com validação de placa Mercosul e checagem de duplicidade' },
-  { method: 'PUT', path: '/veiculos/:id', auth: 'Bearer JWT', status: '200 / 404', desc: 'Atualiza dados cadastrais do veículo (status ativo, prefixo) filtrando pelo ID no WHERE' },
-  { method: 'DELETE', path: '/veiculos/:id', auth: 'Bearer JWT', status: '204 / 404', desc: 'Inativa operacionalmente o veículo na frota da SEMOB de forma segura' },
+  {
+    method: 'GET',
+    path: '/api/linhas',
+    auth: 'Público',
+    status: '200 OK',
+    desc: 'Lista linhas cadastradas com filtros opcionais (?codigo=0.111&tarifaMaxima=5.50)',
+  },
+  {
+    method: 'GET',
+    path: '/api/linhas/:codigo',
+    auth: 'Público',
+    status: '200 / 404',
+    desc: 'Retorna detalhes cadastrais de uma linha específica pelo código (ex: 0.111)',
+  },
+  {
+    method: 'GET',
+    path: '/api/linhas/:codigo/itinerario',
+    auth: 'Público',
+    status: '200 / 404',
+    desc: 'Retorna o trajeto sequencial de vias e localidades percorrido pela linha (ordenado por nm_sequencia)',
+  },
+  {
+    method: 'GET',
+    path: '/api/linhas/:codigo/horarios',
+    auth: 'Público',
+    status: '200 / 404',
+    desc: 'Retorna o quadro de partidas programadas com filtro opcional por tipo de dia (?tipoDia=UTIL|SABADO|DOMINGO)',
+  },
+  {
+    method: 'PUT',
+    path: '/api/linhas/:codigo/status',
+    auth: 'Bearer JWT',
+    status: '200 / 401 / 404',
+    desc: 'Atualiza o status operacional da linha no SISMOB (Apenas fiscais e administradores autenticados)',
+  },
+  {
+    method: 'GET',
+    path: '/api/linhas/:codigo/telemetria',
+    auth: 'Público',
+    status: '200 / 404',
+    desc: 'Prévia de dados de telemetria GPS em tempo real (base arquitetural para o futuro Infoônibus / Módulo VOL)',
+  },
 ];
 
 export const BackendChallengeScreen: React.FC<BackendChallengeScreenProps> = ({
@@ -350,11 +478,12 @@ export const BackendChallengeScreen: React.FC<BackendChallengeScreenProps> = ({
           <span className="hero-badge">
             <Server size={14} /> Desafio Prático • Engenharia Backend
           </span>
-          <h1>Desafio de Engenharia Backend: Módulo de Veículos (SISMOB)</h1>
+          <h1>Desafio Backend: APIs de Linhas do SISMOB (Itinerários e Horários)</h1>
           <p>
-            Construa o módulo completo de <strong>Veículos da Frota SEMOB</strong> utilizando o padrão
-            arquitetural oficial da SUTINF em <strong>7 camadas NestJS + TypeORM</strong>, protegido por
-            autenticação <strong>JWT</strong> e documentado com <strong>OpenAPI Swagger</strong>.
+            Construa endpoints corporativos de alta performance no <strong>SISMOB-BOILERPLATE</strong> utilizando o
+            padrão oficial da SUTINF em <strong>NestJS + TypeORM</strong>. Conecte as tabelas reais do Desafio SQL
+            (<code>tab_itinerario_descritivo</code> e <code>tab_horario</code>), aplique segurança com <strong>JWT</strong> e
+            documente tudo no <strong>Swagger</strong>, preparando a API para o Frontend e o futuro <strong>Infoônibus</strong>.
           </p>
           <div className="hero-actions">
             <button className="btn-secondary" onClick={() => onOpenModule('mod-4-backend')}>
@@ -364,14 +493,14 @@ export const BackendChallengeScreen: React.FC<BackendChallengeScreenProps> = ({
         </div>
       </section>
 
-      {/* Roteiro da Missão: Do Clone ao Módulo de Veículos */}
+      {/* Roteiro da Missão: Do Clone às Novas APIs de Linha */}
       <section className="section-card">
         <h2>
           <GitBranch size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
-          Roteiro da Missão: Como executar este desafio passo a passo
+          Roteiro da Missão: Do SISMOB-BOILERPLATE aos Endpoints de Mobilidade
         </h2>
         <p className="text-muted" style={{ marginTop: '0.3rem', marginBottom: '1.25rem' }}>
-          Este desafio simula o fluxo diário de engenharia na SUTINF/SEMOB. Siga os 3 passos estruturantes:
+          Este desafio simula o fluxo diário de desenvolvimento na SUTINF/SEMOB. Siga os 3 passos estruturantes:
         </p>
 
         <div className="cards-grid three-cols">
@@ -379,44 +508,44 @@ export const BackendChallengeScreen: React.FC<BackendChallengeScreenProps> = ({
             <span className="status-pill pending" style={{ marginBottom: '0.5rem' }}>Passo 1 • Setup</span>
             <h3 style={{ fontSize: '1.05rem', marginTop: '0.3rem' }}>Clonar Boilerplate SEMOB</h3>
             <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.5rem', lineHeight: 1.5 }}>
-              Clone o repositório base com a estrutura NestJS, Docker Compose e banco PostgreSQL já configurados:
+              Clone o repositório base com a estrutura NestJS, Docker Compose e PostgreSQL PostGIS já configurados:
             </p>
             <pre className="code-block" style={{ fontSize: '0.78rem', margin: '0.75rem 0' }}>
-              <code>git clone https://gitlab.semob.df.gov.br/sutinf/sismob-backend.git&#10;cd sismob-backend&#10;npm install</code>
+              <code>git clone https://github.com/pedro090904/SISMOB-BOILERPLATE.git&#10;cd SISMOB-BOILERPLATE&#10;npm install</code>
             </pre>
           </div>
 
           <div className="glass-card" style={{ borderTop: '4px solid #10b981', padding: '1.25rem' }}>
             <span className="status-pill passed" style={{ marginBottom: '0.5rem' }}>Passo 2 • Validação</span>
-            <h3 style={{ fontSize: '1.05rem', marginTop: '0.3rem' }}>Subir e Testar /linhas</h3>
+            <h3 style={{ fontSize: '1.05rem', marginTop: '0.3rem' }}>Subir Banco e Testar /linhas</h3>
             <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.5rem', lineHeight: 1.5 }}>
-              Suba o banco e a API com Docker, verifique o módulo de <code>/linhas</code> já existente e explore o Swagger:
+              Suba o banco no Rancher Desktop e inicie o NestJS. O <code>Seed.ts</code> criará as linhas iniciais:
             </p>
             <pre className="code-block" style={{ fontSize: '0.78rem', margin: '0.75rem 0' }}>
-              <code>docker compose up -d&#10;npm run start:dev&#10;# Acesse: http://localhost:3333/api/docs</code>
+              <code>docker compose up -d&#10;npm run start:dev&#10;# Acesse: http://localhost:8097/api/docs</code>
             </pre>
           </div>
 
           <div className="glass-card" style={{ borderTop: '4px solid #f59e0b', padding: '1.25rem' }}>
             <span className="status-pill active" style={{ marginBottom: '0.5rem' }}>Passo 3 • Desafio Real</span>
-            <h3 style={{ fontSize: '1.05rem', marginTop: '0.3rem' }}>Criar os 7 Arquivos de Veículos</h3>
+            <h3 style={{ fontSize: '1.05rem', marginTop: '0.3rem' }}>Criar Itinerários e Horários</h3>
             <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.5rem', lineHeight: 1.5 }}>
-              O desafio começa aqui! Crie o novo domínio <code>/veiculos</code> passando por todos os 7 arquivos obrigatórios, com validação de placa Mercosul e JWT.
+              O desafio começa aqui! Implemente <code>/api/linhas/:codigo/itinerario</code> e <code>/api/linhas/:codigo/horarios</code> conectando com as queries SQL do desafio anterior!
             </p>
           </div>
         </div>
       </section>
 
-      {/* Fluxo Interativo dos 7 Arquivos da Arquitetura SUTINF */}
+      {/* Fluxo Interativo dos 7 Passos da Arquitetura SUTINF */}
       <section className="section-card">
         <div className="section-header-row">
           <div>
             <h2>
               <Layers size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
-              Os 7 Arquivos Obrigatórios da Arquitetura SEMOB (Clique para inspecionar)
+              Os 7 Arquivos e Camadas da Arquitetura SUTINF (Clique para inspecionar)
             </h2>
             <p className="text-muted">
-              Inspecione o papel, as regras e o código de referência de cada uma das 7 camadas antes de escrever seu código.
+              Inspecione o papel, as regras e o código de referência de cada uma das camadas da arquitetura oficial do SISMOB.
             </p>
           </div>
         </div>
@@ -495,13 +624,13 @@ export const BackendChallengeScreen: React.FC<BackendChallengeScreenProps> = ({
               <Key size={18} color="#8b5cf6" /> Autenticação JWT no SISMOB
             </h3>
             <p className="text-muted" style={{ fontSize: '0.88rem', marginTop: '0.5rem', lineHeight: 1.6 }}>
-              No ecossistema da SEMOB, requisições de consulta pública (leitura de linhas e frotas) não exigem token. Porém, <strong>operações de mutação (POST /veiculos, PUT, DELETE)</strong> alteram a base cadastral de transporte e DEVEM ser protegidas:
+              No ecossistema de transporte da SEMOB, consultas públicas (leitura de itinerários e quadro de horários) não exigem token. Porém, <strong>operações de mutação ou despacho (PUT /api/linhas/:codigo/status)</strong> DEVEM ser protegidas:
             </p>
             <ul style={{ paddingLeft: '1.2rem', fontSize: '0.85rem', lineHeight: 1.6, marginTop: '0.5rem' }}>
-              <li>Utilize o decorador <code>@UseGuards(JwtAuthGuard)</code> no controller de Veículos;</li>
-              <li>A requisição deve enviar o cabeçalho <code>Authorization: Bearer &lt;token&gt;</code>;</li>
-              <li>O token é gerado pelo <code>AuthModule</code> presente no boilerplate da SEMOB;</li>
-              <li>Em caso de token ausente ou expirado, a API deve retornar <code>401 Unauthorized</code> automaticamente.</li>
+              <li>Utilize o decorador <code>@UseGuards(JwtAuthGuard)</code> e <code>@ApiBearerAuth()</code> no método do controller;</li>
+              <li>A requisição deve enviar o cabeçalho HTTP <code>Authorization: Bearer &lt;token&gt;</code>;</li>
+              <li>O token é gerado via <code>POST /api/auth/login</code> (usuário padrão: <code>admin</code> / <code>sismob@2026</code>);</li>
+              <li>Em caso de token ausente ou expirado, a API retorna <code>401 Unauthorized</code> automaticamente.</li>
             </ul>
           </div>
 
@@ -510,28 +639,28 @@ export const BackendChallengeScreen: React.FC<BackendChallengeScreenProps> = ({
               <FileText size={18} color="#0ea5e9" /> Documentação OpenAPI Swagger
             </h3>
             <p className="text-muted" style={{ fontSize: '0.88rem', marginTop: '0.5rem', lineHeight: 1.6 }}>
-              Toda API governamental da SEMOB deve ser auto-documentada para consumo de outras secretarias e aplicativos mobile:
+              Todas as APIs da SEMOB devem ser auto-documentadas para que as equipes de Frontend e os sistemas integrados possam consumir os serviços sem adivinhação:
             </p>
             <ul style={{ paddingLeft: '1.2rem', fontSize: '0.85rem', lineHeight: 1.6, marginTop: '0.5rem' }}>
-              <li>Decore a classe do controller com <code>@ApiTags('Veículos')</code>;</li>
-              <li>Decore cada endpoint com <code>@ApiOperation(&#123; summary: '...' &#125;)</code> e <code>@ApiResponse()</code>;</li>
-              <li>Nas rotas protegidas por JWT, adicione <code>@ApiBearerAuth()</code>;</li>
-              <li>Verifique a documentação gerada em tempo real acessando <code>http://localhost:3333/api/docs</code>.</li>
+              <li>Decore a classe com <code>@ApiTags('Linhas')</code> para agrupar as rotas no Swagger;</li>
+              <li>Decore os endpoints com <code>@ApiOperation(&#123; summary: '...' &#125;)</code> e <code>@ApiResponse()</code>;</li>
+              <li>Nas rotas protegidas por JWT, adicione <code>@ApiBearerAuth()</code> para habilitar o cadeado do Swagger;</li>
+              <li>Acesse a documentação gerada em tempo real em <code>http://localhost:8097/api/docs</code>.</li>
             </ul>
           </div>
         </div>
       </section>
 
-      {/* Sequência Guiada de Criação dos 7 Arquivos */}
+      {/* Sequência Guiada de Criação dos Arquivos */}
       <section className="section-card">
         <div className="section-header-row">
           <div>
             <h2>
               <Code2 size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
-              Sequência Guiada de Criação dos 7 Arquivos
+              Sequência Guiada de Criação dos Arquivos
             </h2>
             <p className="text-muted">
-              Siga a ordem arquitetural de baixo para cima (Entity → DTO → Repository → Service → Controller → Module → AppModule) e marque o seu progresso:
+              Siga a ordem arquitetural de baixo para cima (Entity → DTO → Repository → Service → Controller → Module → Swagger E2E) e marque o seu progresso:
             </p>
           </div>
         </div>
@@ -567,11 +696,11 @@ export const BackendChallengeScreen: React.FC<BackendChallengeScreenProps> = ({
         </div>
       </section>
 
-      {/* Contrato dos Endpoints do Módulo de Veículos */}
+      {/* Contrato dos Endpoints da API REST */}
       <section className="section-card">
         <h2>
           <Terminal size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
-          Contrato da API REST de Veículos (/veiculos)
+          Contrato da API REST de Linhas do SISMOB (/api/linhas)
         </h2>
         <div className="cards-grid two-cols" style={{ marginTop: '1rem' }}>
           {API_ENDPOINTS.map((ep, idx) => (
@@ -601,21 +730,22 @@ export const BackendChallengeScreen: React.FC<BackendChallengeScreenProps> = ({
       <ChallengeSubmissionPanel
         challengeId="challenge-backend-api"
         title="Entrega do Repositório & Checklist de Arquitetura Backend SUTINF"
-        subtitle="Valide o cumprimento dos 7 arquivos e cole o link do seu Merge Request / Repositório Git."
+        subtitle="Valide o cumprimento dos endpoints de Linha, Itinerários e Horários e cole o link do seu Merge Request / Repositório Git."
         requireRepoUrl={true}
         existingSubmission={submission}
         onSaveSubmission={onSaveSubmission}
         prChecklist={[
-          'Clonei o boilerplate, rodei o Docker Compose e validei o funcionamento prévio do módulo /linhas?',
-          'Criei os 7 arquivos do módulo de Veículos: Entity, DTO, Repository, Service, Controller, Module e AppModule?',
-          'O DTO valida placa padrão Mercosul com regex e ano de fabricação positivo com class-validator?',
-          'O Service valida unicidade de placa lançando ConflictException (409) e trata inexistência com NotFoundException (404)?',
-          'As rotas de mutação (POST, PUT, DELETE) estão devidamente protegidas com @UseGuards(JwtAuthGuard)?',
-          'Todos os endpoints e DTOs foram documentados com decoradores OpenAPI Swagger?',
+          'Clonei o SISMOB-BOILERPLATE, subi o PostgreSQL com Rancher Desktop e confirmei que GET /api/linhas funciona?',
+          'Modelei as entidades/interfaces de Itinerário Descritivo e Horário respeitando o schema dados_mobilidade?',
+          'Criei os DTOs com class-validator e decorators OpenAPI Swagger para os parâmetros de itinerário e quadro de horários?',
+          'Implementei no LinhaRepository as queries SQL parametrizadas ($1, $2) sem concatenação direta (proteção SQL Injection)?',
+          'No LinhaService, tratei o caso de linha inexistente disparando EntityNotFoundException (HTTP 404)?',
+          'No LinhaController, expus GET /api/linhas/:codigo/itinerario e GET /api/linhas/:codigo/horarios com documentação Swagger?',
+          'Protegi a rota de atualização com @UseGuards(JwtAuthGuard) e @ApiBearerAuth(), validando retorno 401 sem token?',
         ]}
       />
     </div>
   );
 };
-export default BackendChallengeScreen;
 
+export default BackendChallengeScreen;

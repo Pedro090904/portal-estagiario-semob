@@ -42,8 +42,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             <li><button onClick={() => onNavigate('quizzes')}>Central de Quizzes Segmentados</button></li>
             <li><button onClick={() => onNavigate('desafio-sql')}>Desafio Prático SQL (25 Questões)</button></li>
             <li><button onClick={() => onNavigate('modulo-gabarito')}>Gabarito Oficial Comentado</button></li>
-            <li><button onClick={() => onNavigate('desafio-backend')}>Desafio Back-end (Veículos)</button></li>
-            <li><button onClick={() => onNavigate('desafio-frontend')}>Desafio InfoÔnibus</button></li>
+            <li><button onClick={() => onNavigate('desafio-backend')}>Desafio Back-end (APIs de Linhas)</button></li>
+            <li><button onClick={() => onNavigate('desafio-frontend')}>Desafio Front-end (Submódulos SCL & InfoÔnibus)</button></li>
           </ul>
         </div>
 

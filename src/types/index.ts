@@ -77,6 +77,39 @@ export interface RichScenarioCard {
   extraNote?: string;
 }
 
+export interface InteractiveFolderItem {
+  id: string;
+  path: string;
+  type: 'folder' | 'file';
+  analogy: string;
+  purpose: string;
+  filesInside: string[];
+  mustDo: string[];
+  mustNotDo: string[];
+  codePreview?: string;
+}
+
+export interface GuidedStepItem {
+  stepNumber: number;
+  title: string;
+  fileTarget: string;
+  questionAnswered: string;
+  whyItMatters: string;
+  lineByLineExplanations: { lineHighlight: string; explanation: string }[];
+  code: string;
+  language: string;
+}
+
+export interface HttpStatusCodeItem {
+  code: number;
+  phrase: string;
+  category: '2xx' | '4xx' | '5xx';
+  analogy: string;
+  realWorldScenario: string;
+  howToTriggerNest: string;
+  responsePreview: string;
+}
+
 export interface ModuleSection {
   heading: string;
   body: string;
@@ -97,6 +130,13 @@ export interface ModuleSection {
     | 'sql-pg-vs-oracle'
     | 'backend-request-lifecycle'
     | 'frontend-unidirectional-flow';
+  folderExplorer?: InteractiveFolderItem[];
+  guidedTutorialSteps?: GuidedStepItem[];
+  enableSwaggerSimulator?: boolean;
+  httpCodesExplorer?: HttpStatusCodeItem[];
+  enableDualModeSimulator?: boolean;
+  enableCdpSimulator?: boolean;
+  enableEnvSimulator?: boolean;
 }
 
 export interface LearningModule {

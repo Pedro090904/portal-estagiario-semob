@@ -359,9 +359,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
           <div className="challenge-spotlight-card" onClick={() => onNavigate('desafio-backend')}>
             <div className="card-badge bg-indigo">NestJS & Docker</div>
-            <h3>Desafio Back-end: Recurso Veículos</h3>
+            <h3>Desafio Back-end: APIs de Linhas</h3>
             <p>
-              Crie um novo recurso no SISMOB Boilerplate do zero passando pelas 7 etapas canônicas: Entity, DTO, Repository parametrizado, Service e Controller.
+              Expanda o SISMOB Boilerplate criando endpoints reais para Itinerários Descritivos e Quadro de Horários, conectando com as tabelas do desafio SQL.
             </p>
             <div className="card-action-link">
               Ver Passo a Passo <ArrowRight size={16} />
@@ -370,9 +370,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
           <div className="challenge-spotlight-card" onClick={() => onNavigate('desafio-frontend')}>
             <div className="card-badge bg-cyan">React 18 & Vite</div>
-            <h3>Desafio Front-end: Novo "InfoÔnibus"</h3>
+            <h3>Desafio Front-end: Submódulos SCL & InfoÔnibus</h3>
             <p>
-              Construa uma interface moderna integrada a APIs reais de transporte com busca dinâmica, paradas, itinerário espacial e GPS em tempo real.
+              Construa os submódulos de Itinerários e Horários consumindo o backend NestJS, e entregue o Capstone Infoônibus com mapa espacial e telemetria.
             </p>
             <div className="card-action-link">
               Especificações & Demo <ArrowRight size={16} />
