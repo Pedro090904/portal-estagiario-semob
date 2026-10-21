@@ -99,9 +99,9 @@ const INITIAL_FORUM_THREADS: ForumThread[] = [
   },
   {
     id: 'thread-2',
-    title: 'NestJS: Injeção de dependência do VeiculoRepository na camada Service',
+    title: 'NestJS: Injeção de dependência do LinhaRepository na camada Service',
     content:
-      'Estou implementando a etapa 4 do Desafio Back-end (recurso Veículos no SISMOB Boilerplate). Ao registrar o Repository no módulo com TypeOrmModule.forFeature([VeiculoEntity]), o Nest acusava circular dependency. Alguém passou por isso?',
+      'Estou implementando a etapa 4 do Desafio Back-end (APIs de Itinerário e Quadro de Horários no SISMOB Boilerplate). Ao registrar o Repository no módulo com TypeOrmModule.forFeature([Linha, ItinerarioDescritivo, Horario]), o Nest acusava circular dependency. Alguém passou por isso?',
     moduleId: 'mod-4-backend',
     moduleTitle: 'Módulo 4: Back-end NestJS (SISMOB)',
     authorName: 'Lucas Ferreira Costa',
@@ -119,7 +119,7 @@ const INITIAL_FORUM_THREADS: ForumThread[] = [
         authorAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=120&q=80',
         authorRole: 'Monitor',
         content:
-          'Verifique se você não importou o VeiculoModule dentro de si mesmo no AppModule. Além disso, lembre-se de exportar o TypeOrmModule caso outro service precise consultar a entidade.',
+          'Verifique se você não importou o LinhaModule dentro de si mesmo no AppModule. Além disso, lembre-se de registrar o LinhaRepository nos providers do módulo para o Service conseguir injetá-lo.',
         createdAt: 'Ontem às 18:10',
         isSolution: true,
       },
@@ -581,10 +581,10 @@ export const portalExtensionService = {
         studentName: 'Lucas Ferreira Costa',
         studentEmail: 'lucas.costa@semob.df.gov.br',
         challengeId: 'challenge-backend-api',
-        challengeTitle: 'Desafio Back-end: Recurso Veículos no SISMOB Boilerplate',
+        challengeTitle: 'Desafio Back-end: APIs de Linhas (Itinerários e Horários)',
         submittedAt: 'Ontem às 14:00',
         waitingHours: 24,
-        repositoryUrl: 'https://gitlab.semob.df.gov.br/estagio-2026/lucas-backend-veiculos',
+        repositoryUrl: 'https://gitlab.semob.df.gov.br/estagio-2026/lucas-backend-linhas',
         status: 'EM_REVISAO',
         checkedPrItems: [0, 1, 2, 3, 4],
       },
@@ -604,8 +604,8 @@ export const portalExtensionService = {
               chId === 'challenge-sql-relatorios'
                 ? 'Desafio Prático SQL (25 Questões)'
                 : chId === 'challenge-backend-api'
-                ? 'Desafio Back-end: Recurso Veículos'
-                : 'Desafio Front-end: InfoÔnibus',
+                ? 'Desafio Back-end: APIs de Linhas'
+                : 'Desafio Front-end: Submódulos SCL & InfoÔnibus',
             submittedAt: sub.completedAt || 'Hoje',
             waitingHours: 1,
             repositoryUrl: sub.repositoryUrl || 'https://gitlab.semob.df.gov.br/estagio-2026/azimute-entrega',

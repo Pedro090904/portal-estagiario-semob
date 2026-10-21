@@ -25,6 +25,17 @@ import { getQuizByModuleId } from '../services/dataService';
 import { QuizBlock } from '../components/QuizBlock';
 import { ModuleNotesPanel } from '../components/ModuleNotesPanel';
 import { TechnicalDiagram } from '../components/TechnicalDiagrams';
+import {
+  InteractiveFolderExplorer,
+  InteractiveSwaggerSimulator,
+  StepByStepCodeJourney,
+  InteractiveHttpCodesExplorer,
+} from '../components/BackendInteractiveWidgets';
+import {
+  InteractiveDualModeSimulator,
+  InteractiveCdpPermissionsSimulator,
+  InteractiveEnvSimulator,
+} from '../components/FrontendInteractiveWidgets';
 
 interface ModuleViewerScreenProps {
   module: LearningModule;
@@ -246,6 +257,33 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
 
               {/* Diagrama Vetorial SVG Original */}
               {section.svgDiagramType && <TechnicalDiagram type={section.svgDiagramType} />}
+
+              {/* Explorador Interativo de Pastas do Boilerplate */}
+              {section.folderExplorer && (
+                <InteractiveFolderExplorer items={section.folderExplorer} />
+              )}
+
+              {/* Explorador Interativo de Códigos HTTP */}
+              {section.httpCodesExplorer && (
+                <InteractiveHttpCodesExplorer items={section.httpCodesExplorer} />
+              )}
+
+              {/* Simulador Interativo do Swagger */}
+              {section.enableSwaggerSimulator && <InteractiveSwaggerSimulator />}
+
+              {/* Simulador do Modo Duplo (Dual-Mode: Backend Online vs Mock Offline) */}
+              {section.enableDualModeSimulator && <InteractiveDualModeSimulator />}
+
+              {/* Simulador de Permissões CDP (<Can> e <ProtectedRoute>) */}
+              {section.enableCdpSimulator && <InteractiveCdpPermissionsSimulator />}
+
+              {/* Simulador de Variáveis de Ambiente (.env & env.config.ts) */}
+              {section.enableEnvSimulator && <InteractiveEnvSimulator />}
+
+              {/* Jornada de Código Guiada Passo a Passo */}
+              {section.guidedTutorialSteps && (
+                <StepByStepCodeJourney steps={section.guidedTutorialSteps} />
+              )}
 
               {/* Callouts / Caixas de Alerta e Analogias */}
               {section.callouts?.map((callout, cIdx) => (
