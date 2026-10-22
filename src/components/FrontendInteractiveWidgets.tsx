@@ -1,75 +1,27 @@
 import React, { useState } from 'react';
 import {
-  Database,
+  ShieldAlert,
+  KeyRound,
+  FileCog,
   CheckCircle2,
-  AlertCircle,
-  Wifi,
-  WifiOff,
-  ShieldCheck,
-  AlertTriangle,
-  Lock,
-  Unlock,
+  XCircle,
+  Trophy,
+  FolderGit2,
   Sparkles,
   RefreshCw,
-  UserCheck,
-  KeyRound,
-  Eye,
-  PlusCircle,
-  Shield,
+  ArrowRight,
   Layers,
+  GitMerge,
 } from 'lucide-react';
 
 // ============================================================================
-// 1. SIMULADOR DO MODO DUPLO (DUAL-MODE: BACKEND ONLINE VS MOCK OFFLINE)
+// 1. SIMULADOR INTERATIVO: FLUXO DE REGISTRO, PONTE BACK <-> FRONT, .ENV E CDP
 // ============================================================================
-export const InteractiveDualModeSimulator: React.FC = () => {
-  const [backendAtivo, setBackendAtivo] = useState<boolean>(true);
-  const [testando, setTestando] = useState<boolean>(false);
-  const [latencia, setLatencia] = useState<number>(38);
-  const [dadosSimulados, setDadosSimulados] = useState<any[]>([
-    { id: 801, codigo: '0.317', descricao: 'SETOR M NORTE / GUARÁ I-II / NÚCLEO BANDEIRANTE', tarifa: 3.8, origem: 'PostgreSQL (tab_linha)' },
-    { id: 948, codigo: '335.1', descricao: 'Setor "O" Norte/W3 Sul (SIG - Qd. 716 Sul)', tarifa: 5.5, origem: 'PostgreSQL (tab_linha)' },
-    { id: 187, codigo: '0.355', descricao: 'TAGUATINGA SUL / TAGUATINGA NORTE', tarifa: 2.7, origem: 'PostgreSQL (tab_linha)' },
-  ]);
-
-  const handleTestarConexao = () => {
-    setTestando(true);
-    setTimeout(() => {
-      setTestando(false);
-      if (backendAtivo) {
-        setLatencia(Math.floor(Math.random() * 25) + 20);
-        setDadosSimulados([
-          { id: 801, codigo: '0.317', descricao: 'SETOR M NORTE / GUARÁ I-II / NÚCLEO BANDEIRANTE', tarifa: 3.8, origem: 'PostgreSQL (tab_linha)' },
-          { id: 948, codigo: '335.1', descricao: 'Setor "O" Norte/W3 Sul (SIG - Qd. 716 Sul)', tarifa: 5.5, origem: 'PostgreSQL (tab_linha)' },
-          { id: 187, codigo: '0.355', descricao: 'TAGUATINGA SUL / TAGUATINGA NORTE', tarifa: 2.7, origem: 'PostgreSQL (tab_linha)' },
-        ]);
-      } else {
-        setLatencia(0);
-        setDadosSimulados([
-          { id: 2842, codigo: '0.108', descricao: 'ROD. PLANO PILOTO / QGEX / SMU / RODOFERROVIÁRIA', tarifa: 2.7, origem: 'MOCK_LINHAS_FALLBACK' },
-          { id: 1657, codigo: '181.1', descricao: 'SÃO SEBASTIÃO (RES. BOSQUE) / PARANOÁ / ITAPOÃ', tarifa: 3.8, origem: 'MOCK_LINHAS_FALLBACK' },
-          { id: 2692, codigo: '0.049', descricao: 'M NORTE / TAG. CENTRO / COLÔNIA AGRÍCOLA', tarifa: 3.8, origem: 'MOCK_LINHAS_FALLBACK' },
-        ]);
-      }
-    }, 400);
-  };
-
-  const handleToggleBackend = (ativo: boolean) => {
-    setBackendAtivo(ativo);
-    if (!ativo) {
-      setDadosSimulados([
-        { id: 2842, codigo: '0.108', descricao: 'ROD. PLANO PILOTO / QGEX / SMU / RODOFERROVIÁRIA', tarifa: 2.7, origem: 'MOCK_LINHAS_FALLBACK' },
-        { id: 1657, codigo: '181.1', descricao: 'SÃO SEBASTIÃO (RES. BOSQUE) / PARANOÁ / ITAPOÃ', tarifa: 3.8, origem: 'MOCK_LINHAS_FALLBACK' },
-        { id: 2692, codigo: '0.049', descricao: 'M NORTE / TAG. CENTRO / COLÔNIA AGRÍCOLA', tarifa: 3.8, origem: 'MOCK_LINHAS_FALLBACK' },
-      ]);
-    } else {
-      setDadosSimulados([
-        { id: 801, codigo: '0.317', descricao: 'SETOR M NORTE / GUARÁ I-II / NÚCLEO BANDEIRANTE', tarifa: 3.8, origem: 'PostgreSQL (tab_linha)' },
-        { id: 948, codigo: '335.1', descricao: 'Setor "O" Norte/W3 Sul (SIG - Qd. 716 Sul)', tarifa: 5.5, origem: 'PostgreSQL (tab_linha)' },
-        { id: 187, codigo: '0.355', descricao: 'TAGUATINGA SUL / TAGUATINGA NORTE', tarifa: 2.7, origem: 'PostgreSQL (tab_linha)' },
-      ]);
-    }
-  };
+export const FrontendBridgeSimulator: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'flow' | 'env' | 'jwt' | 'cdp'>('flow');
+  const [simulatedEnvUrl, setSimulatedEnvUrl] = useState('http://localhost:8097/api');
+  const [hasToken, setHasToken] = useState(true);
+  const [activeProfile, setActiveProfile] = useState<'ADMIN' | 'GESTOR_SCL' | 'SEM_PERMISSAO'>('GESTOR_SCL');
 
   return (
     <div
@@ -77,10 +29,350 @@ export const InteractiveDualModeSimulator: React.FC = () => {
       style={{
         marginTop: '1.5rem',
         padding: '1.35rem',
-        border: '1px solid rgba(16, 185, 129, 0.35)',
+        border: '1px solid rgba(56, 189, 248, 0.35)',
       }}
     >
-      {/* Cabeçalho */}
+      <div style={{ marginBottom: '1rem' }}>
+        <span className="hero-badge" style={{ marginBottom: '0.35rem' }}>
+          🔌 Raio-X Arquitetural • O Fluxo Completo do BoilerPlate_Front_end
+        </span>
+        <h3 style={{ fontSize: '1.1rem' }}>
+          Do Registro em config/modules.ts até a Compilação no .tsx Final
+        </h3>
+        <p className="text-muted" style={{ fontSize: '0.85rem' }}>
+          Navegue pelas 4 abas para visualizar o ciclo de vida completo de um módulo/submódulo e sua integração com o Back-end:
+        </p>
+      </div>
+
+      {/* Abas de Simulação */}
+      <div
+        className="sql-filter-buttons"
+        style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.25rem' }}
+      >
+        <button
+          type="button"
+          onClick={() => setActiveTab('flow')}
+          className={`sql-filter-btn ${activeTab === 'flow' ? 'active' : ''}`}
+        >
+          <GitMerge size={14} style={{ display: 'inline', marginRight: 5 }} />
+          1. As 7 Estações (Como RelatorioLinha existe no SCL)
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('env')}
+          className={`sql-filter-btn ${activeTab === 'env' ? 'active' : ''}`}
+        >
+          <FileCog size={14} style={{ display: 'inline', marginRight: 5 }} />
+          2. Fluxo .env & Docker Runtime
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('jwt')}
+          className={`sql-filter-btn ${activeTab === 'jwt' ? 'active' : ''}`}
+        >
+          <KeyRound size={14} style={{ display: 'inline', marginRight: 5 }} />
+          3. Ponte Axios + tokenStore (Porta 8097)
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('cdp')}
+          className={`sql-filter-btn ${activeTab === 'cdp' ? 'active' : ''}`}
+        >
+          <ShieldAlert size={14} style={{ display: 'inline', marginRight: 5 }} />
+          4. CDP, Segurança & Perfis Simulados
+        </button>
+      </div>
+
+      {/* ABA 1: AS 7 ESTAÇÕES DO FLUXO COMPLETO */}
+      {activeTab === 'flow' && (
+        <div className="glass-card" style={{ padding: '1.2rem' }}>
+          <h4 style={{ fontSize: '1rem', color: '#38bdf8', marginBottom: '0.5rem' }}>
+            Mapa Mental: A Ordem Exata para Criar uma Nova Tela no BoilerPlate_Front_end
+          </h4>
+          <p className="text-muted" style={{ fontSize: '0.86rem', lineHeight: 1.6 }}>
+            Olhando para <code>src/modulos/SCL/RelatorioLinha/</code>, vemos que uma tela profissional nunca começa pelo arquivo visual final. Primeiro registramos a rota no portal, depois criamos as peças atômicas e, <strong>por último</strong>, o arquivo <code>RelatorioLinha.tsx</code> apenas junta (compila) tudo:
+          </p>
+
+          <pre className="code-block" style={{ marginTop: '0.9rem', fontSize: '0.78rem' }}>
+            <code>{`[ 1º PASSO: REGISTRO NO PORTAL ]
+ ├── src/config/modules.ts      ──► Cadastra o Módulo/Submódulo, ícone, rota e permissão
+ ├── src/modulos/SCL/SCLMenu.tsx──► Adiciona o Card no submenu visual do SCL
+ └── src/App.tsx                ──► Conecta a rota <Route path="/scl/..." /> com ProtectedRoute
+
+[ 2º PASSO: CRIAR A PASTA DA TELA E SUAS 4 SUBPASTAS DE BASE ]
+ └── src/modulos/SCL/RelatorioLinha/
+      ├── 1. types/             ──► typesRelatorioLinha.ts + index.ts (Contratos puros)
+      ├── 2. services/          ──► linhaService.ts (Chama api.get('/linhas'))
+      ├── 3. hooks/             ──► Micro-hooks focados:
+      │                              • useBuscarLinha.ts & useLinhasList.ts
+      │                              • useRelatorioLinhaData.ts
+      │                              • useDownloadCSV.ts & useImpressao.ts
+      └── 4. components/        ──► Micro-componentes visuais desacoplados:
+                                     • UI Base: Button.tsx, Card.tsx, Loading.tsx, ErrorMessage.tsx
+                                     • Negócio: FormSearch.tsx, LinhaStatsCards.tsx,
+                                                LinhaLista.tsx, DaLinhaDetails.tsx
+
+[ 3º PASSO (POR ÚLTIMO!): O ARQUIVO .TSX ORQUESTRADOR QUE COMPILA TUDO ]
+ └── src/modulos/SCL/RelatorioLinha/RelatorioLinha.tsx
+      └── Importa os hooks e encaixa <FormSearch />, <Loading />, <LinhaStatsCards /> e <LinhaLista />!`}</code>
+          </pre>
+        </div>
+      )}
+
+      {/* ABA 2: .ENV & RUNTIME */}
+      {activeTab === 'env' && (
+        <div className="glass-card" style={{ padding: '1.2rem' }}>
+          <h4 style={{ fontSize: '1rem', color: '#38bdf8', marginBottom: '0.5rem' }}>
+            Como o Front-end descobre o endereço do Back-end? (.env ➔ env.config.ts ➔ public/config.js)
+          </h4>
+          <p className="text-muted" style={{ fontSize: '0.86rem', lineHeight: 1.6 }}>
+            No <strong>BoilerPlate_Front_end</strong>, nunca escrevemos <code>http://localhost:8097</code> fixo num service. O ficheiro <code>src/config/env.config.ts</code> lê primeiro o <code>window.__ENV__</code> (injetado em produção pelo script <code>docker/30-runtime-env.sh</code> e <code>public/config.js</code>, conforme documentado em <code>docs/CONFIG-RUNTIME.md</code>) e, no desenvolvimento local, usa o <code>.env</code>!
+          </p>
+
+          <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.35rem' }}>
+              Simule alterar a variável VITE_API_URL no ficheiro .env:
+            </label>
+            <input
+              type="text"
+              value={simulatedEnvUrl}
+              onChange={(e) => setSimulatedEnvUrl(e.target.value)}
+              className="sql-editor-textarea"
+              style={{ minHeight: '38px', height: '38px', padding: '0.4rem 0.8rem', fontFamily: 'monospace' }}
+            />
+          </div>
+
+          <pre className="code-block" style={{ margin: 0, fontSize: '0.8rem' }}>
+            <code>{`// 1. No ficheiro .env (Raiz do BoilerPlate_Front_end):
+VITE_API_URL=${simulatedEnvUrl}
+
+// 2. Em src/config/env.config.ts (Centralizador seguro):
+export const envConfig = {
+  apiUrl: window.__ENV__?.VITE_API_URL || import.meta.env.VITE_API_URL || '${simulatedEnvUrl}',
+};
+
+// 3. Resultado em src/services/api.ts:
+// Todas as chamadas de linhaService.ts irão automaticamente para:
+// 👉 ${simulatedEnvUrl}/linhas`}</code>
+          </pre>
+        </div>
+      )}
+
+      {/* ABA 3: PONTE AXIOS + TOKENSTORE */}
+      {activeTab === 'jwt' && (
+        <div className="glass-card" style={{ padding: '1.2rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '0.5rem',
+              marginBottom: '0.75rem',
+            }}
+          >
+            <h4 style={{ fontSize: '1rem', color: '#10b981' }}>
+              A Ponte Automática: Login.tsx ➔ authService.ts ➔ tokenStore.ts ➔ api.ts
+            </h4>
+            <button
+              type="button"
+              onClick={() => setHasToken(!hasToken)}
+              className={hasToken ? 'btn-primary' : 'btn-secondary'}
+            >
+              {hasToken ? '🟢 Token Presente no tokenStore' : '🔴 Simular Sem Token (Deslogado)'}
+            </button>
+          </div>
+
+          <p className="text-muted" style={{ fontSize: '0.86rem', lineHeight: 1.6 }}>
+            Quando você cria um service como <code>src/modulos/SCL/RelatorioLinha/services/linhaService.ts</code>, basta importar o <code>api</code> de <code>src/services/api.ts</code>. O interceptor lê o token salvo no <code>tokenStore.ts</code> e anexa o cabeçalho <code>Authorization: Bearer ...</code> automaticamente:
+          </p>
+
+          <pre className="code-block" style={{ marginTop: '0.9rem', fontSize: '0.8rem' }}>
+            <code>{`// Quando o seu hook chama: await linhaService.listar()
+// O ficheiro src/services/api.ts intercepta a requisição:
+
+api.interceptors.request.use((config) => {
+  const token = tokenStore.getToken(); // ${hasToken ? '"eyJhbGciOiJIUzI1NiIs..."' : 'null'}
+  if (token) {
+    config.headers.Authorization = \`Bearer \${token}\`;
+  }
+  return config;
+});
+
+// Resposta do BoilerPlate_Back_end (http://localhost:8097/api/linhas):
+${
+  hasToken
+    ? '// ✅ HTTP 200 OK — JwtAuthGuard validou o Bearer Token e devolveu as linhas do PostgreSQL!'
+    : '// ❌ HTTP 401 Unauthorized — O interceptor captura o 401, limpa o tokenStore e redireciona para Login.tsx!'
+}`}</code>
+          </pre>
+        </div>
+      )}
+
+      {/* ABA 4: CDP, DEVTOOLS & PERFIS SIMULADOS */}
+      {activeTab === 'cdp' && (
+        <div className="glass-card" style={{ padding: '1.2rem' }}>
+          <h4 style={{ fontSize: '1rem', color: '#f59e0b', marginBottom: '0.5rem' }}>
+            CDP (Chrome DevTools Protocol), Guards de Segurança e Perfis Simulados
+          </h4>
+          <p className="text-muted" style={{ fontSize: '0.86rem', lineHeight: 1.6 }}>
+            O <strong>BoilerPlate_Front_end</strong> possui hooks e guardiões globais em <code>src/hooks/</code> e <code>src/components/</code> que protegem a aplicação:
+          </p>
+
+          <ul style={{ fontSize: '0.85rem', lineHeight: 1.65, paddingLeft: '1.2rem', margin: '0.75rem 0' }}>
+            <li>
+              <strong>CDP & Monitorização (<code>useSecurity.ts</code>, <code>useIncognitoBlocker.tsx</code> e <code>auditLogger.ts</code>):</strong> Integra-se com as ferramentas de inspeção e segurança do navegador para auditar acessos, bloquear janelas anónimas não autorizadas (<code>IncognitoBlockScreen.tsx</code>) e validar impressões oficiais (<code>SeloValidacaoImpressao.tsx</code>).
+            </li>
+            <li>
+              <strong>Simulação de Perfis (<code>src/config/simulatedProfiles.ts</code> & <code>DevModal.tsx</code>):</strong> Permite testar instantaneamente como o <code>&lt;Can /&gt;</code>, o <code>&lt;ProtectedRoute /&gt;</code> e o <code>&lt;SemAcessoGuard /&gt;</code> reagem para cada perfil de usuário:
+            </li>
+          </ul>
+
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+            {(['ADMIN', 'GESTOR_SCL', 'SEM_PERMISSAO'] as const).map((role) => (
+              <button
+                key={role}
+                type="button"
+                onClick={() => setActiveProfile(role)}
+                className={`sql-filter-btn ${activeProfile === role ? 'active' : ''}`}
+              >
+                Simular Perfil: {role}
+              </button>
+            ))}
+          </div>
+
+          <div
+            className="glass-card"
+            style={{
+              marginTop: '0.85rem',
+              padding: '0.85rem 1rem',
+              borderLeft: `4px solid ${activeProfile === 'SEM_PERMISSAO' ? '#ef4444' : '#10b981'}`,
+            }}
+          >
+            {activeProfile === 'SEM_PERMISSAO' ? (
+              <span style={{ fontSize: '0.85rem', color: '#ef4444' }}>
+                🚫 <strong>SemAcessoGuard.tsx acionado:</strong> Este perfil não possui permissão no <code>src/config/modules.ts</code> para abrir o módulo SCL. O portal bloqueia a rota e abre o <code>SemAcessoModal.tsx</code>!
+              </span>
+            ) : (
+              <span style={{ fontSize: '0.85rem', color: '#10b981' }}>
+                ✅ <strong>Acesso Liberado ({activeProfile}):</strong> O <code>useModules.tsx</code> e o <code>SemAcessoGuard.tsx</code> validaram a permissão declarada em <code>src/config/modules.ts</code>!
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============================================================================
+// 2. MINI-JOGO GAMIFICADO: AS 7 ESTAÇÕES DE CRIAÇÃO DE UMA TELA NO BOILERPLATE
+// ============================================================================
+interface FolderChallengeQuestion {
+  id: number;
+  scenario: string;
+  correctPath: string;
+  options: string[];
+  explanation: string;
+}
+
+const FOLDER_GAME_QUESTIONS: FolderChallengeQuestion[] = [
+  {
+    id: 1,
+    scenario:
+      'Estação 1 (O Ponto de Partida): Antes mesmo de criar a pasta da sua nova tela, onde você deve declarar os metadados do módulo/submódulo (id, nome, rota, ícone e permissões) para que o portal reconheça sua existência?',
+    correctPath: 'src/config/modules.ts',
+    options: [
+      'src/config/modules.ts',
+      'src/services/tokenStore.ts',
+      'src/utils/formatters.ts',
+      'public/config.js',
+    ],
+    explanation:
+      'Exato! Tudo começa em src/config/modules.ts. É ele que alimenta a Sidebar, o Dashboard, os hooks useModules/useNavigation e as permissões de acesso.',
+  },
+  {
+    id: 2,
+    scenario:
+      'Estação 2 (Submenu Visual do SCL e Rota): Para que a nova tela "Consultar Itinerário" apareça como um Card clicável quando o usuário entra no módulo SCL e tenha sua URL mapeada, quais ficheiros você atualiza?',
+    correctPath: 'src/modulos/SCL/SCLMenu.tsx e src/App.tsx',
+    options: [
+      'src/modulos/SCL/SCLMenu.tsx e src/App.tsx',
+      'src/screens/Login.tsx e nginx.conf',
+      'src/modulos/Noticias/NoticiasIndex.tsx',
+      'src/hooks/useTypewriter.ts',
+    ],
+    explanation:
+      'Perfeito! O SCLMenu.tsx exibe os cartões dos submódulos do SCL (como ConsultaOS e RelatorioLinha) e o App.tsx registra a rota protegida.',
+  },
+  {
+    id: 3,
+    scenario:
+      'Estação 3 e 4 (Contratos e API): Dentro da nova pasta src/modulos/SCL/ConsultarItinerario/, você precisa declarar as interfaces TypeScript (sem usar any) e a chamada Axios api.get(). Quais subpastas você cria primeiro?',
+    correctPath: 'types/ (com index.ts) e services/ (importando o api global)',
+    options: [
+      'Coloco o axios.get() e as interfaces tudo junto dentro de Button.tsx',
+      'types/ (com index.ts) e services/ (importando o api global)',
+      'public/images/ e docker/',
+      'src/assets/brasaoBase64.ts',
+    ],
+    explanation:
+      'Na mosca! Seguindo o exemplo de RelatorioLinha, criamos types/ para os contratos e services/ para isolar as chamadas HTTP que usam o src/services/api.ts.',
+  },
+  {
+    id: 4,
+    scenario:
+      'Estação 5 e 6 (Modularização Máxima): Em RelatorioLinha, a lógica é dividida em micro-hooks (useBuscarLinha, useLinhasList, useImpressao) e a UI em micro-componentes (FormSearch, LinhaStatsCards, LinhaLista, Loading, ErrorMessage). Por que fazemos isso antes do arquivo .tsx final?',
+    correctPath: 'Para que cada arquivo tenha responsabilidade única e o arquivo .tsx final apenas compile/orquestre tudo limpo!',
+    options: [
+      'Para deixar o projeto com mais pastas sem motivo.',
+      'Para que cada arquivo tenha responsabilidade única e o arquivo .tsx final apenas compile/orquestre tudo limpo!',
+      'Porque o React proíbe ter mais de um componente por projeto.',
+      'Para não precisar usar TypeScript.',
+    ],
+    explanation:
+      'Exatamente! Quando fatiarmos a lógica em hooks/ e as partes visuais em components/, o arquivo final (ex: RelatorioLinha.tsx ou ConsultarItinerario.tsx) vira apenas um maestro limpo de 40 linhas que conecta os hooks aos componentes!',
+  },
+];
+
+export const FrontendFolderGame: React.FC = () => {
+  const [currentQIndex, setCurrentQIndex] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [score, setScore] = useState(0);
+  const [completedIds, setCompletedIds] = useState<number[]>([]);
+
+  const currentQ = FOLDER_GAME_QUESTIONS[currentQIndex];
+  const isCorrect = selectedOption === currentQ.correctPath;
+
+  const handleSelect = (opt: string) => {
+    setSelectedOption(opt);
+    if (opt === currentQ.correctPath && !completedIds.includes(currentQ.id)) {
+      setScore((prev) => prev + 25);
+      setCompletedIds((prev) => [...prev, currentQ.id]);
+    }
+  };
+
+  const handleNext = () => {
+    setSelectedOption(null);
+    setCurrentQIndex((prev) => (prev + 1) % FOLDER_GAME_QUESTIONS.length);
+  };
+
+  const handleReset = () => {
+    setSelectedOption(null);
+    setCurrentQIndex(0);
+    setScore(0);
+    setCompletedIds([]);
+  };
+
+  return (
+    <div
+      className="glass-card"
+      style={{
+        marginTop: '1.5rem',
+        padding: '1.4rem',
+        border: '1px solid rgba(16, 185, 129, 0.4)',
+      }}
+    >
       <div
         style={{
           display: 'flex',
@@ -88,81 +380,98 @@ export const InteractiveDualModeSimulator: React.FC = () => {
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: '0.75rem',
-          paddingBottom: '1rem',
-          borderBottom: '1px solid rgba(148,163,184,0.2)',
+          marginBottom: '1rem',
         }}
       >
         <div>
           <span className="hero-badge" style={{ marginBottom: '0.35rem' }}>
-            ⚡ Simulador Ao Vivo • Arquitetura Dual-Mode do Boilerplate_Front
+            🎮 Jogo do Fluxo Real • As Estações do BoilerPlate_Front_end
           </span>
           <h3 style={{ fontSize: '1.1rem' }}>
-            Zero Dependência: O Front Não Quebra Mesmo Sem o Backend Ligado
+            Valide a Ordem de Construção de uma Nova Tela ({currentQIndex + 1}/{FOLDER_GAME_QUESTIONS.length})
           </h3>
-          <p className="text-muted" style={{ fontSize: '0.84rem' }}>
-            Simule o que acontece na tela do estagiário quando o <code>Boilerplate_Back</code> está rodando ou desligado:
-          </p>
         </div>
 
-        {/* Chave de Controle */}
-        <div style={{ display: 'flex', gap: '0.4rem', background: 'rgba(15, 23, 42, 0.6)', padding: '0.3rem', borderRadius: '10px' }}>
-          <button
-            type="button"
-            onClick={() => handleToggleBackend(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              padding: '0.4rem 0.8rem',
-              borderRadius: '7px',
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              border: backendAtivo ? '1px solid #10b981' : '1px solid transparent',
-              background: backendAtivo ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
-              color: backendAtivo ? '#10b981' : '#94a3b8',
-            }}
-          >
-            <Wifi size={14} /> Backend Ligado (:8097)
-          </button>
-          <button
-            type="button"
-            onClick={() => handleToggleBackend(false)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              padding: '0.4rem 0.8rem',
-              borderRadius: '7px',
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              border: !backendAtivo ? '1px solid #f59e0b' : '1px solid transparent',
-              background: !backendAtivo ? 'rgba(245, 158, 11, 0.2)' : 'transparent',
-              color: !backendAtivo ? '#f59e0b' : '#94a3b8',
-            }}
-          >
-            <WifiOff size={14} /> Backend Desligado (Offline)
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <span className="status-pill passed" style={{ fontSize: '0.82rem', fontWeight: 700 }}>
+            <Trophy size={14} style={{ display: 'inline', marginRight: 4 }} />
+            {score} / 100 XP
+          </span>
+          <button type="button" className="btn-secondary" onClick={handleReset} title="Reiniciar Jogo">
+            <RefreshCw size={14} />
           </button>
         </div>
       </div>
 
-      {/* Réplica Exata do Componente StatusIntegracaoBackend.tsx */}
-      <div style={{ marginTop: '1.25rem' }}>
-        <strong style={{ fontSize: '0.78rem', color: '#94a3b8', display: 'block', marginBottom: '0.45rem', textTransform: 'uppercase' }}>
-          Visual do Componente Real (`src/modulos/SCL/Linhas/components/StatusIntegracaoBackend.tsx`):
-        </strong>
+      {/* Pergunta / Cenário */}
+      <div
+        className="glass-card"
+        style={{
+          padding: '1rem 1.2rem',
+          borderLeft: '4px solid #38bdf8',
+          marginBottom: '1rem',
+        }}
+      >
+        <p style={{ fontSize: '0.94rem', fontWeight: 600, lineHeight: 1.6, margin: 0 }}>
+          <FolderGit2 size={17} style={{ display: 'inline', marginRight: 6, color: '#38bdf8' }} />
+          {currentQ.scenario}
+        </p>
+      </div>
 
+      {/* Opções */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+        {currentQ.options.map((opt) => {
+          const isPicked = selectedOption === opt;
+          const isRightOption = opt === currentQ.correctPath;
+
+          let borderColor = 'rgba(148, 163, 184, 0.25)';
+          let bg = 'rgba(15, 23, 42, 0.45)';
+          if (selectedOption) {
+            if (isRightOption) {
+              borderColor = '#10b981';
+              bg = 'rgba(16, 185, 129, 0.14)';
+            } else if (isPicked && !isRightOption) {
+              borderColor = '#ef4444';
+              bg = 'rgba(239, 68, 68, 0.14)';
+            }
+          }
+
+          return (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => handleSelect(opt)}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0.8rem 1rem',
+                borderRadius: '10px',
+                border: `1px solid ${borderColor}`,
+                background: bg,
+                color: 'inherit',
+                fontFamily: 'monospace',
+                fontSize: '0.84rem',
+                textAlign: 'left',
+                cursor: 'pointer',
+              }}
+            >
+              <span>{opt}</span>
+              {selectedOption && isRightOption && <CheckCircle2 size={18} color="#10b981" />}
+              {selectedOption && isPicked && !isRightOption && <XCircle size={18} color="#ef4444" />}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Feedback */}
+      {selectedOption && (
         <div
+          className="glass-card"
           style={{
-            padding: '1rem 1.25rem',
-            borderRadius: '12px',
-            border: backendAtivo
-              ? '1px solid rgba(16, 185, 129, 0.4)'
-              : '1px solid rgba(245, 158, 11, 0.4)',
-            background: backendAtivo
-              ? 'rgba(16, 185, 129, 0.08)'
-              : 'rgba(245, 158, 11, 0.08)',
+            marginTop: '1rem',
+            padding: '1rem',
+            borderLeft: `4px solid ${isCorrect ? '#10b981' : '#f59e0b'}`,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -170,476 +479,29 @@ export const InteractiveDualModeSimulator: React.FC = () => {
             gap: '0.75rem',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-            <div
+          <div style={{ flex: '1 1 300px' }}>
+            <strong
               style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
-                background: backendAtivo ? '#10b981' : '#f59e0b',
-                color: '#090d16',
+                color: isCorrect ? '#10b981' : '#f59e0b',
+                fontSize: '0.86rem',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 900,
+                gap: 5,
               }}
             >
-              {backendAtivo ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
-            </div>
-            <div>
-              <strong
-                style={{
-                  fontSize: '0.88rem',
-                  display: 'block',
-                  color: backendAtivo ? '#10b981' : '#f59e0b',
-                }}
-              >
-                {backendAtivo
-                  ? '🟢 CONEXÃO ATIVA COM O BOILERPLATE BACKEND'
-                  : '🟡 MODO CONTINGÊNCIA (MOCK OFFLINE)'}
-              </strong>
-              <span style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>
-                {backendAtivo
-                  ? `Os dados desta tela estão sendo servidos pela API NestJS (porta 8097) conectada ao PostgreSQL (${latencia}ms).`
-                  : 'O front está exibindo linhas simuladas. Inicie o Boilerplate_Back (npm run start:dev) para ver os dados reais!'}
-              </span>
-            </div>
+              <Sparkles size={15} />
+              {isCorrect ? 'Resposta Certa (+25 XP)!' : 'Veja como o Boilerplate funciona:'}
+            </strong>
+            <p className="text-muted" style={{ fontSize: '0.84rem', marginTop: '0.3rem', marginBottom: 0 }}>
+              {currentQ.explanation}
+            </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span
-              style={{
-                fontFamily: 'monospace',
-                fontSize: '0.72rem',
-                padding: '0.25rem 0.6rem',
-                borderRadius: '6px',
-                fontWeight: 800,
-                background: backendAtivo ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
-                color: backendAtivo ? '#10b981' : '#f59e0b',
-                border: backendAtivo ? '1px solid #10b981' : '1px solid #f59e0b',
-              }}
-            >
-              {backendAtivo ? 'API POSTGRESQL' : 'MOCK LOCAL'}
-            </span>
-            <button
-              type="button"
-              className="btn-secondary"
-              style={{ padding: '0.25rem 0.65rem', fontSize: '0.74rem' }}
-              onClick={handleTestarConexao}
-              disabled={testando}
-            >
-              <RefreshCw size={13} className={testando ? 'animate-spin' : ''} />
-              {testando ? 'Testando...' : 'Diagnosticar'}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Explicação dos Bastidores e Tabela de Dados */}
-      <div className="cards-grid two-cols" style={{ marginTop: '1.15rem', alignItems: 'start' }}>
-        {/* Bastidores do linhaService.ts */}
-        <div className="glass-card" style={{ padding: '1rem', borderLeft: '3px solid #38bdf8' }}>
-          <strong style={{ fontSize: '0.8rem', color: '#38bdf8', display: 'block', marginBottom: '0.4rem' }}>
-            ⚙️ O que acontece nos bastidores (`linhaService.ts`):
-          </strong>
-          {backendAtivo ? (
-            <ul style={{ fontSize: '0.8rem', lineHeight: 1.6, paddingLeft: '1.1rem', margin: 0 }}>
-              <li>1. O front chama <code>api.get('/api/linhas')</code> via proxy Vite.</li>
-              <li>2. O <code>tokenStore</code> envia o cabeçalho <code>Authorization: Bearer &lt;token&gt;</code>.</li>
-              <li>3. O NestJS processa com o <code>LinhaRepository</code> no PostgreSQL local.</li>
-              <li>4. O hook <code>useLinhas</code> recebe <code>origem: "backend"</code> e exibe o badge verde.</li>
-            </ul>
-          ) : (
-            <ul style={{ fontSize: '0.8rem', lineHeight: 1.6, paddingLeft: '1.1rem', margin: 0 }}>
-              <li>1. O front tenta bater em <code>/api/linhas</code>, mas a conexão falha (ECONNREFUSED).</li>
-              <li>2. O bloco <code>catch</code> do <code>linhaService.ts</code> captura o erro sem travar a tela.</li>
-              <li>3. Ele retorna automaticamente o dataset <code>MOCK_LINHAS_FALLBACK</code> em memória.</li>
-              <li>4. O estagiário continua programando o front normalmente sem depender de Docker!</li>
-            </ul>
-          )}
-        </div>
-
-        {/* Amostra dos Dados Carregados */}
-        <div className="glass-card" style={{ padding: '1rem' }}>
-          <strong style={{ fontSize: '0.8rem', display: 'block', marginBottom: '0.4rem', color: '#cbd5e1' }}>
-            📦 Dados entregues ao componente `TabelaLinhas.tsx`:
-          </strong>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-            {dadosSimulados.map((item) => (
-              <div
-                key={item.codigo}
-                style={{
-                  padding: '0.45rem 0.65rem',
-                  borderRadius: '6px',
-                  background: 'rgba(15, 23, 42, 0.5)',
-                  fontSize: '0.78rem',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <div>
-                  <strong style={{ color: '#38bdf8', fontFamily: 'monospace' }}>{item.codigo}</strong>{' '}
-                  <span style={{ color: '#cbd5e1' }}>{item.descricao}</span>
-                </div>
-                <span
-                  style={{
-                    fontFamily: 'monospace',
-                    fontSize: '0.7rem',
-                    color: backendAtivo ? '#10b981' : '#f59e0b',
-                  }}
-                >
-                  {item.origem}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ============================================================================
-// 2. SIMULADOR DE PERMISSÕES CDP (<Can> E <ProtectedRoute>)
-// ============================================================================
-export const InteractiveCdpPermissionsSimulator: React.FC = () => {
-  type PerfilSimulado = 'aluno' | 'operador' | 'admin';
-  const [perfilAtivo, setPerfilAtivo] = useState<PerfilSimulado>('aluno');
-
-  const permissoes: Record<
-    PerfilSimulado,
-    { nome: string; rotas: string[]; acoes: string[]; badge: string }
-  > = {
-    aluno: {
-      nome: 'Estagiário (Aluno)',
-      rotas: ['dashboard', 'scl-menu', 'linhas', 'infoonibus'],
-      acoes: ['linhas:LEITURA', 'vol:LEITURA'],
-      badge: 'passed',
-    },
-    operador: {
-      nome: 'Operador de Tráfego',
-      rotas: ['dashboard', 'scl-menu', 'linhas', 'infoonibus'],
-      acoes: ['linhas:LEITURA', 'linhas:ESCRITA', 'vol:LEITURA'],
-      badge: 'pending',
-    },
-    admin: {
-      nome: 'Administrador / Supervisor',
-      rotas: ['dashboard', 'scl-menu', 'linhas', 'infoonibus', 'admin-painel'],
-      acoes: ['linhas:LEITURA', 'linhas:ESCRITA', 'admin:TOTAL'],
-      badge: 'danger',
-    },
-  };
-
-  const current = permissoes[perfilAtivo];
-  const podeAcessarTelaAdmin = current.rotas.includes('admin-painel');
-  const podeCadastrarLinha = current.acoes.includes('linhas:ESCRITA');
-
-  return (
-    <div
-      className="glass-card"
-      style={{
-        marginTop: '1.5rem',
-        padding: '1.35rem',
-        border: '1px solid rgba(99, 102, 241, 0.35)',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '0.75rem',
-          paddingBottom: '1rem',
-          borderBottom: '1px solid rgba(148,163,184,0.2)',
-        }}
-      >
-        <div>
-          <span className="hero-badge" style={{ marginBottom: '0.35rem' }}>
-            🛡️ Simulador de Permissões CDP • Controle Granular no Front-end
-          </span>
-          <h3 style={{ fontSize: '1.1rem' }}>
-            Como os Componentes `&lt;ProtectedRoute&gt;` e `&lt;Can&gt;` Blindam a Interface
-          </h3>
-          <p className="text-muted" style={{ fontSize: '0.84rem' }}>
-            Alterne entre os perfis de usuário abaixo para ver botões administrativos sumirem e rotas serem bloqueadas:
-          </p>
-        </div>
-
-        {/* Seletor de Perfil do CDP */}
-        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-          {(['aluno', 'operador', 'admin'] as PerfilSimulado[]).map((p) => {
-            const isSel = perfilAtivo === p;
-            return (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPerfilAtivo(p)}
-                className={`sql-filter-btn ${isSel ? 'active' : ''}`}
-                style={{ fontSize: '0.78rem' }}
-              >
-                <UserCheck size={13} /> {permissoes[p].nome}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="cards-grid two-cols" style={{ marginTop: '1.25rem', alignItems: 'start' }}>
-        {/* Caso A: Controle Granular com <Can action="ESCRITA"> */}
-        <div className="glass-card" style={{ padding: '1.15rem', borderLeft: '4px solid #38bdf8' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <strong style={{ fontSize: '0.86rem' }}>1. Visibilidade de Botões com `&lt;Can&gt;`</strong>
-            <span
-              className={`status-pill ${podeCadastrarLinha ? 'passed' : 'pending'}`}
-              style={{ fontSize: '0.72rem' }}
-            >
-              {podeCadastrarLinha ? 'Ação Liberada' : 'Ação Oculta'}
-            </span>
-          </div>
-
-          <p className="text-muted" style={{ fontSize: '0.82rem', lineHeight: 1.55 }}>
-            O componente <code>&lt;Can endpoint="linhas" action="ESCRITA"&gt;</code> só renderiza botões administrativos se o usuário tiver permissão de escrita.
-          </p>
-
-          <div
-            style={{
-              marginTop: '0.85rem',
-              padding: '0.85rem',
-              borderRadius: '8px',
-              background: 'rgba(15, 23, 42, 0.65)',
-              border: '1px solid rgba(148,163,184,0.15)',
-            }}
-          >
-            <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginBottom: '0.45rem' }}>
-              Interface renderizada para {current.nome}:
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-              <button type="button" className="btn-secondary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.76rem' }}>
-                <Eye size={13} /> Consultar Linhas (Leitura)
-              </button>
-
-              {podeCadastrarLinha ? (
-                <button type="button" className="btn-primary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.76rem' }}>
-                  <PlusCircle size={13} /> + Cadastrar Nova Linha (Escrita)
-                </button>
-              ) : (
-                <span
-                  style={{
-                    fontSize: '0.74rem',
-                    color: '#94a3b8',
-                    fontStyle: 'italic',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}
-                >
-                  <Lock size={12} color="#f59e0b" /> [Botão oculto pelo &lt;Can&gt; para perfil Aluno]
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Caso B: Bloqueio de Rota Inteira com <ProtectedRoute> */}
-        <div className="glass-card" style={{ padding: '1.15rem', borderLeft: '4px solid #818cf8' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <strong style={{ fontSize: '0.86rem' }}>2. Bloqueio de Tela com `&lt;ProtectedRoute&gt;`</strong>
-            <span
-              className={`status-pill ${podeAcessarTelaAdmin ? 'passed' : 'danger'}`}
-              style={{ fontSize: '0.72rem' }}
-            >
-              {podeAcessarTelaAdmin ? 'Rota Liberada' : 'Acesso Negado (403)'}
-            </span>
-          </div>
-
-          <p className="text-muted" style={{ fontSize: '0.82rem', lineHeight: 1.55 }}>
-            O <code>&lt;ProtectedRoute endpoint="admin-painel"&gt;</code> impede o acesso à tela inteira e exibe o cartão amigável do CDP se o estagiário tentar abrir uma rota restrita.
-          </p>
-
-          <div
-            style={{
-              marginTop: '0.85rem',
-              padding: '0.85rem',
-              borderRadius: '8px',
-              background: podeAcessarTelaAdmin ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
-              border: podeAcessarTelaAdmin ? '1px solid #10b981' : '1px solid #ef4444',
-            }}
-          >
-            {podeAcessarTelaAdmin ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <ShieldCheck size={18} color="#10b981" />
-                <span style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 700 }}>
-                  Acesso Autorizado: Painel Administrativo do SISMOB liberado!
-                </span>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <AlertTriangle size={18} color="#ef4444" />
-                <span style={{ fontSize: '0.8rem', color: '#ef4444', fontWeight: 700 }}>
-                  Acesso Restrito pelo CDP: Seu perfil atual não tem permissão para esta rota.
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ============================================================================
-// 3. SIMULADOR DE VARIÁVEIS DE AMBIENTE (.env & env.config.ts)
-// ============================================================================
-export const InteractiveEnvSimulator: React.FC = () => {
-  const [usarPrefixoVite, setUsarPrefixoVite] = useState<boolean>(true);
-  const [ambiente, setAmbiente] = useState<'local' | 'k8s'>('local');
-
-  const varName = usarPrefixoVite ? 'VITE_API_HOST' : 'API_HOST';
-  const varValue = 'http://localhost:8097/api';
-
-  return (
-    <div
-      className="glass-card"
-      style={{
-        marginTop: '1.5rem',
-        padding: '1.35rem',
-        border: '1px solid rgba(245, 158, 11, 0.35)',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '0.75rem',
-          paddingBottom: '1rem',
-          borderBottom: '1px solid rgba(148,163,184,0.2)',
-        }}
-      >
-        <div>
-          <span className="hero-badge" style={{ marginBottom: '0.35rem' }}>
-            ⚙️ Simulador de Variáveis de Ambiente • .env no Vite & SEMOB
-          </span>
-          <h3 style={{ fontSize: '1.1rem' }}>
-            A Regra de Ouro do Prefixo `VITE_` e a Resolução Centralizada
-          </h3>
-          <p className="text-muted" style={{ fontSize: '0.84rem' }}>
-            Descubra por que variáveis sem <code>VITE_</code> desaparecem no navegador e como o <code>env.config.ts</code> unifica ambiente local e nuvem:
-          </p>
-        </div>
-
-        {/* Controles do Simulador */}
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            onClick={() => setUsarPrefixoVite(!usarPrefixoVite)}
-            className={`sql-filter-btn ${usarPrefixoVite ? 'active' : ''}`}
-            style={{ fontSize: '0.78rem' }}
-          >
-            {usarPrefixoVite ? '✅ Com Prefixo VITE_' : '❌ Sem Prefixo VITE_'}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setAmbiente(ambiente === 'local' ? 'k8s' : 'local')}
-            className="btn-secondary"
-            style={{ padding: '0.3rem 0.75rem', fontSize: '0.78rem' }}
-          >
-            Ambiente: {ambiente === 'local' ? '💻 Local (.env)' : '☸️ Kubernetes (window.__ENV__)'}
+          <button type="button" className="btn-primary" onClick={handleNext}>
+            Próxima Estação <ArrowRight size={15} />
           </button>
         </div>
-      </div>
-
-      <div className="cards-grid two-cols" style={{ marginTop: '1.25rem', alignItems: 'start' }}>
-        {/* Painel Esquerdo: O arquivo .env ou injeção em runtime */}
-        <div className="glass-card" style={{ padding: '1.1rem', borderLeft: '4px solid #f59e0b' }}>
-          <strong style={{ fontSize: '0.84rem', display: 'block', marginBottom: '0.4rem', color: '#f59e0b' }}>
-            📄 Arquivo <code>.env</code> ou Runtime Injection:
-          </strong>
-
-          <pre className="code-block" style={{ fontSize: '0.78rem', margin: 0 }}>
-            <code>
-              {ambiente === 'local'
-                ? `# Configuração Local no Vite
-${varName}="${varValue}"
-VITE_MOCK_AUTH="true"
-VITE_MOCK_DATA="true"
-APP_TITLE="SISMOB - Boilerplate Frontend"`
-                : `// Injeção Dinâmica em Produção (Kubernetes)
-window.__ENV__ = {
-  ${varName}: "${varValue}",
-  APP_TITLE: "SISMOB - Produção SEMOB"
-};`}
-            </code>
-          </pre>
-
-          <p className="text-muted" style={{ fontSize: '0.8rem', marginTop: '0.65rem', lineHeight: 1.55 }}>
-            {usarPrefixoVite
-              ? '✅ Como a variável começa com VITE_, o compilador do Vite autoriza a exposição pública para o bundle do navegador.'
-              : '⚠️ ATENÇÃO: Sem o prefixo VITE_, o Vite bloqueia a variável por segurança! No navegador ela virará undefined.'}
-          </p>
-        </div>
-
-        {/* Painel Direito: O que o código enxerga */}
-        <div className="glass-card" style={{ padding: '1.1rem', borderLeft: '4px solid #38bdf8' }}>
-          <strong style={{ fontSize: '0.84rem', display: 'block', marginBottom: '0.4rem', color: '#38bdf8' }}>
-            🔍 Leitura no Código TypeScript (`src/config/env.config.ts`):
-          </strong>
-
-          <div
-            style={{
-              padding: '0.85rem',
-              borderRadius: '8px',
-              background: 'rgba(15, 23, 42, 0.65)',
-              fontFamily: 'monospace',
-              fontSize: '0.82rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.45rem',
-            }}
-          >
-            <div>
-              <span style={{ color: '#94a3b8' }}>// Chamada direta:</span>
-              <br />
-              <code>import.meta.env.{varName}</code>
-              <br />
-              <span style={{ color: usarPrefixoVite ? '#10b981' : '#ef4444', fontWeight: 800 }}>
-                ➔ {usarPrefixoVite ? `"${varValue}"` : 'undefined'}
-              </span>
-            </div>
-
-            <div style={{ borderTop: '1px solid rgba(148,163,184,0.15)', paddingTop: '0.45rem' }}>
-              <span style={{ color: '#94a3b8' }}>// Via env.config.ts da SEMOB:</span>
-              <br />
-              <code>env.{usarPrefixoVite ? 'API_HOST' : 'API_HOST'}</code>
-              <br />
-              <span style={{ color: '#10b981', fontWeight: 800 }}>
-                ➔ {ambiente === 'k8s' ? `"${varValue}" (lido de window.__ENV__)` : (usarPrefixoVite ? `"${varValue}"` : '"" (fallback seguro)')}
-              </span>
-            </div>
-          </div>
-
-          <div
-            style={{
-              marginTop: '0.85rem',
-              padding: '0.75rem',
-              borderRadius: '8px',
-              background: 'rgba(239, 68, 68, 0.08)',
-              border: '1px solid rgba(239, 68, 68, 0.25)',
-              fontSize: '0.78rem',
-              color: '#f87171',
-              lineHeight: 1.5,
-            }}
-          >
-            🔒 <strong>Regra de Segurança:</strong> Nunca coloque senhas de banco ou chaves secretas no <code>.env</code> do Front! Qualquer variável exposta via <code>VITE_</code> pode ser lida por qualquer pessoa inspecionando o código no navegador (F12).
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
-

@@ -133,6 +133,8 @@ export interface ModuleSection {
   folderExplorer?: InteractiveFolderItem[];
   guidedTutorialSteps?: GuidedStepItem[];
   enableSwaggerSimulator?: boolean;
+  enableFrontendBridgeSimulator?: boolean;
+  enableFrontendFolderGame?: boolean;
   httpCodesExplorer?: HttpStatusCodeItem[];
   enableDualModeSimulator?: boolean;
   enableCdpSimulator?: boolean;

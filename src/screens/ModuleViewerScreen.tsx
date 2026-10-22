@@ -32,9 +32,8 @@ import {
   InteractiveHttpCodesExplorer,
 } from '../components/BackendInteractiveWidgets';
 import {
-  InteractiveDualModeSimulator,
-  InteractiveCdpPermissionsSimulator,
-  InteractiveEnvSimulator,
+  FrontendBridgeSimulator,
+  FrontendFolderGame,
 } from '../components/FrontendInteractiveWidgets';
 
 interface ModuleViewerScreenProps {
@@ -271,14 +270,11 @@ export const ModuleViewerScreen: React.FC<ModuleViewerScreenProps> = ({
               {/* Simulador Interativo do Swagger */}
               {section.enableSwaggerSimulator && <InteractiveSwaggerSimulator />}
 
-              {/* Simulador do Modo Duplo (Dual-Mode: Backend Online vs Mock Offline) */}
-              {section.enableDualModeSimulator && <InteractiveDualModeSimulator />}
+              {/* Simulador da Ponte Front <-> Back (.env, runtime config, tokenStore e CDP) */}
+              {section.enableFrontendBridgeSimulator && <FrontendBridgeSimulator />}
 
-              {/* Simulador de Permissões CDP (<Can> e <ProtectedRoute>) */}
-              {section.enableCdpSimulator && <InteractiveCdpPermissionsSimulator />}
-
-              {/* Simulador de Variáveis de Ambiente (.env & env.config.ts) */}
-              {section.enableEnvSimulator && <InteractiveEnvSimulator />}
+              {/* Jogo Gamificado: Onde Fica Cada Ficheiro no BoilerPlate_Front_end */}
+              {section.enableFrontendFolderGame && <FrontendFolderGame />}
 
               {/* Jornada de Código Guiada Passo a Passo */}
               {section.guidedTutorialSteps && (

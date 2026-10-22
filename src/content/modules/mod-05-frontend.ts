@@ -3,895 +3,639 @@ import { LearningModule } from '../../types';
 export const mod05Frontend: LearningModule = {
   id: 'mod-5-frontend',
   order: 5,
-  title: 'Manual Prático de Front-end: Da Arquitetura SISMOB e Dual-Mode à Criação de Módulos SCL',
+  title: 'Manual Prático de Front-end: Dominando o BoilerPlate_Front_end e o Fluxo do SCL',
   category: 'frontend',
-  estimatedTime: '3h 30min',
-  version: '2.0.0',
-  updatedAt: '2026-10-21',
+  estimatedTime: '3h 45min',
+  version: '2.1.0',
+  updatedAt: '2026-10-22',
   workloadHours: 12,
   description:
-    'Guia completo do zero à tela funcional: como clonar e rodar o Boilerplate_Front, o papel do .env no Vite, a separação em 5 camadas, o funcionamento do modo duplo (Dual-Mode), dissecção da tela real de Linhas (SCL), segurança com CDP (<ProtectedRoute> e <Can>) e o passo a passo para construir uma nova tela consumindo uma API.',
+    'Do git clone ao domínio completo do BoilerPlate_Front_end: entenda o .env e Runtime Config, o CDP/Segurança, como a tela RelatorioLinha existe dentro do módulo SCL e o fluxo completo de 7 estações (de src/config/modules.ts até o arquivo .tsx final que compila os micro-componentes e hooks).',
   objectives: [
-    'Compreender o setup local do front-end com Vite e a regra do prefixo VITE_ nas variáveis de ambiente (.env)',
-    'Dominar a arquitetura modular SISMOB e a esteira em 5 camadas (Types ➔ Services ➔ Hooks ➔ Smart UI ➔ Dumb UI)',
-    'Entender o Dual-Mode com proxy reverso (/api) e auto-login JWT transparente com o Boilerplate_Back',
-    'Conhecer a anatomia interna da pasta src/modulos/ e como a tela real de Linhas (SCL) foi implementada',
-    'Aplicar controle granular de acesso e blindagem de telas utilizando o padrão CDP com <ProtectedRoute> e <Can>',
-    'Criar uma nova tela completa no SCL do zero até o consumo funcional de uma API registrada no menu',
+    'Subir o BoilerPlate_Front_end conectado ao BoilerPlate_Back_end via .env, env.config.ts e public/config.js',
+    'Compreender a ponte automática de autenticação (Login.tsx ➔ tokenStore.ts ➔ api.ts) e os hooks de CDP/Segurança',
+    'Entender na prática como a tela RelatorioLinha existe dentro do módulo SCL (modules.ts ➔ SCLMenu.tsx ➔ App.tsx ➔ Pasta da Tela)',
+    'Aplicar a modularização máxima (types, services, micro-hooks e micro-componentes) para que o arquivo .tsx final apenas compile e orquestre tudo',
   ],
   sections: [
     // ========================================================================
-    // CAPÍTULO 1: O MODELO MENTAL DAS 5 CAMADAS FRONT-END
+    // CAPÍTULO 1: DO CLONE AO AR (CONECTANDO FRONT E BACK)
     // ========================================================================
     {
-      heading: '1. O que é o SISMOB-BOILERPLATE Front e o Modelo Mental das 5 Camadas',
-      body: 'No desenvolvimento front-end moderno da SEMOB, o maior erro de quem está começando é misturar tudo num único arquivo: chamadas Axios, estados do React (useState), validações de formulário e código visual (JSX). Quando esse arquivo passa de 300 linhas, qualquer ajuste quebra a tela inteira. No SISMOB-BOILERPLATE Front, nós resolvemos isso com a Arquitetura em 5 Camadas Unidirecionais.',
-      paragraphs: [
-        'Cada camada tem uma única responsabilidade e conversa exclusivamente com a camada imediatamente vizinha. O fluxo dos dados desce de forma limpa, garantindo que componentes visuais nunca fiquem acoplados a chamadas HTTP.',
-      ],
-      codeBlocks: [
-        {
-          title: 'A Esteira Unidirecional de 5 Camadas do Front-end SISMOB',
-          language: 'text',
-          code: `[ API NestJS / Servidor SISMOB (:8097) ]
-               │
-               ▼
-1. TYPES (types/index.ts) ────────► "O Contrato"
-       │  Define as interfaces TypeScript (Linha, Itinerario, Filtros).
-       ▼
-2. SERVICES (services/*.ts) ──────► "O Mensageiro HTTP"
-       │  Usa Axios para chamar a API e aplica contingência mock se o back cair.
-       ▼
-3. HOOKS (hooks/useLinhas.ts) ────► "O Cérebro Reativo"
-       │  Gere useState, loading, erro, dados e dispara os Services.
-       ▼
-4. SMART UI (LinhasIndex.tsx) ────► "O Maestro da Página"
-       │  Recebe os dados do Hook e orquestra layout, alertas e navegação.
-       ▼
-5. DUMB UI (components/*.tsx) ────► "Os Operários Visuais"
-          Apenas recebem props (linhas, onBuscar) e desenham botões e tabelas.`,
-        },
-      ],
-      tables: [
-        {
-          headers: ['Camada', 'Papel Arquitetural', 'Responsabilidade Principal'],
-          rows: [
-            [
-              '1. Types',
-              'O Contrato',
-              'Define as regras e interfaces estruturais dos dados (entidades, filtros e props de componentes).',
-            ],
-            [
-              '2. Services',
-              'O Mensageiro',
-              'Executa requisições HTTP (GET, POST) com Axios, gerencia tokens e fornece dados de contingência.',
-            ],
-            [
-              '3. Hooks',
-              'O Cérebro',
-              'Gerencia o estado reativo (useState), aciona o Service, orquestra loadings, erros e regras de tela.',
-            ],
-            [
-              '4. Smart UI',
-              'O Maestro',
-              'A página/container principal (Index.tsx). Conecta o Hook aos componentes visuais, controlando layout e permissões.',
-            ],
-            [
-              '5. Dumb UI',
-              'Os Operários',
-              'Componentes puramente visuais (cards, formulários, tabelas). Apenas renderizam dados e repassam eventos via props.',
-            ],
-          ],
-        },
-      ],
-      callouts: [
-        {
-          type: 'important',
-          title: '🛡️ As 4 Leis Inegociáveis do Front-end SISMOB',
-          content: 'Para o seu código ser aprovado na revisão da equipe, nunca quebre estas 4 fronteiras:',
-          bullets: [
-            '1. Nenhum componente visual em components/ pode importar axios nem fazer chamadas HTTP diretas.',
-            '2. Nenhum serviço em services/ pode usar useState, useEffect ou retornar tags JSX (ele é TypeScript puro).',
-            '3. Os componentes Dumb em components/ devem ser puros: recebem dados via props e emitem eventos via callbacks (onBuscar, onSelecionar).',
-            '4. Toda tipagem deve ser declarada estritamente no types/index.ts — o uso do tipo "any" é proibido.',
-          ],
-        },
-      ],
-    },
-
-    // ========================================================================
-    // CAPÍTULO 2: VARIÁVEIS DE AMBIENTE (.env, env.config.ts E PREFIXO VITE_)
-    // ========================================================================
-    {
-      heading: '2. Configurando o Ambiente e as Variáveis de Ambiente (.env & env.config.ts)',
-      body: 'Para colocar o Boilerplate Front para rodar na sua máquina, o primeiro passo após clonar o repositório é entender como as Variáveis de Ambiente funcionam no ecossistema Vite e na infraestrutura da SEMOB.',
-      paragraphs: [
-        'Diferente do Node.js tradicional (que usa process.env), o Vite roda dentro do navegador e exige que toda variável exposta publicamente comece obrigatoriamente com o prefixo VITE_ (ex: VITE_MOCK_DATA, VITE_API_HOST). Se você esquecer esse prefixo, a variável virará undefined no código!',
-        'No SISMOB, nós usamos um padrão de nível corporativo no arquivo src/config/env.config.ts: ele unifica as variáveis de desenvolvimento (.env lido por import.meta.env) e as variáveis de produção (injetadas dinamicamente no container Docker/Kubernetes via window.__ENV__). Veja no simulador interativo abaixo:',
-      ],
-      enableEnvSimulator: true,
+      heading: '1. O Que é o BoilerPlate_Front_end e Como Colocá-lo no Ar',
+      body: 'O BoilerPlate_Front_end é a nossa plataforma base de interfaces da SEMOB. Ele já vem com Login integrado ao Back-end, Dashboard de sistemas, Sidebar inteligente, controle de acesso por perfil (Can.tsx, ProtectedRoute.tsx, SemAcessoGuard.tsx), suporte a PWA (public/manifests/) e um módulo real já construído para servir de referência: o SCL (Sistema de Controle de Linhas), contendo ConsultaOS e RelatorioLinha.',
       commandCards: [
         {
-          name: 'Comandos para Iniciar o Front-end',
-          role: 'Terminal Bash / PowerShell',
-          concept: 'Na pasta do Boilerplate_Front, clonamos, instalamos e subimos o servidor Vite:',
-          code: `# 1. Entrar na pasta do front
-cd Boilerplate_Front
-
-# 2. Copiar o arquivo de exemplo de variáveis de ambiente
-cp .env.example .env
-
-# 3. Baixar os pacotes (React, Tailwind, Lucide, Axios)
-npm install
-
-# 4. Iniciar o servidor local (porta 5173)
-npm run dev`,
+          name: 'Passo 1: Clonar o Repositório e Abrir no VS Code',
+          role: 'Terminal Git',
+          concept:
+            'Com o seu BoilerPlate_Back_end rodando na porta 8097 (e o banco PostgreSQL ativo no Rancher Desktop), abra um novo terminal para o Front-end:',
+          code: `git clone https://github.com/pedro090904/BoilerPlate_Front_end.git
+cd BoilerPlate_Front_end
+code .`,
         },
-      ],
-      tables: [
         {
-          headers: ['Variável no .env', 'Valor Padrão', 'O que ela controla no SISMOB?'],
-          rows: [
-            [
-              'VITE_MOCK_AUTH',
-              'true',
-              'Habilita o auto-login mock quando o backend estiver fora, permitindo testar a interface sem travar.',
-            ],
-            [
-              'VITE_MOCK_DATA',
-              'true',
-              'Permite aos serviços usarem dados de contingência locais se o PostgreSQL não responder.',
-            ],
-            [
-              'APP_TITLE',
-              '"SISMOB - Boilerplate Frontend"',
-              'Título exibido na aba do navegador e no cabeçalho superior do sistema.',
-            ],
-            [
-              'DEV_PROXY_TARGET',
-              '"https://dev-sismob.semob.df.gov.br"',
-              'Endereço do servidor remoto de desenvolvimento caso queira apontar para a nuvem da SEMOB.',
-            ],
-          ],
+          name: 'Passo 2: Configurar o .env na Raiz do Projeto',
+          role: 'Variáveis de Ambiente',
+          concept:
+            'O ficheiro .env na raiz informa ao Vite onde o Back-end está rodando. O ficheiro src/config/env.config.ts lê essa variável e alimenta o cliente HTTP src/services/api.ts:',
+          code: `# No ficheiro .env da raiz:
+VITE_API_URL=http://localhost:8097/api`,
+        },
+        {
+          name: 'Passo 3: Instalar Dependências (.npmrc) e Iniciar com Vite',
+          role: 'NPM & Vite',
+          concept:
+            'O projeto possui um ficheiro .npmrc configurado com legacy-peer-deps=true para garantir instalação limpa de todos os pacotes gráficos. Basta rodar:',
+          code: `npm install
+npm run dev
+
+# Acesse no navegador: http://localhost:5173`,
         },
       ],
     },
 
     // ========================================================================
-    // CAPÍTULO 3: O MODO DUPLO (DUAL-MODE) E CONEXÃO COM O BACKEND
+    // CAPÍTULO 2: .ENV RUNTIME, PONTE JWT, CDP E AS 7 ESTAÇÕES
     // ========================================================================
     {
-      heading: '3. O Modo Duplo (Dual-Mode) e a Conexão com o Backend NestJS',
-      body: 'Ao abrir o Boilerplate_Front, você percebe um recurso fundamental: o front funciona em Modo Duplo (Dual-Mode com Zero Dependência). Ele conversa com a API real do NestJS na porta 8097, mas se o backend estiver desligado, ele não quebra.',
-      paragraphs: [
-        'Como o navegador impede requisições entre portas diferentes por segurança (CORS), o arquivo vite.config.ts configura um Proxy Reverso: toda chamada que o front faz para /api é redirecionada de forma transparente para http://localhost:8097/api.',
-        'Além disso, o linhaService.ts implementa Auto-Login JWT: se o token não existir na tokenStore, ele faz login sozinho com as credenciais padrão (admin / sismob@2026), grava o access_token e anexa o cabeçalho Authorization: Bearer <token>. Veja no simulador como o card de status reage:',
-      ],
-      enableDualModeSimulator: true,
+      heading: '2. Engrenagens Internas: .env Runtime, Ponte JWT (api.ts) e CDP / Segurança',
+      body: 'Antes de criarmos uma tela nova, precisamos entender como o BoilerPlate_Front_end resolve autenticação, variáveis de ambiente em produção (Docker) e segurança de sessão automaticamente para você. Interaja com o painel abaixo:',
+      enableFrontendBridgeSimulator: true,
       callouts: [
         {
           type: 'info',
-          title: '🔄 O Papel do StatusIntegracaoBackend.tsx',
+          title: '🐳 Por que existem .env, src/config/env.config.ts e public/config.js?',
           content:
-            'Toda tela principal no SISMOB inclui no topo o componente StatusIntegracaoBackend. Ele exibe um badge verde ("CONEXÃO ATIVA COM O BOILERPLATE BACKEND") com a latência em ms quando a API responde, ou um badge âmbar ("MODO CONTINGÊNCIA") quando o front está usando dados simulados. Isso dá total transparência ao estagiário e ao fiscal!',
+            'Conforme documentado em docs/CONFIG-RUNTIME.md, aplicações React compiladas viram arquivos estáticos. Para permitir trocar a URL do Back-end quando o container Docker sobe em Homologação ou Produção sem precisar rodar "npm run build" de novo:',
+          bullets: [
+            '1. O script docker/30-runtime-env.sh lê as variáveis do servidor quando o container inicia e gera o arquivo public/config.js (window.__ENV__).',
+            '2. O arquivo src/config/env.config.ts lê primeiro o window.__ENV__ e, se não existir (como no seu npm run dev local), usa o .env!',
+            '3. Regra prática: Nos seus services ou componentes, NUNCA use import.meta.env direto; importe sempre de src/config/env.config.ts.',
+          ],
+        },
+        {
+          type: 'important',
+          title: '🕵️ O que é o CDP, Proxy e a Camada de Segurança do Boilerplate?',
+          content:
+            'O boilerplate traz ferramentas nativas de proteção e depuração que rodam automaticamente no AppLayout:',
+          bullets: [
+            'Inspeção via CDP (Chrome DevTools Protocol) & Network: Permite auditar as chamadas que saem do front para a porta 8097 e verificar o cabeçalho Authorization: Bearer.',
+            'Hooks de Proteção (useSecurity.ts, useIncognitoBlocker.tsx, auditLogger.ts): Bloqueiam uso em guias anônimas não autorizadas (IncognitoBlockScreen.tsx), bloqueiam telas exclusivas de desktop quando abertas em telas incompatíveis (ApenasDesktopModal.tsx) e geram o selo criptográfico em relatórios impressos (useSeloImpressao.ts / SeloValidacaoImpressao.tsx).',
+            'Simulação de Perfis (src/config/simulatedProfiles.ts e DevModal.tsx): Permite testar em tempo real se um perfil tem ou não acesso a um módulo sem precisar trocar de usuário no banco.',
+          ],
         },
       ],
     },
 
     // ========================================================================
-    // CAPÍTULO 4: ANATOMIA COMPLETA E A ESTRUTURA DA PASTA SRC/MODULOS/
+    // CAPÍTULO 3: ESTUDO DE CASO REAL — COMO "RELATORIOLINHA" EXISTE NO SCL
     // ========================================================================
     {
-      heading: '4. Anatomia do Boilerplate e a Estrutura da Pasta src/modulos/',
-      body: 'Uma das características mais marcantes da arquitetura front-end da SEMOB é a Modularidade por Sistema dentro de src/modulos/. Em vez de termos pastas genéricas globais, cada grande sistema da secretaria vira um módulo autônomo.',
+      heading: '3. Estudo de Caso Real: Como a Tela "RelatorioLinha" Existe Dentro do Módulo SCL?',
+      body: 'Para entender como criar qualquer tela nova no BoilerPlate_Front_end, basta observar como a tela "RelatorioLinha" foi construída dentro do módulo SCL. Ela não é um arquivo solto: ela segue um fluxo completo que começa na pasta src/config/modules.ts e termina no arquivo compilador RelatorioLinha.tsx!',
       paragraphs: [
-        'Por exemplo, o SCL (Sistema de Controle de Linhas) fica em src/modulos/SCL/. Ele possui um menu central (SCLMenu.tsx) e submódulos independentes como Linhas/ e Vol/ (o desafio Infoônibus). Navegue pelo explorador abaixo para conhecer cada pasta:',
+        'Por que não escrevemos tudo dentro de um único arquivo gigante? Porque a boa prática de engenharia adotada no boilerplate é a MODULARIZAÇÃO MÁXIMA: nós quebramos tipagens, chamadas de API, buscas, exportação CSV, impressão e cada pedaço visual (formulário de filtro, cards de estatística, lista de linhas, detalhes da linha) em arquivos pequenos e independentes. Assim, o último arquivo (.tsx) na raiz da pasta da tela serve apenas para importar e conectar (compilar) essas peças!',
       ],
       folderExplorer: [
         {
-          id: 'front-folder-modulos-scl-linhas',
-          path: 'src/modulos/SCL/Linhas/',
-          type: 'folder',
-          analogy: 'O Buscador Integrado ao NestJS',
+          id: 'step-config-modules',
+          path: '1º src/config/modules.ts',
+          type: 'file',
+          analogy: 'A Certidão de Nascimento do Módulo/Submódulo',
           purpose:
-            'É o módulo de referência do sistema! Contém o fluxo completo de consulta de linhas conectado à API do backend. É aqui que você deve se inspirar para criar qualquer novo módulo.',
-          filesInside: [
-            'src/modulos/SCL/Linhas/LinhasIndex.tsx',
-            'src/modulos/SCL/Linhas/services/linhaService.ts',
-            'src/modulos/SCL/Linhas/hooks/useLinhas.ts',
-            'src/modulos/SCL/Linhas/components/FormBuscaLinha.tsx',
-            'src/modulos/SCL/Linhas/components/TabelaLinhas.tsx',
-            'src/modulos/SCL/Linhas/components/CardLinhaDetalhes.tsx',
-            'src/modulos/SCL/Linhas/components/StatusIntegracaoBackend.tsx',
-            'src/modulos/SCL/Linhas/types/index.ts',
-          ],
+            'É o primeiro lugar onde você mexe! Aqui ficam declarados todos os módulos do sistema (como SCL e Noticias), seus ícones (logo_scl.webp), suas rotas, permissões e seus submódulos filhos. Se não estiver registrado aqui, ele não aparece na Sidebar nem no Dashboard!',
+          filesInside: ['src/config/modules.ts', 'src/hooks/useModules.tsx', 'src/hooks/useNavigation.tsx'],
           mustDo: [
-            'Organizar o módulo nas 5 subpastas (types, services, hooks, components e Index)',
-            'Incluir o StatusIntegracaoBackend para dar visibilidade da conexão ao usuário',
+            'Cadastrar os metadados do módulo ou adicionar a nova opção dentro do grupo do módulo pai (ex: SCL)',
+            'Definir o id, título, caminho da rota (path) e ícone correspondente',
           ],
           mustNotDo: [
-            'Não misturar regras de outros módulos (ex: frota de veículos) dentro da pasta Linhas',
+            'Nunca criar uma rota secreta no App.tsx sem declará-la na estrutura de módulos quando ela fizer parte do menu',
           ],
-          codePreview: `// LinhasIndex.tsx (Smart UI)
-export default function LinhasIndex() {
-  const { navegarPara } = useNavigation();
-  const { carregando, erro, linhas, linhaSelecionada, setLinhaSelecionada, buscarLinhas, origemDados, mensagemStatus } = useLinhas();
+          codePreview: `// Em src/config/modules.ts:
+{
+  id: 'scl',
+  title: 'SCL - Controle de Linhas',
+  icon: '/images/logo_scl.webp',
+  path: '/scl',
+  submodules: [
+    { id: 'consulta-os', title: 'Consulta de OS', path: '/scl/consulta-os' },
+    { id: 'relatorio-linha', title: 'Relatório de Linhas', path: '/scl/relatorio-linha' },
+    // 👉 É aqui que você registrará "Consultar Itinerário" e "Consultar Horários"!
+  ]
+}`,
+        },
+        {
+          id: 'step-scl-menu-app',
+          path: '2º src/modulos/SCL/SCLMenu.tsx & src/App.tsx',
+          type: 'file',
+          analogy: 'O Hall de Entrada do SCL e o Mapa de Rotas',
+          purpose:
+            'Quando o usuário clica em SCL no Dashboard, o App.tsx abre o SCLMenu.tsx. O SCLMenu.tsx exibe os cards dos submódulos (ConsultaOS, RelatorioLinha). Ao clicar no card de Relatório de Linha, o React Router navega para a rota registrada no src/App.tsx!',
+          filesInside: ['src/modulos/SCL/SCLMenu.tsx', 'src/App.tsx', 'src/components/ProtectedRoute.tsx'],
+          mustDo: [
+            'Adicionar o Card/Botão do novo submódulo no SCLMenu.tsx',
+            'Declarar a <Route path="/scl/minha-nova-tela" element={<MinhaTela />} /> dentro da área autenticada do src/App.tsx',
+          ],
+          mustNotDo: [
+            'Nunca colocar a lógica da tela dentro do SCLMenu.tsx (ele é apenas o menu de entrada do módulo SCL)',
+          ],
+        },
+        {
+          id: 'step-types-services',
+          path: '3º RelatorioLinha/types/ & services/',
+          type: 'folder',
+          analogy: 'Os Contratos e o Mensageiro HTTP',
+          purpose:
+            'Agora entramos em src/modulos/SCL/RelatorioLinha/. Primeiro criamos a pasta types/ (com typesRelatorioLinha.ts e o reexportador index.ts) e depois a pasta services/ (com linhaService.ts, que importa o api global e conversa com o BoilerPlate_Back_end).',
+          filesInside: [
+            'src/modulos/SCL/RelatorioLinha/types/typesRelatorioLinha.ts',
+            'src/modulos/SCL/RelatorioLinha/types/index.ts',
+            'src/modulos/SCL/RelatorioLinha/services/linhaService.ts',
+          ],
+          mustDo: [
+            'Criar um arquivo index.ts dentro de types/ exportando todas as interfaces para facilitar os imports',
+            'Usar o api de src/services/api.ts dentro de linhaService.ts',
+          ],
+          mustNotDo: [
+            'Proibido usar "any" em typesRelatorioLinha.ts ou chamar hooks React dentro de linhaService.ts',
+          ],
+        },
+        {
+          id: 'step-micro-hooks',
+          path: '4º RelatorioLinha/hooks/ (Micro-Hooks)',
+          type: 'folder',
+          analogy: 'Os Cérebros Especializados da Tela',
+          purpose:
+            'Veja como o RelatorioLinha NÃO joga 500 linhas de lógica num arquivo só! Ele divide a inteligência em micro-hooks na pasta hooks/: um para buscar linha específica, um para listar todas, um para consolidar dados, um para baixar CSV e um para impressão!',
+          filesInside: [
+            'hooks/useBuscarLinha.ts',
+            'hooks/useLinhasList.ts',
+            'hooks/useRelatorioLinhaData.ts',
+            'hooks/useDownloadCSV.ts',
+            'hooks/useImpressao.ts',
+            'hooks/useTour.ts',
+          ],
+          mustDo: [
+            'Separar responsabilidades: um hook para busca/estado da API e hooks auxiliares para ações como exportação ou filtros',
+          ],
+          mustNotDo: ['Nunca retornar JSX/HTML de dentro de um arquivo da pasta hooks/'],
+        },
+        {
+          id: 'step-micro-components',
+          path: '5º RelatorioLinha/components/ (Decomposição UI)',
+          type: 'folder',
+          analogy: 'As Peças de Lego Visuais',
+          purpose:
+            'Cada pedaço visual da tela vira um componente pequeno e focado dentro de components/: FormSearch.tsx (formulário de filtro), LinhaStatsCards.tsx (indicadores no topo), LinhaLista.tsx (tabela/lista), DaLinhaDetails.tsx (modal/painel de detalhes), além de Loading.tsx, ErrorMessage.tsx, Button.tsx e Card.tsx.',
+          filesInside: [
+            'components/FormSearch.tsx',
+            'components/LinhaStatsCards.tsx',
+            'components/LinhaLista.tsx',
+            'components/DaLinhaDetails.tsx',
+            'components/RelatorioLinhas.tsx',
+            'components/Loading.tsx & ErrorMessage.tsx',
+          ],
+          mustDo: [
+            'Receber dados e funções exclusivamente via props tipadas em types/',
+            'Manter cada componente focado em desenhar apenas a sua parte da tela',
+          ],
+          mustNotDo: [
+            'Nunca importar linhaService.ts direto dentro de FormSearch.tsx ou LinhaLista.tsx',
+          ],
+        },
+        {
+          id: 'step-final-compiler-tsx',
+          path: '6º RelatorioLinha/RelatorioLinha.tsx (O Compilador Final)',
+          type: 'file',
+          analogy: 'O Maestro que Apenas Junta Tudo',
+          purpose:
+            'Por último, na raiz da pasta da tela, criamos o arquivo principal RelatorioLinha.tsx! Como você já modularizou tudo em types/, services/, hooks/ e components/, este arquivo final fica extremamente limpo: ele apenas chama os hooks e encaixa os componentes visuais na ordem certa!',
+          filesInside: ['src/modulos/SCL/RelatorioLinha/RelatorioLinha.tsx'],
+          mustDo: [
+            'Ser o último arquivo a ser fechado, atuando apenas como orquestrador/compilador das peças criadas nas outras pastas',
+          ],
+          mustNotDo: [
+            'Nunca escrever chamadas axios, lógica complexa de negócio ou tabelas gigantes diretamente aqui dentro',
+          ],
+          codePreview: `// Veja como o arquivo final RelatorioLinha.tsx apenas compila as peças:
+export const RelatorioLinha: React.FC = () => {
+  const { linhas, stats, isLoading, erro, filtros, buscar } = useRelatorioLinhaData();
+  const { exportarCSV } = useDownloadCSV(linhas);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      <VoltarButton onClick={() => navegarPara('scl-menu')} />
-      <StatusIntegracaoBackend origem={origemDados} mensagem={mensagemStatus} />
-      <FormBuscaLinha onBuscar={buscarLinhas} carregando={carregando} />
-      <TabelaLinhas linhas={linhas} onSelecionar={setLinhaSelecionada} />
+    <div className="space-y-6">
+      <FormSearch filtros={filtros} onSearch={buscar} onExport={exportarCSV} />
+      {erro && <ErrorMessage message={erro} />}
+      {isLoading ? (
+        <Loading />
+      ) : (
+        <>
+          <LinhaStatsCards stats={stats} />
+          <LinhaLista linhas={linhas} />
+        </>
+      )}
     </div>
   );
-}`,
-        },
-        {
-          id: 'front-folder-modulos-scl-vol',
-          path: 'src/modulos/SCL/Vol/',
-          type: 'folder',
-          analogy: 'O Embrião do Projeto Final Infoônibus',
-          purpose:
-            'Contém a tela VolDesafio.tsx registrada na rota /infoonibus. É a área preparada com checklist, dados de telemetria GPS simulados e sandbox para o estagiário desenvolver o rastreamento em mapa!',
-          filesInside: ['src/modulos/SCL/Vol/VolDesafio.tsx'],
-          mustDo: [
-            'Consultar este arquivo para entender os requisitos do projeto final (mapa, GPS, operadoras)',
-          ],
-          mustNotDo: ['Não apagar a rota infoonibus do modules.ts'],
-        },
-        {
-          id: 'front-folder-modulos-scl',
-          path: 'src/modulos/SCL/SCLMenu.tsx',
-          type: 'file',
-          analogy: 'O Painel de Serviços do SCL',
-          purpose:
-            'É o menu central do Sistema de Controle de Linhas. Lê as rotas permitidas do usuário (CDP) e desenha os cards dos submódulos (Buscador de Linhas e Desafio VOL). Toda tela nova que você criar no SCL ganha um card aqui!',
-          filesInside: ['src/modulos/SCL/SCLMenu.tsx'],
-          mustDo: [
-            'Adicionar o novo serviço na lista servicos com ícone do Lucide e descrição clara',
-          ],
-          mustNotDo: ['Não colocar lógica de requisições HTTP dentro do Menu'],
-        },
-        {
-          id: 'front-folder-config',
-          path: 'src/config/',
-          type: 'folder',
-          analogy: 'O Cartório de Rotas e Ambiente',
-          purpose:
-            'modules.ts registra todas as rotas da aplicação usando lazy loading (lazyWithRetry). env.config.ts lê as variáveis de ambiente e mockUsers.ts define os perfis de teste do CDP.',
-          filesInside: [
-            'src/config/modules.ts',
-            'src/config/env.config.ts',
-            'src/config/mockUsers.ts',
-          ],
-          mustDo: [
-            'Usar lazyWithRetry(() => import(...)) para carregar telas sob demanda e manter o bundle leve',
-          ],
-          mustNotDo: ['Nunca importar telas pesadas de forma síncrona no topo do arquivo'],
-        },
-        {
-          id: 'front-folder-services',
-          path: 'src/services/',
-          type: 'folder',
-          analogy: 'A Infraestrutura de Conexão',
-          purpose:
-            'api.ts configura a instância global do Axios com baseURL e timeout. tokenStore.ts armazena e lê o token JWT do localStorage e auditLogger.ts registra logs operacionais.',
-          filesInside: [
-            'src/services/api.ts',
-            'src/services/tokenStore.ts',
-            'src/services/auditLogger.ts',
-          ],
-          mustDo: ['Reutilizar a instância api para garantir que o interceptor de token funcione'],
-          mustNotDo: ['Não criar instâncias soltas de axios.create() em outros lugares'],
-        },
-        {
-          id: 'front-folder-components-security',
-          path: 'src/components/ (Can & ProtectedRoute)',
-          type: 'folder',
-          analogy: 'A Blindagem de Acesso CDP',
-          purpose:
-            'ProtectedRoute.tsx barra o acesso a páginas inteiras se o perfil do usuário não tiver permissão. Can.tsx controla a visibilidade de botões (ex: esconde o botão "Cadastrar" para quem só tem leitura).',
-          filesInside: [
-            'src/components/ProtectedRoute.tsx',
-            'src/components/Can.tsx',
-            'src/components/DevRoleSwitcher.tsx',
-          ],
-          mustDo: [
-            'Envolver rotas administrativas com <ProtectedRoute endpoint="...">',
-            'Envolver botões de escrita com <Can endpoint="..." action="ESCRITA">',
-          ],
-          mustNotDo: ['Não confiar apenas no front para segurança (o back sempre valida via Guard)'],
-        },
-        {
-          id: 'front-folder-hooks',
-          path: 'src/hooks/',
-          type: 'folder',
-          analogy: 'Os Sensores Globais da Aplicação',
-          purpose:
-            'useAuth.tsx fornece os dados do usuário logado e método temAcesso(). useNavigation.tsx controla a troca de telas sem recarregar a página e useModules.tsx filtra as rotas liberadas.',
-          filesInside: [
-            'src/hooks/useAuth.tsx',
-            'src/hooks/useNavigation.tsx',
-            'src/hooks/useModules.tsx',
-            'src/hooks/useResponsive.ts',
-          ],
-          mustDo: ['Usar useNavigation() para navegar entre telas mantendo o estado reativo'],
-          mustNotDo: ['Não usar window.location.href para navegação interna'],
-        },
-      ],
-    },
-
-    // ========================================================================
-    // CAPÍTULO 5: ESTUDO DE CASO: COMO A TELA DE LINHAS FOI CONSTRUÍDA
-    // ========================================================================
-    {
-      heading: '5. Estudo de Caso Vivo: Dissecando a Tela Real de Linhas (src/modulos/SCL/Linhas)',
-      body: 'Para você entender perfeitamente como uma tela nasce e como as camadas conversam, vamos dissecar arquivo por arquivo a tela oficial de Linhas que já está funcionando no seu Boilerplate:',
-      paragraphs: [
-        'Observe como cada arquivo resolve apenas um pedaço do problema de forma cirúrgica:',
-      ],
-      codeBlocks: [
-        {
-          title: '1. O Contrato (src/modulos/SCL/Linhas/types/index.ts)',
-          language: 'typescript',
-          code: `// Espelha os dados que o LinhaController do NestJS devolve
-export interface Linha {
-  id?: number | string;
-  codigo: string;          // ex: '0.108'
-  descricao: string;       // ex: 'ROD. PLANO PILOTO / QGEX / SMU'
-  valorTarifa: number;     // ex: 2.70
-  faixaTarifaria?: string; // ex: 'URBANA 1'
-  dataInicialTarifa?: string;
-  dataFinalTarifa?: string | null;
-}
-
-export interface FiltroLinha {
-  codigo?: string;
-  descricao?: string;
-}`,
-        },
-        {
-          title: '2. O Serviço com Auto-Login JWT (src/modulos/SCL/Linhas/services/linhaService.ts)',
-          language: 'typescript',
-          code: `export const linhaService = {
-  async buscarLinhas(filtro: FiltroLinha) {
-    try {
-      // 1. Garante login automático como "admin" no NestJS
-      await this.obterTokenAutenticacao();
-
-      // 2. Chama a API real via proxy Vite (/api -> http://localhost:8097)
-      const params: Record<string, string> = {};
-      if (filtro.codigo) params.codigo = filtro.codigo;
-      if (filtro.descricao) params.descricao = filtro.descricao;
-
-      const response = await api.get('/api/linhas', { params });
-      return { linhas: response.data, origem: 'backend' };
-    } catch (e) {
-      // 3. Backend offline? Retorna os dados mock de contingência!
-      return { linhas: MOCK_LINHAS_FALLBACK, origem: 'mock' };
-    }
-  }
 };`,
         },
-        {
-          title: '3. O Custom Hook Reativo (src/modulos/SCL/Linhas/hooks/useLinhas.ts)',
-          language: 'typescript',
-          code: `export function useLinhas() {
-  const [carregando, setCarregando] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
-  const [linhas, setLinhas] = useState<Linha[]>([]);
-  const [linhaSelecionada, setLinhaSelecionada] = useState<Linha | null>(null);
-  const [origemDados, setOrigemDados] = useState<'backend' | 'mock'>('mock');
-
-  const buscarLinhas = useCallback(async (filtro: FiltroLinha) => {
-    try {
-      setCarregando(true);
-      setErro(null);
-      const res = await linhaService.buscarLinhas(filtro);
-      setLinhas(res.linhas);
-      setOrigemDados(res.origem);
-      if (res.linhas.length > 0) setLinhaSelecionada(res.linhas[0]);
-    } catch (e: any) {
-      setErro(e.message);
-    } finally {
-      setCarregando(false);
-    }
-  }, []);
-
-  useEffect(() => { buscarLinhas({}); }, [buscarLinhas]);
-
-  return { carregando, erro, linhas, linhaSelecionada, setLinhaSelecionada, buscarLinhas, origemDados };
-}`,
-        },
-        {
-          title: '4. A Página Principal Smart UI (src/modulos/SCL/Linhas/LinhasIndex.tsx)',
-          language: 'typescript',
-          code: `export default function LinhasIndex() {
-  const { navegarPara } = useNavigation();
-  const { carregando, erro, linhas, linhaSelecionada, setLinhaSelecionada, buscarLinhas, origemDados } = useLinhas();
-
-  return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Botão de navegação */}
-      <VoltarButton onClick={() => navegarPara('scl-menu')} label="Voltar ao Menu SCL" />
-
-      {/* Indicador de Conexão com o Backend */}
-      <StatusIntegracaoBackend origem={origemDados} />
-
-      {/* Formulário Puro (Dumb) */}
-      <FormBuscaLinha onBuscar={buscarLinhas} carregando={carregando} />
-
-      {/* Mensagem de Erro se houver */}
-      {erro && <div className="p-4 bg-red-50 text-red-700 rounded-2xl">{erro}</div>}
-
-      {/* Tabela Pura (Dumb) */}
-      <TabelaLinhas linhas={linhas} linhaSelecionada={linhaSelecionada} onSelecionar={setLinhaSelecionada} />
-
-      {/* Card Dossiê da Linha Clicada (Dumb) */}
-      {linhaSelecionada && <CardLinhaDetalhes linha={linhaSelecionada} />}
-    </div>
-  );
-}`,
-        },
       ],
-      callouts: [
-        {
-          type: 'success',
-          title: '✨ Repare na Elegância da Página LinhasIndex.tsx',
-          content:
-            'A página LinhasIndex.tsx tem menos de 60 linhas de código! Ela não tem nenhum comando SQL, nenhuma requisição Axios e nenhum if complexo de dados. Ela funciona como um Maestro: junta o Hook com os componentes visuais.',
-        },
-      ],
+      enableFrontendFolderGame: true,
     },
 
     // ========================================================================
-    // CAPÍTULO 6: SEGURANÇA E PERFIS CDP NO FRONT-END
+    // CAPÍTULO 4: TUTORIAL GUIADO DAS 7 ESTAÇÕES (DO CONFIG/MODULES AO .TSX FINAL)
     // ========================================================================
     {
-      heading: '6. Segurança e Perfis CDP: Blindando Rotas e Botões com <ProtectedRoute> e <Can>',
-      body: 'Na SEMOB, os sistemas atendem a diferentes públicos: estagiários, operadores de bacias, fiscais de campo e diretores de mobilidade. Para evitar que um perfil não autorizado execute ações indevidas, nós utilizamos o CDP (Controle de Direitos de Acesso).',
-      paragraphs: [
-        'No front-end, a segurança atua em dois níveis complementares: no nível de Tela Inteira (usando ProtectedRoute) e no nível Granular de Botões (usando Can).',
-        'Use o simulador abaixo para alternar entre os perfis e ver a interface reagir em tempo real:',
-      ],
-      enableCdpSimulator: true,
-      callouts: [
-        {
-          type: 'important',
-          title: '🛡️ A Regra de Ouro da Segurança em Duas Pontas',
-          content:
-            'O front-end esconde botões e bloqueia telas para oferecer uma boa experiência de uso ao usuário. No entanto, a segurança real e definitiva está sempre no backend (@UseGuards(JwtAuthGuard, RolesGuard)). Mesmo que alguém tente burlar o front, a API devolverá HTTP 401 ou 403!',
-        },
-      ],
-    },
-
-    // ========================================================================
-    // CAPÍTULO 7: TUTORIAL GUIADO — CRIANDO UMA NOVA TELA COMPLETA (ITINERÁRIOS)
-    // ========================================================================
-    {
-      heading: '7. Laboratório Guiado: Criando uma Nova Tela do Zero Consumindo uma API',
-      body: 'Agora que você conhece todas as peças, vamos ao objetivo principal: você ser capaz de criar uma nova tela sozinho do zero absoluto! Vamos criar o submódulo de Itinerário Descritivo de Linhas em src/modulos/SCL/Itinerarios/ para consumir o endpoint GET /api/linhas/:codigo/itinerario.',
-      paragraphs: [
-        'Siga os 6 passos sequenciais abaixo. Cada passo responde a uma pergunta e traz o código exato comentado:',
-      ],
+      heading: '4. Laboratório Guiado Completo: As 7 Estações para Criar uma Nova Tela no SCL',
+      body: 'Agora vamos percorrer juntos as 7 estações exatas para criar uma nova funcionalidade dentro do módulo SCL (por exemplo: ConsultarItinerario), seguindo 100% a arquitetura real do BoilerPlate_Front_end:',
       guidedTutorialSteps: [
         {
           stepNumber: 1,
-          title: 'Criar a Pasta e Definir os Tipos',
-          fileTarget: 'src/modulos/SCL/Itinerarios/types/index.ts',
+          title: '1ª Estação: Registrar em src/config/modules.ts',
+          fileTarget: 'src/config/modules.ts',
           questionAnswered:
-            'Como informamos ao TypeScript quais campos a nova API de itinerário retorna?',
+            'Como avisamos ao BoilerPlate_Front_end que o módulo SCL ganhou uma nova sub-tela (ou que existe um módulo novo)?',
           whyItMatters:
-            'Crie a pasta src/modulos/SCL/Itinerarios/types/ e adicione o arquivo index.ts. Nele declaramos a forma dos dados (sequencia, nomeVia, localidade) refletindo a tabela tab_itinerario_descritivo.',
+            'Tudo começa em src/config/modules.ts! É aqui que declaramos os módulos principais e os submódulos. Os hooks useModules.tsx, useSidebarLogic.ts e o SemAcessoGuard.tsx leem esta lista automaticamente.',
           language: 'typescript',
-          code: `export interface ItinerarioVia {
-  id?: number;
-  sequencia: number;      // nm_sequencia na tabela
-  nomeVia: string;        // nm_via na tabela
-  localidade: string;     // localidade / bairro
-  sentido?: string;       // IDA, VOLTA ou CIRCULAR
-}
-
-export interface FiltroItinerario {
-  codigoLinha: string;    // ex: "0.111"
-  sentido?: string;
-}
-
-export interface RespostaItinerario {
-  codigoLinha: string;
-  denominacao: string;
-  vias: ItinerarioVia[];
-  origem: 'backend' | 'mock';
-  mensagem?: string;
-}`,
+          code: `// Em src/config/modules.ts, localize a definição do módulo SCL:
+export const MODULES_CONFIG = [
+  {
+    id: 'scl',
+    name: 'SCL',
+    description: 'Sistema de Controle de Linhas Operacionais',
+    icon: '/images/logo_scl.webp',
+    route: '/scl',
+    allowedRoles: ['ADMIN', 'GESTOR_SCL', 'ESTAGIARIO_DEV'],
+    submodules: [
+      {
+        id: 'scl-consulta-os',
+        name: 'Consulta de OS',
+        route: '/scl/consulta-os',
+      },
+      {
+        id: 'scl-relatorio-linha',
+        name: 'Relatório de Linhas',
+        route: '/scl/relatorio-linha',
+      },
+      // 👇 ADICIONE O NOVO SUBMÓDULO AQUI:
+      {
+        id: 'scl-consultar-itinerario',
+        name: 'Consultar Itinerário',
+        description: 'Sequência de vias e localidades por sentido da linha',
+        route: '/scl/consultar-itinerario',
+      },
+    ],
+  },
+];`,
           lineByLineExplanations: [
             {
-              lineHighlight: `export interface ItinerarioVia`,
+              lineHighlight: `id: 'scl-consultar-itinerario'`,
               explanation:
-                'Representa cada ponto do trajeto com a numeração sequencial da parada e o nome da via física.',
+                'Identificador único do submódulo usado pelo controle de navegação (useEstadoModulo / useNavigation) e permissões.',
             },
             {
-              lineHighlight: `origem: 'backend' | 'mock'`,
+              lineHighlight: `route: '/scl/consultar-itinerario'`,
               explanation:
-                'Fundamental para o padrão Dual-Mode: o hook saberá se os dados vieram da API real do NestJS ou do mock local.',
+                'Define o endereço oficial da nova tela dentro do ecossistema do módulo SCL.',
             },
           ],
         },
         {
           stepNumber: 2,
-          title: 'Criar o Serviço HTTP com Dual-Mode',
-          fileTarget: 'src/modulos/SCL/Itinerarios/services/itinerarioService.ts',
+          title: '2ª Estação: Adicionar no SCLMenu.tsx e App.tsx',
+          fileTarget: 'src/modulos/SCL/SCLMenu.tsx & src/App.tsx',
           questionAnswered:
-            'Como fazemos a requisição com Axios e garantimos que o front não quebre se o backend estiver desligado?',
+            'Como fazemos o card aparecer dentro da tela inicial do SCL e ligamos a rota protegida?',
           whyItMatters:
-            'No arquivo itinerarioService.ts, usamos a instância global api. Se o backend estiver rodando, devolvemos os dados reais. Se estiver fora, retornamos o fallback mock de contingência.',
-          language: 'typescript',
-          code: `import api from '../../../../services/api';
-import { tokenStore } from '../../../../services/tokenStore';
-import { ItinerarioVia, RespostaItinerario } from '../types';
-
-const MOCK_ITINERARIO_FALLBACK: ItinerarioVia[] = [
-  { sequencia: 1, nomeVia: 'PLATAFORMA E - RODOVIÁRIA DO PLANO PILOTO', localidade: 'PLANO PILOTO', sentido: 'CIRCULAR' },
-  { sequencia: 2, nomeVia: 'EIXO RODOVIÁRIO NORTE (ALTURA 106 NORTE)', localidade: 'ASA NORTE', sentido: 'CIRCULAR' },
-  { sequencia: 3, nomeVia: 'VIA L2 NORTE (QUADRAS 406/408)', localidade: 'ASA NORTE', sentido: 'CIRCULAR' },
-  { sequencia: 4, nomeVia: 'CAMPUS UNIVERSITÁRIO DARCY RIBEIRO (ICC NORTE)', localidade: 'UNB', sentido: 'CIRCULAR' },
-  { sequencia: 5, nomeVia: 'RETORNO À RODOVIÁRIA DO PLANO PILOTO', localidade: 'PLANO PILOTO', sentido: 'CIRCULAR' },
+            'Quando o usuário entra em /scl, ele vê o componente SCLMenu.tsx. Adicionamos o atalho visual lá e registramos a rota no src/App.tsx apontando para a pasta que vamos criar no próximo passo.',
+          language: 'tsx',
+          code: `// 1. Em src/modulos/SCL/SCLMenu.tsx, adicione o card na lista de opções do SCL:
+const opcoesSCL = [
+  {
+    titulo: 'Consulta de OS',
+    descricao: 'Ordens de serviço e frota associada',
+    rota: '/scl/consulta-os',
+  },
+  {
+    titulo: 'Relatório de Linhas',
+    descricao: 'Listagem geral, tarifas e exportação CSV',
+    rota: '/scl/relatorio-linha',
+  },
+  // 👇 NOVO CARD ADICIONADO NO SUBMENU DO SCL:
+  {
+    titulo: 'Consultar Itinerário',
+    descricao: 'Vias percorridas em sequência por sentido (Ida/Volta/Circular)',
+    rota: '/scl/consultar-itinerario',
+  },
 ];
 
-export const itinerarioService = {
-  async buscarPorCodigoLinha(codigoLinha: string): Promise<RespostaItinerario> {
-    try {
-      const token = tokenStore.getToken();
-      const headers = token ? { Authorization: \`Bearer \${token}\` } : {};
-
-      const response = await api.get(\`/api/linhas/\${codigoLinha}/itinerario\`, { headers });
-
-      if (response.data && Array.isArray(response.data)) {
-        return {
-          codigoLinha,
-          denominacao: response.data[0]?.descricao || 'Linha Operacional',
-          vias: response.data,
-          origem: 'backend',
-          mensagem: \`Itinerário carregado com sucesso da API NestJS (\${response.data.length} vias).\`,
-        };
-      }
-    } catch (_error) {
-      console.warn('[itinerarioService] Backend offline, usando contingência mock.');
-    }
-
-    // Fallback Mock se o backend estiver desligado
-    return {
-      codigoLinha,
-      denominacao: 'Linha 0.110 (Demonstração Mock)',
-      vias: MOCK_ITINERARIO_FALLBACK,
-      origem: 'mock',
-      mensagem: 'Exibindo trajeto de contingência. Suba o Boilerplate_Back para dados do PostgreSQL!',
-    };
-  },
-};`,
+// 2. Em src/App.tsx, dentro das rotas protegidas por <ProtectedRoute />:
+<Route
+  path="/scl/consultar-itinerario"
+  element={<ConsultarItinerario />}
+/>`,
           lineByLineExplanations: [
             {
-              lineHighlight: `const headers = token ? { Authorization: \`Bearer \${token}\` } : {};`,
+              lineHighlight: `opcoesSCL em src/modulos/SCL/SCLMenu.tsx`,
               explanation:
-                'Anexa automaticamente o token JWT para passar com sucesso pelo JwtAuthGuard do NestJS.',
+                'Cria o botão/card visual dentro do menu do SCL ao lado de ConsultaOS e RelatorioLinha.',
             },
             {
-              lineHighlight: `catch (_error) { ... return fallback; }`,
+              lineHighlight: `<Route path="/scl/consultar-itinerario" ... />`,
               explanation:
-                'O coração do Dual-Mode: o erro é absorvido com elegância e o aluno continua programando a interface sem travar!',
+                'Conecta a URL no roteador principal dentro da moldura AppLayout.tsx.',
             },
           ],
         },
         {
           stepNumber: 3,
-          title: 'Criar o Cérebro Reativo (Custom Hook)',
-          fileTarget: 'src/modulos/SCL/Itinerarios/hooks/useItinerario.ts',
+          title: '3ª Estação: Criar a Pasta da Tela e types/',
+          fileTarget: 'src/modulos/SCL/ConsultarItinerario/types/index.ts',
           questionAnswered:
-            'Como controlamos carregando, erro e a lista de vias sem poluir os componentes visuais?',
+            'Agora que criamos a pasta src/modulos/SCL/ConsultarItinerario/, qual é a primeira subpasta que construímos?',
           whyItMatters:
-            'O Hook concentra 100% da reatividade do React. Ele expõe variáveis limpas (carregando, erro, vias, buscarItinerario) para a tela consumir em uma única linha.',
+            'Seguindo exatamente o modelo de RelatorioLinha (types/typesRelatorioLinha.ts + types/index.ts), começamos sempre definindo as interfaces dos dados que vêm da API e as Props de cada micro-componente.',
           language: 'typescript',
-          code: `import { useState, useCallback } from 'react';
-import { ItinerarioVia } from '../types';
-import { itinerarioService } from '../services/itinerarioService';
+          code: `// Em src/modulos/SCL/ConsultarItinerario/types/typesItinerario.ts:
+export interface ViaItinerario {
+  cd_linha: string;
+  lin_sentido: string;
+  nm_sequencia: number;
+  nm_via: string;
+  localidade: string;
+}
 
-export function useItinerario() {
-  const [carregando, setCarregando] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
-  const [vias, setVias] = useState<ItinerarioVia[]>([]);
-  const [origemDados, setOrigemDados] = useState<'backend' | 'mock'>('mock');
-  const [mensagemStatus, setMensagemStatus] = useState<string>('');
+export interface FormSearchItinerarioProps {
+  codigo: string;
+  onChangeCodigo: (val: string) => void;
+  sentido: string;
+  onChangeSentido: (val: string) => void;
+  onSearch: (e: React.FormEvent) => void;
+  isLoading: boolean;
+}
 
-  const buscarItinerario = useCallback(async (codigo: string) => {
-    if (!codigo.trim()) return;
+export interface ResultViasListProps {
+  vias: ViaItinerario[];
+}
 
-    try {
-      setCarregando(true);
-      setErro(null);
-
-      const res = await itinerarioService.buscarPorCodigoLinha(codigo);
-      setVias(res.vias);
-      setOrigemDados(res.origem);
-      setMensagemStatus(res.mensagem || '');
-    } catch (e: any) {
-      setErro(e.message || 'Falha ao buscar itinerário da linha.');
-      setVias([]);
-    } finally {
-      setCarregando(false);
-    }
-  }, []);
-
-  return {
-    carregando,
-    erro,
-    vias,
-    origemDados,
-    mensagemStatus,
-    buscarItinerario,
-  };
-}`,
+// Em src/modulos/SCL/ConsultarItinerario/types/index.ts:
+export * from './typesItinerario';`,
           lineByLineExplanations: [
             {
-              lineHighlight: `const [carregando, setCarregando] = useState(false);`,
+              lineHighlight: `typesItinerario.ts + index.ts`,
               explanation:
-                'Permite à tela desabilitar botões de busca e exibir spinners enquanto a requisição HTTP viaja na rede.',
-            },
-            {
-              lineHighlight: `useCallback(async (codigo: string) => { ... }, []);`,
-              explanation:
-                'Memoriza a função de busca evitando re-renderizações desnecessárias no React.',
+                'Mantém o padrão idêntico ao de RelatorioLinha: um arquivo detalhado de tipos e um index.ts que exporta tudo de forma limpa.',
             },
           ],
         },
         {
           stepNumber: 4,
-          title: 'Criar o Componente Visual (Dumb UI)',
-          fileTarget: 'src/modulos/SCL/Itinerarios/components/TabelaViasItinerario.tsx',
+          title: '4ª Estação: Criar a Camada HTTP (services/)',
+          fileTarget: 'src/modulos/SCL/ConsultarItinerario/services/itinerarioService.ts',
           questionAnswered:
-            'Como desenhamos a lista de vias e paradas de forma limpa e modular?',
+            'Como conectamos esta sub-tela do SCL com a API criada lá no BoilerPlate_Back_end?',
           whyItMatters:
-            'Este componente é puramente visual. Ele não sabe o que é Axios nem o que é banco de dados: apenas recebe vias: ItinerarioVia[] via props e desenha a linha do tempo do trajeto!',
+            'Criamos a subpasta services/ e importamos o "api" global de src/services/api.ts. Ele já usa a URL do env.config.ts e o Bearer Token do tokenStore.ts!',
           language: 'typescript',
-          code: `import React from 'react';
-import { MapPin, Navigation } from 'lucide-react';
-import { ItinerarioVia } from '../types';
+          code: `import api from '../../../../services/api';
+import { ViaItinerario } from '../types';
 
-interface TabelaViasProps {
-  vias: ItinerarioVia[];
-  carregando: boolean;
-}
-
-export const TabelaViasItinerario: React.FC<TabelaViasProps> = ({ vias, carregando }) => {
-  if (carregando) {
-    return <div className="p-8 text-center text-slate-400 text-sm">Carregando sequência de paradas...</div>;
-  }
-
-  if (vias.length === 0) {
-    return (
-      <div className="p-8 text-center text-slate-500 bg-slate-50 rounded-2xl border border-slate-200 text-sm">
-        Digite o código de uma linha acima para visualizar o itinerário descritivo de vias.
-      </div>
+export const itinerarioService = {
+  async buscarItinerarioDaLinha(
+    codigoLinha: string,
+    sentido?: string,
+  ): Promise<ViaItinerario[]> {
+    const codigoFormatado = encodeURIComponent(codigoLinha.trim());
+    const { data } = await api.get<ViaItinerario[]>(
+      \`/linhas/\${codigoFormatado}/itinerario\`,
+      {
+        params: sentido && sentido !== 'TODOS' ? { sentido } : undefined,
+      },
     );
-  }
-
-  return (
-    <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-      <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-        <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wide flex items-center gap-2">
-          <Navigation className="w-4 h-4 text-indigo-600" /> Trajeto Sequencial de Vias ({vias.length} pontos)
-        </h3>
-      </div>
-
-      <div className="divide-y divide-slate-100">
-        {vias.map((item) => (
-          <div key={item.sequencia} className="p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors">
-            <span className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 font-mono font-bold text-xs flex items-center justify-center shrink-0">
-              #{item.sequencia}
-            </span>
-            <div className="flex-1">
-              <strong className="text-slate-800 text-sm block">{item.nomeVia}</strong>
-              <span className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                <MapPin className="w-3 h-3" /> {item.localidade}
-              </span>
-            </div>
-            {item.sentido && (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                {item.sentido}
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+    return Array.isArray(data) ? data : [];
+  },
 };`,
           lineByLineExplanations: [
             {
-              lineHighlight: `interface TabelaViasProps { vias: ItinerarioVia[]; carregando: boolean; }`,
+              lineHighlight: `import api from '../../../../services/api';`,
               explanation:
-                'O contrato do componente Dumb: ele depende exclusivamente dessas duas propriedades.',
-            },
-            {
-              lineHighlight: `vias.map((item) => ( ... ))`,
-              explanation:
-                'Desenha cada parada numerada com ícone de localização e nome da via.',
+                'Nunca usamos fetch() puro ou criamos outro axios; usamos sempre a instância central configurada do boilerplate.',
             },
           ],
         },
         {
           stepNumber: 5,
-          title: 'Criar a Página Principal (Smart UI)',
-          fileTarget: 'src/modulos/SCL/Itinerarios/ItinerariosIndex.tsx',
+          title: '5ª Estação: Criar os Micro-Hooks (hooks/)',
+          fileTarget: 'src/modulos/SCL/ConsultarItinerario/hooks/useItinerarioData.ts',
           questionAnswered:
-            'Como unimos o cabeçalho, o diagnóstico de conexão, o hook e a tabela em uma única tela?',
+            'Onde ficam os estados (useState), o disparo da busca e os cálculos derivados?',
           whyItMatters:
-            'O ItinerariosIndex é o Maestro! Ele não tem nenhuma lógica de requisição HTTP (o hook resolveu isso) e não se preocupa com o desenho dos pontos da via (o dumb component resolveu isso). Ele apenas une as peças.',
+            'Na subpasta hooks/! Assim como RelatorioLinha tem useBuscarLinha.ts e useRelatorioLinhaData.ts, isolamos aqui toda a lógica reativa para que os componentes visuais não tenham uma única linha de regra de negócio.',
           language: 'typescript',
-          code: `import React, { useState } from 'react';
-import { useNavigation } from '../../../hooks/useNavigation';
-import { VoltarButton } from '../../../components/ui/VoltarButton';
-import { StatusIntegracaoBackend } from '../Linhas/components/StatusIntegracaoBackend';
-import { TabelaViasItinerario } from './components/TabelaViasItinerario';
-import { useItinerario } from './hooks/useItinerario';
-import { Route, Search } from 'lucide-react';
+          code: `import { useState, useCallback, useMemo } from 'react';
+import { itinerarioService } from '../services/itinerarioService';
+import { ViaItinerario } from '../types';
 
-export default function ItinerariosIndex() {
-  const { navegarPara } = useNavigation();
-  const [codigoBusca, setCodigoBusca] = useState('0.110');
-  const { carregando, erro, vias, origemDados, mensagemStatus, buscarItinerario } = useItinerario();
+export function useItinerarioData() {
+  const [codigo, setCodigo] = useState('0.111');
+  const [sentido, setSentido] = useState('TODOS');
+  const [vias, setVias] = useState<ViaItinerario[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
-  const handleSubmeter = (e: React.FormEvent) => {
-    e.preventDefault();
-    buscarItinerario(codigoBusca);
-  };
+  const handleBuscar = useCallback(
+    async (e?: React.FormEvent) => {
+      if (e) e.preventDefault();
+      if (!codigo.trim()) {
+        setErro('Digite o código de uma linha (ex: 0.111 ou 0.170).');
+        return;
+      }
 
-  return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16 animate-fadeIn">
-      <VoltarButton onClick={() => navegarPara('scl-menu')} label="Voltar ao Menu SCL" />
-
-      <div className="flex items-center gap-4">
-        <div className="p-3.5 bg-indigo-50 text-indigo-600 rounded-2xl">
-          <Route className="w-8 h-8" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-black text-slate-900">Itinerário Descritivo de Linhas</h1>
-          <p className="text-slate-500 text-sm font-medium">
-            Sequência oficial de vias e paradas integrado com o Boilerplate Backend
-          </p>
-        </div>
-      </div>
-
-      <StatusIntegracaoBackend origem={origemDados} mensagem={mensagemStatus} />
-
-      <form onSubmit={handleSubmeter} className="bg-white p-5 rounded-3xl border border-slate-200 flex gap-3 shadow-sm">
-        <input
-          type="text"
-          value={codigoBusca}
-          onChange={(e) => setCodigoBusca(e.target.value)}
-          placeholder="Código da Linha (ex: 0.110)"
-          className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-mono focus:outline-none focus:border-indigo-600"
-        />
-        <button type="submit" disabled={carregando} className="btn-primary">
-          <Search size={15} /> {carregando ? 'Buscando...' : 'Buscar Trajeto'}
-        </button>
-      </form>
-
-      {erro && <div className="p-4 bg-red-50 text-red-700 rounded-2xl border border-red-200 text-sm">{erro}</div>}
-
-      <TabelaViasItinerario vias={vias} carregando={carregando} />
-    </div>
+      setIsLoading(true);
+      setErro(null);
+      try {
+        const resultado = await itinerarioService.buscarItinerarioDaLinha(
+          codigo,
+          sentido,
+        );
+        setVias(resultado);
+      } catch (err: unknown) {
+        console.error(err);
+        setErro('Falha ao buscar o itinerário no servidor SISMOB.');
+        setVias([]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [codigo, sentido],
   );
+
+  const totalLocalidades = useMemo(
+    () => new Set(vias.map((v) => v.localidade)).size,
+    [vias],
+  );
+
+  return {
+    codigo,
+    setCodigo,
+    sentido,
+    setSentido,
+    vias,
+    totalLocalidades,
+    isLoading,
+    erro,
+    handleBuscar,
+  };
 }`,
           lineByLineExplanations: [
             {
-              lineHighlight: `const { navegarPara } = useNavigation();`,
+              lineHighlight: `totalLocalidades = useMemo(...)`,
               explanation:
-                'Permite que o botão VoltarButton retorne o usuário com segurança ao Menu do SCL.',
-            },
-            {
-              lineHighlight: `<StatusIntegracaoBackend origem={origemDados} mensagem={mensagemStatus} />`,
-              explanation:
-                'Reutiliza o componente de diagnóstico: o usuário sabe na hora se o trajeto veio do PostgreSQL ou do Mock!',
+                'Qualquer estatística ou resumo para exibir nos cards do topo já é calculada dentro do hook e entregue pronta!',
             },
           ],
         },
         {
           stepNumber: 6,
-          title: 'Registrar a Nova Rota no SCL',
-          fileTarget: 'src/config/modules.ts & src/modulos/SCL/SCLMenu.tsx',
+          title: '6ª Estação: Decompor tudo em components/',
+          fileTarget: 'src/modulos/SCL/ConsultarItinerario/components/*',
           questionAnswered:
-            'Como fazemos a nova tela aparecer no menu do SCL e ser carregada sob demanda pelo Vite?',
+            'Como dividimos a interface em vários componentes pequenos dentro de components/ igual ao RelatorioLinha?',
           whyItMatters:
-            'O último passo de ouro! No modules.ts, importamos a tela com lazyWithRetry e registramos na lista de subMenus do SCL. Automaticamente, o SCLMenu.tsx desenha o card com o ícone Route e aplica as regras do CDP!',
-          language: 'typescript',
-          code: `// 1. Em src/config/modules.ts:
-const ItinerariosIndex = lazyWithRetry(
-  () => import('../modulos/SCL/Itinerarios/ItinerariosIndex')
+            'Olhe para src/modulos/SCL/RelatorioLinha/components/: temos FormSearch.tsx, Loading.tsx, ErrorMessage.tsx, LinhaStatsCards.tsx e LinhaLista.tsx. Fazemos exatamente o mesmo aqui para que cada arquivo cuide de apenas um bloco visual!',
+          language: 'tsx',
+          code: `// 1. components/FormSearch.tsx (Apenas a barra de filtro):
+export const FormSearch: React.FC<FormSearchItinerarioProps> = ({
+  codigo,
+  onChangeCodigo,
+  sentido,
+  onChangeSentido,
+  onSearch,
+  isLoading,
+}) => (
+  <form onSubmit={onSearch} className="bg-white p-4 rounded-2xl border flex gap-3">
+    <input
+      value={codigo}
+      onChange={(e) => onChangeCodigo(e.target.value)}
+      placeholder="Código da linha (ex: 0.111)"
+      className="border rounded-xl px-3 py-2 text-sm"
+    />
+    <select
+      value={sentido}
+      onChange={(e) => onChangeSentido(e.target.value)}
+      className="border rounded-xl px-3 py-2 text-sm"
+    >
+      <option value="TODOS">Todos os Sentidos</option>
+      <option value="I">Ida (I)</option>
+      <option value="V">Volta (V)</option>
+      <option value="C">Circular (C)</option>
+    </select>
+    <button type="submit" disabled={isLoading} className="bg-sky-600 text-white px-4 py-2 rounded-xl text-sm font-bold">
+      {isLoading ? 'Buscando...' : 'Consultar'}
+    </button>
+  </form>
 );
 
-// Dentro de modulos_sistema no item com id: 'scl', adicione aos subMenus:
-{
-  id: 'itinerarios',
-  titulo: 'Itinerário Descritivo',
-  icone: 'Route',
-  rota: 'itinerarios',
-  componente: ItinerariosIndex,
-}
-
-// 2. Pronto! O SCLMenu.tsx lê os subMenus automaticamente e desenha o card clicável!`,
+// 2. components/ResultViasList.tsx (Apenas a listagem sequencial de vias):
+export const ResultViasList: React.FC<ResultViasListProps> = ({ vias }) => (
+  <div className="bg-white rounded-2xl border p-4 space-y-2">
+    {vias.map((v) => (
+      <div key={\`\${v.lin_sentido}-\${v.nm_sequencia}\`} className="p-3 bg-slate-50 rounded-xl flex justify-between">
+        <span><strong>{v.nm_sequencia}º</strong> — {v.nm_via}</span>
+        <span className="text-xs text-slate-500">{v.localidade} ({v.lin_sentido})</span>
+      </div>
+    ))}
+  </div>
+);`,
           lineByLineExplanations: [
             {
-              lineHighlight: `lazyWithRetry(() => import(...))`,
+              lineHighlight: `FormSearch.tsx + ResultViasList.tsx + Loading.tsx + ErrorMessage.tsx`,
               explanation:
-                'Garante que o código desta tela só é baixado pela rede quando o usuário clicar no card, acelerando o carregamento inicial do sistema.',
-            },
-            {
-              lineHighlight: `rota: 'itinerarios'`,
-              explanation:
-                'Permite que useNavigation().navegarPara("itinerarios") abra a tela instantaneamente.',
+                'Cada arquivo dentro de components/ tem entre 20 e 40 linhas, recebe props tipadas e é super fácil de dar manutenção.',
             },
           ],
         },
-      ],
-    },
-
-    // ========================================================================
-    // CAPÍTULO 8: GUIA DE BOLSO DO FRONT-END SISMOB
-    // ========================================================================
-    {
-      heading: '8. Guia de Bolso & Checklist de Qualidade Front-end',
-      body: 'Antes de abrir um Merge Request para a equipe de desenvolvimento da SEMOB, consulte esta tabela rápida para garantir que seu código segue as melhores práticas:',
-      tables: [
         {
-          headers: ['Conceito', 'Como Fazer do Jeito Certo ✅', 'O Que Evitar a Todo Custo ❌'],
-          rows: [
-            [
-              'Chamadas HTTP',
-              'Invocar o método do service (ex: itinerarioService.buscar()).',
-              'Fazer axios.get() solto dentro de componente visual ou hook.',
-            ],
-            [
-              'Loading State',
-              'Desabilitar botões (disabled={carregando}) e exibir spinner animado.',
-              'Permitir múltiplos cliques enviando requisições duplicadas à API.',
-            ],
-            [
-              'Tipagem',
-              'Criar interfaces detalhadas e DTOs no diretório types/.',
-              'Usar any para burlar avisos do compilador TypeScript.',
-            ],
-            [
-              'Tratamento de Erros',
-              'Notificar o usuário de forma amigável com card de erro estilizado.',
-              'Deixar blocos catch {} vazios em silêncio ou travar a tela em branco.',
-            ],
-            [
-              'Controle de Acesso',
-              'Usar <ProtectedRoute> para telas e <Can> para botões administrativos.',
-              'Deixar rotas de supervisor abertas ou renderizar botões que dão 403.',
-            ],
-            [
-              'Dual-Mode',
-              'Implementar fallback em memória no Service para garantir zero dependência.',
-              'Fazer o front quebrar com tela preta quando o Docker estiver desligado.',
-            ],
-            [
-              'Variáveis .env',
-              'Usar sempre o prefixo VITE_ e centralizar a leitura em env.config.ts.',
-              'Colocar senhas no .env do front ou acessar import.meta.env solto nos componentes.',
-            ],
+          stepNumber: 7,
+          title: '7ª Estação (Final): O Arquivo .tsx que Compila Tudo!',
+          fileTarget: 'src/modulos/SCL/ConsultarItinerario/ConsultarItinerario.tsx',
+          questionAnswered:
+            'Por que o arquivo ConsultarItinerario.tsx na raiz da pasta da tela é o ÚLTIMO a ser construído?',
+          whyItMatters:
+            'Porque ele é o maestro/compilador! Como já criamos types/, services/, hooks/ e todos os blocos visuais em components/, este arquivo final apenas importa o hook useItinerarioData() e monta a página encaixando <FormSearch />, <ErrorMessage />, <Loading /> e <ResultViasList />!',
+          language: 'tsx',
+          code: `// Em src/modulos/SCL/ConsultarItinerario/ConsultarItinerario.tsx:
+import React from 'react';
+import { VoltarButton } from '../../../components/ui/VoltarButton';
+import { useItinerarioData } from './hooks/useItinerarioData';
+import { FormSearch } from './components/FormSearch';
+import { ResultViasList } from './components/ResultViasList';
+import { Loading } from '../RelatorioLinha/components/Loading';
+import { ErrorMessage } from '../RelatorioLinha/components/ErrorMessage';
+
+export const ConsultarItinerario: React.FC = () => {
+  // 1. Invoca o cérebro da tela (Custom Hook)
+  const {
+    codigo,
+    setCodigo,
+    sentido,
+    setSentido,
+    vias,
+    totalLocalidades,
+    isLoading,
+    erro,
+    handleBuscar,
+  } = useItinerarioData();
+
+  // 2. Apenas compila/orquestra os componentes visuais da pasta components/!
+  return (
+    <div className="p-6 max-w-6xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-black text-slate-800">
+            Consultar Itinerário da Linha
+          </h1>
+          <p className="text-xs text-slate-500">
+            Módulo SCL • Total de localidades no percurso: {totalLocalidades}
+          </p>
+        </div>
+        <VoltarButton to="/scl" />
+      </div>
+
+      <FormSearch
+        codigo={codigo}
+        onChangeCodigo={setCodigo}
+        sentido={sentido}
+        onChangeSentido={setSentido}
+        onSearch={handleBuscar}
+        isLoading={isLoading}
+      />
+
+      {erro && <ErrorMessage message={erro} />}
+
+      {isLoading ? <Loading /> : <ResultViasList vias={vias} />}
+    </div>
+  );
+};`,
+          lineByLineExplanations: [
+            {
+              lineHighlight: `ConsultarItinerario.tsx (Apenas 45 linhas!)`,
+              explanation:
+                'Repare na beleza arquitetural: zero axios, zero regras de negócio complexas, zero HTML bagunçado. O arquivo final apenas junta os hooks e os componentes que criamos nos passos anteriores!',
+            },
           ],
         },
       ],
     },
   ],
   checklist: [
-    'Configurei o arquivo .env respeitando o prefixo VITE_ e compreendi a leitura unificada via env.config.ts',
-    'Subi o Boilerplate_Front com npm run dev na porta 5173 confirmando a conexão com o backend no badge verde',
-    'Compreendi o funcionamento do Dual-Mode com proxy reverso do Vite (/api) e auto-login JWT transparente',
-    'Naveguei pela estrutura interna de src/modulos/ e compreendi como a tela real de Linhas (SCL) foi implementada',
-    'Testei os perfis do CDP utilizando <ProtectedRoute> para blindar telas e <Can> para ocultar botões de escrita',
-    'Pratiquei a construção de novos submódulos no SCL seguindo a esteira Types ➔ Service ➔ Hook ➔ Dumb UI ➔ Smart UI',
+    'Configurei o .env apontando para a porta 8097 e entendi o fluxo env.config.ts + public/config.js',
+    'Compreendi como a tela RelatorioLinha existe no SCL desde o registro em src/config/modules.ts até o SCLMenu.tsx',
+    'Entendi por que modularizamos types/, services/, micro-hooks/ e micro-components/ ANTES de fechar o arquivo .tsx compilador final',
+    'Completei o jogo das Estações de Arquitetura acertando 100 XP',
+    'Estou pronto para encarar os Desafios Encadeados (APIs no Back ➔ Telas no SCL ➔ Desafio Final InfoÔnibus)',
   ],
 };
