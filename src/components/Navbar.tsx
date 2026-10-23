@@ -19,6 +19,7 @@ import {
   Library,
   Boxes,
   BookOpen,
+  Rocket,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -83,7 +84,13 @@ export const Navbar: React.FC<NavbarProps> = ({
     'modulo-backend',
     'modulo-frontend',
   ].includes(currentScreen);
-  const isChallengeActive = ['desafio-sql', 'desafio-backend', 'desafio-frontend'].includes(currentScreen);
+
+  const isChallengeActive = [
+    'desafio-sql',
+    'desafio-backend',
+    'desafio-frontend',
+    'desafio-infoonibus',
+  ].includes(currentScreen);
 
   return (
     <>
@@ -227,22 +234,29 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button onClick={() => handleNav('desafio-sql')} className="dropdown-item">
                     <Database size={16} className="text-emerald" />
                     <div>
-                      <div className="item-title">Desafio SQL das 25 Questões</div>
+                      <div className="item-title">1. Desafio SQL (Relatórios)</div>
                       <div className="item-desc">Consultas reais em dados_mobilidade</div>
                     </div>
                   </button>
                   <button onClick={() => handleNav('desafio-backend')} className="dropdown-item">
                     <Server size={16} className="text-indigo" />
                     <div>
-                      <div className="item-title">Desafio Back-end (Veículos)</div>
-                      <div className="item-desc">As 7 etapas no SISMOB Boilerplate</div>
+                      <div className="item-title">2. Desafio Back-end (APIs)</div>
+                      <div className="item-desc">Transformar os SQLs em endpoints REST</div>
                     </div>
                   </button>
                   <button onClick={() => handleNav('desafio-frontend')} className="dropdown-item">
                     <Layout size={16} className="text-cyan" />
                     <div>
-                      <div className="item-title">Desafio Front-end (InfoÔnibus)</div>
-                      <div className="item-desc">Pesquisa, rotas e GPS em tempo real</div>
+                      <div className="item-title">3. Desafio Front-end (SCL)</div>
+                      <div className="item-desc">Itinerário e Horários no módulo SCL</div>
+                    </div>
+                  </button>
+                  <button onClick={() => handleNav('desafio-infoonibus')} className="dropdown-item">
+                    <Rocket size={16} className="text-amber" />
+                    <div>
+                      <div className="item-title">4. Desafio Final (InfoÔnibus)</div>
+                      <div className="item-desc">Projeto Full-Stack completo</div>
                     </div>
                   </button>
                 </div>
@@ -362,13 +376,16 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <div className="drawer-section-title">Desafios Práticos</div>
             <button onClick={() => handleNav('desafio-sql')} className={`drawer-btn ${currentScreen === 'desafio-sql' ? 'active' : ''}`}>
-              <Database size={16} className="text-emerald" /> Desafio SQL (25 Questões)
+              <Database size={16} className="text-emerald" /> 1. Desafio SQL (25 Questões)
             </button>
             <button onClick={() => handleNav('desafio-backend')} className={`drawer-btn ${currentScreen === 'desafio-backend' ? 'active' : ''}`}>
-              <Server size={16} className="text-indigo" /> Desafio Back-end (Veículos)
+              <Server size={16} className="text-indigo" /> 2. Desafio Back-end (APIs)
             </button>
             <button onClick={() => handleNav('desafio-frontend')} className={`drawer-btn ${currentScreen === 'desafio-frontend' ? 'active' : ''}`}>
-              <Layout size={16} className="text-cyan" /> Desafio Front-end (InfoÔnibus)
+              <Layout size={16} className="text-cyan" /> 3. Desafio Front-end (SCL)
+            </button>
+            <button onClick={() => handleNav('desafio-infoonibus')} className={`drawer-btn ${currentScreen === 'desafio-infoonibus' ? 'active' : ''}`}>
+              <Rocket size={16} className="text-amber" /> 4. Desafio Final (InfoÔnibus)
             </button>
           </div>
         </div>

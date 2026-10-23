@@ -247,7 +247,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <Terminal className="metric-icon" size={20} />
             </div>
             <div className="metric-value">{completedChallengesCount} / {totalChallenges}</div>
-            <div className="metric-footer text-muted">25 queries SQL + Back-end + Front-end</div>
+            <div className="metric-footer text-muted">25 queries SQL + Back + Front (SCL) + InfoÔnibus</div>
           </div>
         </div>
       </section>
@@ -370,12 +370,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
           <div className="challenge-spotlight-card" onClick={() => onNavigate('desafio-frontend')}>
             <div className="card-badge bg-cyan">React 18 & Vite</div>
-            <h3>Desafio Front-end: Submódulos SCL & InfoÔnibus</h3>
+            <h3>3. Desafio Front-end: Submódulos SCL</h3>
             <p>
-              Construa os submódulos de Itinerários e Horários consumindo o backend NestJS, e entregue o Capstone Infoônibus com mapa espacial e telemetria.
+              Construa as telas de Itinerários e Horários dentro de src/modulos/SCL/ seguindo as 7 Estações e consumindo o backend NestJS.
             </p>
             <div className="card-action-link">
-              Especificações & Demo <ArrowRight size={16} />
+              Especificações & Demo SCL <ArrowRight size={16} />
+            </div>
+          </div>
+
+          <div className="challenge-spotlight-card" onClick={() => onNavigate('desafio-infoonibus')}>
+            <div className="card-badge bg-amber">Full-Stack Capstone</div>
+            <h3>4. Desafio Final: Projeto InfoÔnibus</h3>
+            <p>
+              Crie o módulo principal InfoÔnibus unificando busca de linhas, sentidos, itinerário e quadro de horários integrado aos dois boilerplates!
+            </p>
+            <div className="card-action-link">
+              Abrir Projeto Final <ArrowRight size={16} />
             </div>
           </div>
         </div>

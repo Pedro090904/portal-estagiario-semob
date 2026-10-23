@@ -23,6 +23,7 @@ export const CANONICAL_CHALLENGE_IDS: CanonicalChallengeId[] = [
   'challenge-sql-relatorios',
   'challenge-backend-api',
   'challenge-frontend-ui',
+  'challenge-fullstack-infoonibus',
 ];
 
 const LEGACY_MODULE_ID_MAP: Record<string, CanonicalModuleId> = {

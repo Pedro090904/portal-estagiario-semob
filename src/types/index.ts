@@ -8,7 +8,8 @@ export type CanonicalModuleId =
 export type CanonicalChallengeId =
   | 'challenge-sql-relatorios'
   | 'challenge-backend-api'
-  | 'challenge-frontend-ui';
+  | 'challenge-frontend-ui'
+  | 'challenge-fullstack-infoonibus';
 
 export type UserRole = 'ALUNO' | 'DESENVOLVEDOR' | 'SUPERVISOR' | 'ADMIN';
 export type ContentAudience = 'PUBLICO' | 'INTERNO' | 'RESTRITO_PERFIL';
@@ -29,9 +30,11 @@ export type ScreenType =
   | 'desafio-sql'
   | 'desafio-backend'
   | 'desafio-frontend'
+  | 'desafio-infoonibus'
   | 'sql-challenge'
   | 'backend-challenge'
   | 'frontend-challenge'
+  | 'fullstack-challenge'
   | 'certificado'
   | 'validar-certificado';
 

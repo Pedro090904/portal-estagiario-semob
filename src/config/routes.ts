@@ -18,9 +18,11 @@ export const SCREEN_TO_PATH: Record<ScreenType, string> = {
   'desafio-sql': '/desafios/sql',
   'desafio-backend': '/desafios/backend',
   'desafio-frontend': '/desafios/frontend',
+  'desafio-infoonibus': '/desafios/infoonibus',
   'sql-challenge': '/desafios/sql',
   'backend-challenge': '/desafios/backend',
   'frontend-challenge': '/desafios/frontend',
+  'fullstack-challenge': '/desafios/infoonibus',
   certificado: '/certificado',
   'validar-certificado': '/certificados/validar',
 };
@@ -40,6 +42,7 @@ const CANONICAL_SCREENS: ScreenType[] = [
   'desafio-sql',
   'desafio-backend',
   'desafio-frontend',
+  'desafio-infoonibus',
   'certificado',
   'validar-certificado',
 ];

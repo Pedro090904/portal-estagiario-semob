@@ -1,224 +1,114 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   Layout,
-  Search,
-  Bus,
-  Clock,
   MapPin,
+  Clock,
   CheckCircle2,
   Circle,
   BookOpen,
   Layers,
   Sparkles,
-  ArrowRight,
-  Map,
-  Compass,
-  Radio,
-  Navigation,
-  Globe2,
-  Cpu,
-  Shield,
-  Zap,
-  ListOrdered,
-  Calendar,
+  ArrowLeft,
+  Search,
+  FolderTree,
 } from 'lucide-react';
-import { ChallengeSubmissionPanel } from '../components/ChallengeSubmissionPanel';
 import { ChallengeSubmission } from '../types';
+import { ChallengeSubmissionPanel } from '../components/ChallengeSubmissionPanel';
 
 interface FrontendChallengeScreenProps {
   completedItems: string[];
   onToggleItem: (itemKey: string) => void;
-  onOpenModule: (moduleId: string) => void;
   submission?: ChallengeSubmission;
   onSaveSubmission: (challengeId: string, data: Partial<ChallengeSubmission>) => void;
+  onOpenModule: (moduleId: string) => void;
+  onNavigateFinalChallenge?: () => void;
 }
 
-interface MockBusLine {
-  cd_linha: string;
-  nm_linha: string;
-  vl_tarifa: number;
-  sentido: 'IDA' | 'VOLTA' | 'CIRCULAR';
-  operadora: string;
-  corLinha: string;
-  itinerario: { sequencia: number; nomeVia: string; localidade: string; x: number; y: number }[];
-  pathD: string;
-  horariosUteis: string[];
-  horariosSabado: string[];
-  horariosDomingo: string[];
-  gpsStatus: string;
-  velocidadeMedia: string;
-  prefixoAtivo: string;
-}
+const MOCK_ITINERARIO_DATA: Record<
+  string,
+  { seq: number; via: string; localidade: string; sentido: string }[]
+> = {
+  '0.111': [
+    { seq: 1, via: 'Plataforma E - Rodoviária do Plano Piloto', localidade: 'Plano Piloto', sentido: 'I' },
+    { seq: 2, via: 'Eixo Rodoviário Norte (Eixão)', localidade: 'Asa Norte', sentido: 'I' },
+    { seq: 3, via: 'Via L2 Norte - Quadras 406/408', localidade: 'Asa Norte', sentido: 'I' },
+    { seq: 4, via: 'Campus Universitário Darcy Ribeiro (UnB)', localidade: 'Asa Norte', sentido: 'I' },
+  ],
+  '0.170': [
+    { seq: 1, via: 'Avenida Comercial Sul - Taguatinga', localidade: 'Taguatinga', sentido: 'I' },
+    { seq: 2, via: 'Via EPTG (Estrada Parque Taguatinga)', localidade: 'Guará / Águas Claras', sentido: 'I' },
+    { seq: 3, via: 'Eixo Monumental - Rodoviária do Plano Piloto', localidade: 'Plano Piloto', sentido: 'I' },
+  ],
+};
 
-const INFO_ONIBUS_MOCK_LINES: MockBusLine[] = [
-  {
-    cd_linha: '0.110',
-    nm_linha: 'Rodoviária do Plano Piloto / Campus UnB (Asa Norte)',
-    vl_tarifa: 2.7,
-    sentido: 'CIRCULAR',
-    operadora: 'Piracicabana',
-    corLinha: '#0ea5e9',
-    pathD: 'M 360,250 C 370,210 390,170 410,130 C 440,110 470,120 480,150 C 485,180 440,220 390,240 Z',
-    itinerario: [
-      { sequencia: 1, nomeVia: 'Plataforma Superior E', localidade: 'Rodoviária do Plano Piloto', x: 360, y: 250 },
-      { sequencia: 2, nomeVia: 'Eixo Rodoviário Norte (Eixinho)', localidade: 'Asa Norte (104/204)', x: 410, y: 170 },
-      { sequencia: 3, nomeVia: 'Avenida L2 Norte', localidade: 'Quadras 406/408 Norte', x: 460, y: 130 },
-      { sequencia: 4, nomeVia: 'Via Universitária (Acesso ICC)', localidade: 'Campus Darcy Ribeiro - UnB', x: 480, y: 160 },
-      { sequencia: 5, nomeVia: 'Retorno Plataforma Eixo Monumental', localidade: 'Rodoviária Central', x: 360, y: 250 },
-    ],
-    horariosUteis: ['06:15', '06:35', '06:55', '07:15', '07:35', '08:00', '12:10', '17:45', '18:15', '19:00'],
-    horariosSabado: ['06:30', '07:30', '08:30', '12:00', '14:00', '18:00'],
-    horariosDomingo: ['07:00', '09:00', '11:00', '13:00', '17:00', '19:00'],
-    gpsStatus: 'Operando no Horário • Pontual',
-    velocidadeMedia: '38 km/h',
-    prefixoAtivo: '112.450',
-  },
-  {
-    cd_linha: '0.152',
-    nm_linha: 'Taguatinga Sul / Eixo Monumental / Esplanada',
-    vl_tarifa: 5.5,
-    sentido: 'IDA',
-    operadora: 'Marechal',
-    corLinha: '#10b981',
-    pathD: 'M 110,340 C 160,320 220,290 280,270 C 320,260 360,250 420,250 C 470,250 510,245 540,245',
-    itinerario: [
-      { sequencia: 1, nomeVia: 'Terminal Rodoviário Taguatinga Sul', localidade: 'Taguatinga Sul', x: 110, y: 340 },
-      { sequencia: 2, nomeVia: 'Estrada Parque Taguatinga (EPTG)', localidade: 'Corredor Exclusivo', x: 230, y: 285 },
-      { sequencia: 3, nomeVia: 'Estrada Parque Indústrias Gráficas (EPIG)', localidade: 'Parque da Cidade', x: 310, y: 265 },
-      { sequencia: 4, nomeVia: 'Eixo Monumental Oeste', localidade: 'Torre de TV / Rodoviária', x: 370, y: 250 },
-      { sequencia: 5, nomeVia: 'Eixo Monumental Leste', localidade: 'Esplanada dos Ministérios', x: 540, y: 245 },
-    ],
-    horariosUteis: ['05:40', '06:05', '06:25', '06:50', '07:15', '07:40', '16:45', '17:20', '18:00'],
-    horariosSabado: ['06:00', '07:00', '08:00', '12:30', '17:00'],
-    horariosDomingo: ['06:30', '08:30', '11:30', '16:30'],
-    gpsStatus: 'Tráfego Moderado na EPIG',
-    velocidadeMedia: '44 km/h',
-    prefixoAtivo: '441.902',
-  },
-  {
-    cd_linha: '2204',
-    nm_linha: 'Terminal Gama (BRT Sul) / Rodoviária Plano Piloto',
-    vl_tarifa: 5.5,
-    sentido: 'IDA',
-    operadora: 'Pioneira',
-    corLinha: '#f59e0b',
-    pathD: 'M 190,460 C 210,400 250,340 290,290 C 320,260 350,255 360,250',
-    itinerario: [
-      { sequencia: 1, nomeVia: 'Terminal BRT Gama Sul', localidade: 'Setor Sul Gama', x: 190, y: 460 },
-      { sequencia: 2, nomeVia: 'DF-480 Canaleta BRT', localidade: 'Balão do Periquito', x: 215, y: 395 },
-      { sequencia: 3, nomeVia: 'Terminal BRT Park Way', localidade: 'SMPW Quadra 26', x: 270, y: 315 },
-      { sequencia: 4, nomeVia: 'Viaduto Camargo Corrêa', localidade: 'Asa Sul / Eixão', x: 330, y: 265 },
-      { sequencia: 5, nomeVia: 'Plataforma BRT Inferior', localidade: 'Rodoviária do Plano Piloto', x: 360, y: 250 },
-    ],
-    horariosUteis: ['05:00', '05:15', '05:30', '05:45', '06:00', '06:15', '06:30', '17:15', '17:40', '18:10'],
-    horariosSabado: ['05:30', '06:00', '06:30', '07:00', '12:00', '17:30'],
-    horariosDomingo: ['06:00', '07:00', '08:30', '11:00', '16:00', '18:00'],
-    gpsStatus: 'Corredor Exclusivo Livre',
-    velocidadeMedia: '62 km/h',
-    prefixoAtivo: '228.114',
-  },
-  {
-    cd_linha: '0.812',
-    nm_linha: 'W3 Norte / Setor Hospitalar / Sudoeste / Cruzeiro',
-    vl_tarifa: 3.8,
-    sentido: 'VOLTA',
-    operadora: 'Urbi',
-    corLinha: '#a855f7',
-    pathD: 'M 390,140 C 370,180 350,220 340,260 C 310,270 270,290 250,300 C 230,310 220,330 210,340',
-    itinerario: [
-      { sequencia: 1, nomeVia: 'Avenida W3 Norte', localidade: 'Terminal 516 Norte', x: 390, y: 140 },
-      { sequencia: 2, nomeVia: 'Setor Hospitalar Local Norte (SHLN)', localidade: 'Hospital Regional Asa Norte', x: 360, y: 210 },
-      { sequencia: 3, nomeVia: 'Avenida W3 Sul', localidade: 'Pátio Brasil / Venâncio Shopping', x: 335, y: 265 },
-      { sequencia: 4, nomeVia: 'Primeira Avenida do Sudoeste', localidade: 'QMSW 5 / Bloco C', x: 265, y: 290 },
-      { sequencia: 5, nomeVia: 'Terminal Rodoviário Cruzeiro Novo', localidade: 'Cruzeiro Novo', x: 210, y: 340 },
-    ],
-    horariosUteis: ['06:20', '07:00', '07:40', '08:20', '12:15', '16:30', '17:15', '18:00', '18:45'],
-    horariosSabado: ['07:00', '08:15', '12:00', '14:30', '17:45'],
-    horariosDomingo: ['08:00', '11:00', '14:00', '17:00'],
-    gpsStatus: 'Paradas Frequentes na W3',
-    velocidadeMedia: '29 km/h',
-    prefixoAtivo: '335.801',
-  },
-];
+const MOCK_HORARIOS_DATA: Record<
+  string,
+  { hr: string; sentido: string; operadora: string; dias: string }[]
+> = {
+  '0.111': [
+    { hr: '06:15', sentido: 'IDA', operadora: 'Piracicabana', dias: 'Seg a Sex' },
+    { hr: '07:30', sentido: 'IDA', operadora: 'Piracicabana', dias: 'Seg a Sáb' },
+    { hr: '12:15', sentido: 'VOLTA', operadora: 'Piracicabana', dias: 'Seg a Sex' },
+    { hr: '18:15', sentido: 'VOLTA', operadora: 'Piracicabana', dias: 'Seg a Sex' },
+  ],
+  '0.170': [
+    { hr: '05:45', sentido: 'IDA', operadora: 'Marechal', dias: 'Todos os dias' },
+    { hr: '06:30', sentido: 'IDA', operadora: 'Marechal', dias: 'Seg a Sex' },
+    { hr: '17:30', sentido: 'VOLTA', operadora: 'Marechal', dias: 'Seg a Sex' },
+  ],
+};
 
-const FRONTEND_STEPS = [
+const SCL_CHALLENGE_STATIONS = [
   {
-    key: 'front-step-1',
-    order: '1ª Camada • Types',
-    file: 'src/modulos/SCL/Itinerarios/types/ & Horarios/types/',
-    title: 'Modelagem dos Tipos e Contratos de Domínio',
-    desc: 'Crie os contratos TypeScript: ItinerarioDescritivo, PontoTrajeto, HorarioPartida e FiltroHorario. Tipagem estrita sem "any", espelhando as entidades do backend.',
+    key: 'scl-st-1',
+    order: '1ª Estação',
+    file: 'src/config/modules.ts',
+    title: 'Registar os 2 Submódulos dentro do Módulo SCL',
+    desc: 'Dentro do objeto do módulo "scl" em src/config/modules.ts, adicione os submódulos "consultar-itinerario" (/scl/consultar-itinerario) e "consultar-horarios" (/scl/consultar-horarios).',
   },
   {
-    key: 'front-step-2',
-    order: '2ª Camada • Service',
-    file: 'src/modulos/SCL/Itinerarios/services/ & Horarios/services/',
-    title: 'Isolamento de Comunicação HTTP com Dual-Mode',
-    desc: 'Implemente itinerarioService.ts e horarioService.ts consumindo /api/linhas/:codigo/itinerario e /horarios com fallback automático para mock se o backend estiver offline.',
-  },
-  {
-    key: 'front-step-3',
-    order: '3ª Camada • Hook',
-    file: 'src/modulos/SCL/Itinerarios/hooks/useItinerario.ts & useHorarios.ts',
-    title: 'Custom Hooks de Estado (Regra das 50 Linhas)',
-    desc: 'Encapsule loading, error, dados e filtros respeitando o padrão SUTINF: hooks limpos, reutilizáveis e com menos de 50 linhas de código.',
-  },
-  {
-    key: 'front-step-4',
-    order: '4ª Camada • Components',
-    file: 'src/modulos/SCL/Itinerarios/components/ & Horarios/components/',
-    title: 'Componentização Visual Desacoplada e Pura',
-    desc: 'Crie ItinerarioTimeline.tsx (timeline sequencial de vias e localidades) e HorariosGrid.tsx (grid com seletor de dias úteis, sábados e domingos).',
-  },
-  {
-    key: 'front-step-5',
-    order: '5ª Camada • Screen',
-    file: 'src/modulos/SCL/Itinerarios/ItinerariosPage.tsx & HorariosPage.tsx',
-    title: 'Composição de Telas com os 4 Estados de UI',
-    desc: 'Construa as telas completas tratando obrigatoriamente: Carregando (Skeleton), Erro com botão de retry, Busca Vazia (Empty State) e Dados Carregados.',
-  },
-  {
-    key: 'front-step-6',
-    order: '6ª Integração • SCL Menu',
+    key: 'scl-st-2',
+    order: '2ª Estação',
     file: 'src/modulos/SCL/SCLMenu.tsx & src/App.tsx',
-    title: 'Registro no Menu do SCL e Guardas de Permissão CDP',
-    desc: 'Adicione os novos botões no menu do SCL ("Itinerários" e "Horários") protegidos pelo componente <Can action="LEITURA"> e registre as rotas na aplicação.',
+    title: 'Adicionar os 2 Novos Cards no SCLMenu.tsx e Mapear as Rotas no App.tsx',
+    desc: 'Adicione os cartões "Consultar Itinerário" e "Consultar Tabela Horária" ao lado de ConsultaOS e RelatorioLinha no SCLMenu.tsx, e declare as duas rotas protegidas no src/App.tsx.',
   },
   {
-    key: 'front-step-7',
-    order: '7º Projeto Final • Capstone',
-    file: 'src/modulos/SCL/Vol/VolDesafio.tsx (/infoonibus)',
-    title: 'Capstone Infoônibus: Mapa Interativo & Telemetria GPS',
-    desc: 'Com as duas APIs integradas, acesse o módulo VOL e finalize o Infoônibus com mapa espacial Leaflet, rota traçada e telemetria GPS em tempo real.',
+    key: 'scl-st-3',
+    order: '3ª Estação',
+    file: 'src/modulos/SCL/ConsultarItinerario/ (types, services, hooks, components)',
+    title: 'Construir as 4 Subpastas de Base da Tela ConsultarItinerario',
+    desc: 'Seguindo o modelo de RelatorioLinha, crie types/index.ts, services/itinerarioService.ts (consumindo GET /linhas/:codigo/itinerario), hooks/useItinerarioData.ts e components/ (FormSearch, ViasList, Loading, ErrorMessage).',
+  },
+  {
+    key: 'scl-st-4',
+    order: '4ª Estação',
+    file: 'src/modulos/SCL/ConsultarItinerario/ConsultarItinerario.tsx',
+    title: 'Criar o Ficheiro .tsx Compilador de ConsultarItinerario',
+    desc: 'Na raiz da subpasta ConsultarItinerario/, crie o ficheiro final ConsultarItinerario.tsx que importa o hook e compila/orquestra os componentes visuais.',
+  },
+  {
+    key: 'scl-st-5',
+    order: '5ª Estação',
+    file: 'src/modulos/SCL/ConsultarHorarios/ (5 Camadas + Compilador .tsx)',
+    title: 'Construir a Subpasta Completa de ConsultarHorarios consumindo a 2ª API',
+    desc: 'Crie types/, services/horarioService.ts (consumindo GET /linhas/:codigo/horarios), hooks/useHorariosData.ts, components/ (FormSearch, QuadroHorariosTable) e o compilador final ConsultarHorarios.tsx.',
   },
 ];
 
 export const FrontendChallengeScreen: React.FC<FrontendChallengeScreenProps> = ({
   completedItems,
   onToggleItem,
-  onOpenModule,
   submission,
   onSaveSubmission,
+  onOpenModule,
+  onNavigateFinalChallenge,
 }) => {
-  const [activeTab, setActiveTab] = useState<'itinerario' | 'horarios' | 'infoonibus'>('itinerario');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTipoDia, setSelectedTipoDia] = useState<'UTIL' | 'SABADO' | 'DOMINGO'>('UTIL');
-  const [selectedLine, setSelectedLine] = useState<MockBusLine>(INFO_ONIBUS_MOCK_LINES[0]);
+  const [activeSclView, setActiveSclView] = useState<'menu' | 'itinerario' | 'horarios'>('menu');
+  const [codigoBusca, setCodigoBusca] = useState('0.111');
 
-  const filteredLines = useMemo(() => {
-    return INFO_ONIBUS_MOCK_LINES.filter((line) => {
-      return (
-        line.cd_linha.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        line.nm_linha.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    });
-  }, [searchQuery]);
-
-  const activeHorariosList = useMemo(() => {
-    if (selectedTipoDia === 'SABADO') return selectedLine.horariosSabado;
-    if (selectedTipoDia === 'DOMINGO') return selectedLine.horariosDomingo;
-    return selectedLine.horariosUteis;
-  }, [selectedLine, selectedTipoDia]);
+  const currentVias = MOCK_ITINERARIO_DATA[codigoBusca] || [];
+  const currentHorarios = MOCK_HORARIOS_DATA[codigoBusca] || [];
 
   return (
     <div className="screen-container">
@@ -226,93 +116,61 @@ export const FrontendChallengeScreen: React.FC<FrontendChallengeScreenProps> = (
       <section className="hero-banner">
         <div className="hero-content">
           <span className="hero-badge">
-            <Layout size={14} /> Desafio Prático • Engenharia Frontend
+            <Layout size={14} /> Etapa 3 da Jornada Prática • Engenharia Front-end (Módulo SCL)
           </span>
-          <h1>Desafio Frontend: Submódulos SCL (Itinerários e Horários) & Infoônibus</h1>
+          <h1>Criando "Consultar Itinerário" e "Consultar Horários" no Módulo SCL</h1>
           <p>
-            Construa os novos submódulos no <strong>Boilerplate_Front</strong> consumindo diretamente as APIs de
-            Linhas desenvolvidas no backend (<code>GET /api/linhas/:codigo/itinerario</code> e <code>/horarios</code>).
-            Aplique a <strong>Arquitetura em 5 Camadas</strong>, o <strong>Dual-Mode</strong> (backend real :8097 ou mock offline),
-            guardas de permissão <strong>CDP</strong> e culmine no <strong>Projeto Final Infoônibus</strong> com mapa e telemetria.
+            No desafio de Back-end você criou as rotas <code>GET /api/linhas/:codigo/itinerario</code> e{' '}
+            <code>GET /api/linhas/:codigo/horarios</code>. Agora, no <strong>BoilerPlate_Front_end</strong>, você
+            vai entrar no módulo <strong>SCL (`src/modulos/SCL/`)</strong> e criar essas duas novas telas tomando{' '}
+            <code>RelatorioLinha</code> como modelo!
           </p>
           <div className="hero-actions">
             <button className="btn-secondary" onClick={() => onOpenModule('mod-5-frontend')}>
-              <BookOpen size={16} /> Revisar Módulo 5: Arquitetura Frontend na Plataforma
+              <BookOpen size={16} /> Revisar as 7 Estações no Manual de Front-end
             </button>
+            {onNavigateFinalChallenge && (
+              <button className="btn-primary" onClick={onNavigateFinalChallenge}>
+                🚀 Ver Próxima Etapa: Desafio Final InfoÔnibus
+              </button>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Roteiro Estruturante da Missão */}
-      <section className="section-card">
-        <h2>
-          <Compass size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
-          Roteiro da Missão: Do Setup dos Submódulos ao Capstone Infoônibus
-        </h2>
-        <p className="text-muted" style={{ marginTop: '0.4rem', marginBottom: '1.25rem' }}>
-          Siga a evolução natural do desenvolvedor na SUTINF: aprenda com o módulo base de Linhas, construa os dois novos submódulos do SCL e entregue o Infoônibus:
-        </p>
-
-        <div className="cards-grid three-cols">
-          <div className="glass-card" style={{ borderTop: '4px solid #0ea5e9', padding: '1.25rem' }}>
-            <span className="status-pill pending" style={{ marginBottom: '0.5rem' }}>Fase 1 • Setup & Dual-Mode</span>
-            <h3 style={{ fontSize: '1.05rem', marginTop: '0.3rem' }}>Clonar Boilerplate Front</h3>
-            <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.5rem', lineHeight: 1.6 }}>
-              Clone o repositório base React + Vite. Ele já possui o componente <code>StatusIntegracaoBackend</code> que detecta automaticamente se o NestJS está rodando na porta 8097 ou ativa o mock offline:
-            </p>
-            <pre className="code-block" style={{ fontSize: '0.78rem', margin: '0.75rem 0' }}>
-              <code>git clone https://github.com/pedro090904/SISMOB-BOILERPLATE-FRONT.git&#10;cd SISMOB-BOILERPLATE-FRONT&#10;npm install &amp;&amp; npm run dev</code>
-            </pre>
-          </div>
-
-          <div className="glass-card" style={{ borderTop: '4px solid #10b981', padding: '1.25rem' }}>
-            <span className="status-pill active" style={{ marginBottom: '0.5rem' }}>Fase 2 • Desafio Principal</span>
-            <h3 style={{ fontSize: '1.05rem', marginTop: '0.3rem' }}>Criar os 2 Submódulos SCL</h3>
-            <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.5rem', lineHeight: 1.6 }}>
-              Construa <code>src/modulos/SCL/Itinerarios/</code> e <code>src/modulos/SCL/Horarios/</code>. Cada submódulo possui suas 5 camadas (Types, Service, Hook &lt;50 linhas, Components e Page) e consome as APIs do backend.
-            </p>
-            <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#10b981', fontWeight: 600 }}>
-              ✓ Registre ambos no menu SCLMenu.tsx
-            </div>
-          </div>
-
-          <div className="glass-card" style={{ borderTop: '4px solid #f59e0b', padding: '1.25rem' }}>
-            <span className="status-pill passed" style={{ marginBottom: '0.5rem' }}>Fase 3 • Capstone Final</span>
-            <h3 style={{ fontSize: '1.05rem', marginTop: '0.3rem' }}>Módulo VOL: Infoônibus DF</h3>
-            <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.5rem', lineHeight: 1.6 }}>
-              Acesse <code>src/modulos/SCL/Vol/VolDesafio.tsx</code> (rota <code>/infoonibus</code>). Integre o mapa Leaflet com o traçado das rotas e telemetria GPS em tempo real, entregando a aplicação cidadã de mobilidade!
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Simulador Interativo Vivo dos 3 Módulos */}
+      {/* Simulador Interativo do Módulo SCL no BoilerPlate_Front_end */}
       <section className="section-card">
         <div className="section-header-row">
           <div>
             <h2>
               <Sparkles size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
-              Simulador Vivo: Explore as Telas que Você Vai Construir
+              Protótipo Interativo: Como o seu Módulo SCL deve ficar
             </h2>
             <p className="text-muted">
-              Alterne entre as 3 visões para experimentar como os submódulos de Itinerários, Quadro de Horários e o Capstone Infoônibus funcionam na prática:
+              Clique nos 2 novos cartões abaixo (destacados em azul/verde) para simular a navegação do{' '}
+              <code>SCLMenu.tsx</code> para as duas novas telas consumindo as APIs da porta 8097:
             </p>
           </div>
         </div>
 
-        {/* Browser Mockup */}
-        <div className="browser-mockup" style={{ marginTop: '1.25rem', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(148, 163, 184, 0.25)' }}>
-          {/* Header do Navegador */}
+        <div
+          className="browser-mockup"
+          style={{
+            marginTop: '1.25rem',
+            borderRadius: '16px',
+            overflow: 'hidden',
+            border: '1px solid rgba(148, 163, 184, 0.25)',
+          }}
+        >
+          {/* Barra Superior do Browser Simulado */}
           <div
-            className="browser-header"
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '0.75rem',
               padding: '0.75rem 1.25rem',
-              background: 'rgba(15, 23, 42, 0.95)',
+              background: 'rgba(15, 23, 42, 0.9)',
               borderBottom: '1px solid rgba(148, 163, 184, 0.2)',
-              flexWrap: 'wrap',
             }}
           >
             <div style={{ display: 'flex', gap: '0.4rem' }}>
@@ -320,370 +178,275 @@ export const FrontendChallengeScreen: React.FC<FrontendChallengeScreenProps> = (
               <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#f59e0b' }} />
               <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#10b981' }} />
             </div>
-
             <div
               style={{
                 flex: 1,
                 background: 'rgba(30, 41, 59, 0.9)',
-                padding: '0.35rem 0.85rem',
+                padding: '0.3rem 0.85rem',
                 borderRadius: '8px',
                 fontSize: '0.78rem',
                 fontFamily: 'monospace',
-                color: '#94a3b8',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                minWidth: '220px',
+                color: '#38bdf8',
               }}
             >
-              <span>
-                http://localhost:5173
-                {activeTab === 'itinerario'
-                  ? '/scl/itinerarios'
-                  : activeTab === 'horarios'
-                  ? '/scl/horarios'
-                  : '/infoonibus'}
-              </span>
-              <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.72rem' }}>
-                <Zap size={12} /> Dual-Mode Ativo (:8097)
-              </span>
-            </div>
-
-            {/* Seletor de Telas do Simulador */}
-            <div style={{ display: 'flex', gap: '0.4rem' }}>
-              <button
-                type="button"
-                onClick={() => setActiveTab('itinerario')}
-                className={`sql-filter-btn ${activeTab === 'itinerario' ? 'active' : ''}`}
-                style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}
-              >
-                <ListOrdered size={14} style={{ display: 'inline', marginRight: 4 }} />
-                1. Itinerários
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('horarios')}
-                className={`sql-filter-btn ${activeTab === 'horarios' ? 'active' : ''}`}
-                style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}
-              >
-                <Clock size={14} style={{ display: 'inline', marginRight: 4 }} />
-                2. Quadro de Horários
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('infoonibus')}
-                className={`sql-filter-btn ${activeTab === 'infoonibus' ? 'active' : ''}`}
-                style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}
-              >
-                <Map size={14} style={{ display: 'inline', marginRight: 4 }} />
-                3. Capstone Infoônibus
-              </button>
+              http://localhost:5173
+              {activeSclView === 'menu'
+                ? '/scl (SCLMenu.tsx)'
+                : activeSclView === 'itinerario'
+                ? '/scl/consultar-itinerario (ConsultarItinerario.tsx)'
+                : '/scl/consultar-horarios (ConsultarHorarios.tsx)'}
             </div>
           </div>
 
-          {/* Corpo do Simulador */}
+          {/* Conteúdo do Simulador SCL */}
           <div style={{ padding: '1.5rem' }}>
-            {/* Barra de Busca de Linhas */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '1 1 280px' }}>
-                <Search size={18} />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Buscar linha por código (0.110, 2204) ou itinerário..."
-                  className="sql-editor-textarea"
-                  style={{ minHeight: '40px', height: '40px', padding: '0.45rem 0.85rem' }}
-                />
-              </div>
+            {activeSclView === 'menu' && (
+              <div>
+                <div style={{ marginBottom: '1rem' }}>
+                  <span className="status-pill passed" style={{ fontSize: '0.72rem' }}>
+                    src/modulos/SCL/SCLMenu.tsx
+                  </span>
+                  <h3 style={{ fontSize: '1.25rem', marginTop: '0.35rem' }}>
+                    SCL — Sistema de Controle de Linhas
+                  </h3>
+                  <p className="text-muted" style={{ fontSize: '0.85rem' }}>
+                    Os 2 primeiros cartões já existem no BoilerPlate_Front_end. Clique nos 2 novos cartões abaixo para ver o que você vai construir:
+                  </p>
+                </div>
 
-              {/* Seletor de Tipo de Dia para a aba Horários */}
-              {activeTab === 'horarios' && (
-                <div className="sql-filter-buttons">
-                  {(['UTIL', 'SABADO', 'DOMINGO'] as const).map((tipo) => (
+                <div className="cards-grid two-cols">
+                  <div className="glass-card" style={{ opacity: 0.65, padding: '1.1rem' }}>
+                    <span className="status-pill pending" style={{ fontSize: '0.7rem' }}>
+                      Já existente em src/modulos/SCL/ConsultaOS/
+                    </span>
+                    <h4 style={{ marginTop: '0.4rem' }}>📄 Consulta de OS</h4>
+                    <p className="text-muted" style={{ fontSize: '0.8rem' }}>
+                      Ordens de serviço operacionais da frota.
+                    </p>
+                  </div>
+
+                  <div className="glass-card" style={{ opacity: 0.65, padding: '1.1rem' }}>
+                    <span className="status-pill pending" style={{ fontSize: '0.7rem' }}>
+                      Já existente em src/modulos/SCL/RelatorioLinha/ (Seu Modelo!)
+                    </span>
+                    <h4 style={{ marginTop: '0.4rem' }}>📊 Relatório de Linhas</h4>
+                    <p className="text-muted" style={{ fontSize: '0.8rem' }}>
+                      Catálogo geral de linhas, estatísticas e exportação CSV.
+                    </p>
+                  </div>
+
+                  {/* Card Novo 1: Consultar Itinerário */}
+                  <div
+                    onClick={() => setActiveSclView('itinerario')}
+                    className="glass-card"
+                    style={{
+                      cursor: 'pointer',
+                      border: '2px solid #38bdf8',
+                      padding: '1.2rem',
+                    }}
+                  >
+                    <span className="status-pill passed" style={{ fontSize: '0.72rem' }}>
+                      ✨ NOVA TELA 1 • Clique para testar!
+                    </span>
+                    <h4 style={{ marginTop: '0.45rem', color: '#38bdf8', fontSize: '1.05rem' }}>
+                      🗺️ Consultar Itinerário da Linha
+                    </h4>
+                    <p className="text-muted" style={{ fontSize: '0.82rem', marginTop: '0.25rem' }}>
+                      Consome <code>GET /api/linhas/:codigo/itinerario</code> e lista a sequência de vias.
+                    </p>
+                  </div>
+
+                  {/* Card Novo 2: Consultar Tabela Horária */}
+                  <div
+                    onClick={() => setActiveSclView('horarios')}
+                    className="glass-card"
+                    style={{
+                      cursor: 'pointer',
+                      border: '2px solid #10b981',
+                      padding: '1.2rem',
+                    }}
+                  >
+                    <span className="status-pill passed" style={{ fontSize: '0.72rem' }}>
+                      ✨ NOVA TELA 2 • Clique para testar!
+                    </span>
+                    <h4 style={{ marginTop: '0.45rem', color: '#10b981', fontSize: '1.05rem' }}>
+                      🕒 Consultar Tabela Horária
+                    </h4>
+                    <p className="text-muted" style={{ fontSize: '0.82rem', marginTop: '0.25rem' }}>
+                      Consome <code>GET /api/linhas/:codigo/horarios</code> e exibe partidas e dias da semana.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeSclView !== 'menu' && (
+              <div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '0.75rem',
+                    marginBottom: '1.25rem',
+                  }}
+                >
+                  <div>
+                    <h3 style={{ fontSize: '1.2rem' }}>
+                      {activeSclView === 'itinerario'
+                        ? '🗺️ SCL • Consultar Itinerário Descritivo'
+                        : '🕒 SCL • Consultar Tabela Horária da Linha'}
+                    </h3>
+                    <p className="text-muted" style={{ fontSize: '0.82rem', fontFamily: 'monospace' }}>
+                      Consumindo: GET http://localhost:8097/api/linhas/{codigoBusca}/
+                      {activeSclView}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => setActiveSclView('menu')}
+                  >
+                    <ArrowLeft size={15} /> Voltar ao SCLMenu.tsx
+                  </button>
+                </div>
+
+                {/* Simulação do componente FormSearch.tsx */}
+                <div
+                  className="glass-card"
+                  style={{
+                    padding: '0.9rem 1.1rem',
+                    marginBottom: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <Search size={16} color="#38bdf8" />
+                  <span style={{ fontSize: '0.84rem', fontWeight: 600 }}>
+                    Selecione uma linha de teste (FormSearch.tsx):
+                  </span>
+                  {(['0.111', '0.170'] as const).map((cod) => (
                     <button
-                      key={tipo}
+                      key={cod}
                       type="button"
-                      onClick={() => setSelectedTipoDia(tipo)}
-                      className={`sql-filter-btn ${selectedTipoDia === tipo ? 'active' : ''}`}
-                      style={{ fontSize: '0.75rem' }}
+                      onClick={() => setCodigoBusca(cod)}
+                      className={`sql-filter-btn ${codigoBusca === cod ? 'active' : ''}`}
                     >
-                      <Calendar size={12} style={{ display: 'inline', marginRight: 4 }} />
-                      {tipo === 'UTIL' ? 'Dias Úteis' : tipo === 'SABADO' ? 'Sábados' : 'Domingos e Feriados'}
+                      Linha {cod}
                     </button>
                   ))}
                 </div>
-              )}
-            </div>
 
-            {/* Layout em Duas Colunas */}
-            <div className="cards-grid two-cols">
-              {/* Coluna Esquerda: Lista de Linhas Disponíveis */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <span className="text-muted" style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Linhas do DF ({filteredLines.length} encontradas):
-                </span>
-                {filteredLines.length === 0 ? (
-                  <div className="glass-card" style={{ textAlign: 'center', padding: '2rem' }}>
-                    <p className="text-muted">Nenhuma linha encontrada (Estado Vazio / Empty State).</p>
-                  </div>
-                ) : (
-                  filteredLines.map((line) => {
-                    const isSelected = selectedLine?.cd_linha === line.cd_linha;
-                    return (
+                {/* Resultado da Tela 1: Itinerário */}
+                {activeSclView === 'itinerario' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    {currentVias.map((item) => (
                       <div
-                        key={line.cd_linha}
-                        onClick={() => setSelectedLine(line)}
-                        className="glass-card io-bus-card"
+                        key={item.seq}
+                        className="glass-card"
                         style={{
-                          cursor: 'pointer',
-                          border: isSelected ? `2px solid ${line.corLinha}` : undefined,
-                          padding: '0.9rem',
-                          background: isSelected ? 'rgba(14, 165, 233, 0.08)' : undefined,
-                          transition: 'all 0.2s ease',
+                          padding: '0.85rem 1.1rem',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
                         }}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span
-                            className="status-pill passed"
-                            style={{
-                              fontWeight: 800,
-                              background: isSelected ? line.corLinha : undefined,
-                              color: isSelected ? '#ffffff' : undefined,
-                            }}
-                          >
-                            <Bus size={13} style={{ display: 'inline', marginRight: 4 }} />
-                            Linha {line.cd_linha}
-                          </span>
-                          <span className="status-pill pending" style={{ fontSize: '0.72rem' }}>
-                            {line.sentido} • R$ {Number(line.vl_tarifa).toFixed(2)}
-                          </span>
-                        </div>
-                        <h4 style={{ marginTop: '0.4rem', fontSize: '0.92rem' }}>{line.nm_linha}</h4>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.4rem', fontSize: '0.78rem' }}>
-                          <span className="text-muted">Operadora: <strong>{line.operadora}</strong></span>
-                          <span style={{ color: line.corLinha, fontWeight: 600 }}>Selecionar →</span>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              {/* Coluna Direita: Conteúdo Dinâmico conforme a Aba Ativa */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {/* 1. ABA ITINERÁRIOS: Timeline sequencial de vias */}
-                {activeTab === 'itinerario' && (
-                  <div className="glass-card" style={{ padding: '1.25rem', borderLeft: `4px solid ${selectedLine.corLinha}` }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid rgba(148,163,184,0.15)', paddingBottom: '0.75rem' }}>
-                      <div>
-                        <span className="status-pill passed" style={{ fontSize: '0.72rem' }}>
-                          Submódulo Itinerários • SCL
-                        </span>
-                        <h3 style={{ fontSize: '1.15rem', marginTop: '0.3rem' }}>
-                          Trajeto Sequencial da Linha {selectedLine.cd_linha}
-                        </h3>
-                        <p className="text-muted" style={{ fontSize: '0.8rem' }}>
-                          Consome <code>GET /api/linhas/{selectedLine.cd_linha}/itinerario</code>
-                        </p>
-                      </div>
-                      <span className="status-pill active" style={{ fontSize: '0.72rem' }}>
-                        {selectedLine.itinerario.length} Paradas Mapeadas
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      {selectedLine.itinerario.map((ponto, idx) => (
-                        <div
-                          key={ponto.sequencia}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            gap: '0.75rem',
-                            padding: '0.65rem 0.85rem',
-                            background: 'rgba(30, 41, 59, 0.4)',
-                            borderRadius: '8px',
-                            borderLeft: idx === 0 ? '3px solid #10b981' : idx === selectedLine.itinerario.length - 1 ? '3px solid #ef4444' : `3px solid ${selectedLine.corLinha}`,
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: 26,
-                              height: 26,
-                              borderRadius: '50%',
-                              background: idx === 0 ? '#10b981' : idx === selectedLine.itinerario.length - 1 ? '#ef4444' : selectedLine.corLinha,
-                              color: '#fff',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontWeight: 700,
-                              fontSize: '0.75rem',
-                              flexShrink: 0,
-                            }}
-                          >
-                            {ponto.sequencia}
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{ponto.nomeVia}</div>
-                            <div className="text-muted" style={{ fontSize: '0.78rem' }}>
-                              <MapPin size={12} style={{ display: 'inline', marginRight: 3 }} />
-                              {ponto.localidade}
-                            </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <span className="status-pill passed">{item.seq}º</span>
+                          <div>
+                            <strong style={{ fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: 5 }}>
+                              <MapPin size={14} color="#38bdf8" /> {item.via}
+                            </strong>
+                            <span className="text-muted" style={{ fontSize: '0.78rem' }}>
+                              Localidade: {item.localidade}
+                            </span>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                        <span className="status-pill pending">Sentido: {item.sentido}</span>
+                      </div>
+                    ))}
                   </div>
                 )}
 
-                {/* 2. ABA HORÁRIOS: Quadro de partidas programadas */}
-                {activeTab === 'horarios' && (
-                  <div className="glass-card" style={{ padding: '1.25rem', borderLeft: `4px solid ${selectedLine.corLinha}` }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid rgba(148,163,184,0.15)', paddingBottom: '0.75rem' }}>
-                      <div>
-                        <span className="status-pill passed" style={{ fontSize: '0.72rem' }}>
-                          Submódulo Horários • SCL
-                        </span>
-                        <h3 style={{ fontSize: '1.15rem', marginTop: '0.3rem' }}>
-                          Quadro de Partidas da Linha {selectedLine.cd_linha}
-                        </h3>
-                        <p className="text-muted" style={{ fontSize: '0.8rem' }}>
-                          Consome <code>GET /api/linhas/{selectedLine.cd_linha}/horarios?tipoDia={selectedTipoDia}</code>
-                        </p>
-                      </div>
-                      <span className="status-pill active" style={{ fontSize: '0.72rem' }}>
-                        {activeHorariosList.length} Viagens Programadas
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(75px, 1fr))', gap: '0.5rem' }}>
-                      {activeHorariosList.map((hr, idx) => (
-                        <div
-                          key={idx}
-                          style={{
-                            padding: '0.6rem 0.4rem',
-                            textAlign: 'center',
-                            background: 'rgba(30, 41, 59, 0.6)',
-                            border: `1px solid ${selectedLine.corLinha}44`,
-                            borderRadius: '8px',
-                            fontFamily: 'monospace',
-                            fontWeight: 700,
-                            fontSize: '0.92rem',
-                            color: '#f8fafc',
-                          }}
-                        >
-                          {hr}
+                {/* Resultado da Tela 2: Horários */}
+                {activeSclView === 'horarios' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    {currentHorarios.map((h, i) => (
+                      <div
+                        key={i}
+                        className="glass-card"
+                        style={{
+                          padding: '0.85rem 1.1rem',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <span className="status-pill passed" style={{ fontFamily: 'monospace', fontWeight: 700 }}>
+                            <Clock size={13} style={{ display: 'inline', marginRight: 4 }} />
+                            {h.hr}
+                          </span>
+                          <strong>Operadora: {h.operadora}</strong>
                         </div>
-                      ))}
-                    </div>
-
-                    <div style={{ marginTop: '1rem', padding: '0.6rem 0.85rem', background: 'rgba(15, 23, 42, 0.6)', borderRadius: '8px', fontSize: '0.78rem' }}>
-                      <span className="text-muted">Observação Operacional: </span>
-                      Partidas sujeitas às condições de tráfego dos eixos estruturantes do DF. Dados homologados pela SEMOB.
-                    </div>
-                  </div>
-                )}
-
-                {/* 3. ABA INFOÔNIBUS CAPSTONE: Mapa SVG e Telemetria GPS */}
-                {activeTab === 'infoonibus' && (
-                  <div
-                    className="glass-card"
-                    style={{
-                      padding: '1rem',
-                      overflow: 'hidden',
-                      position: 'relative',
-                      background: 'radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.95), rgba(2, 6, 23, 1))',
-                      borderRadius: '12px',
-                      border: `1px solid ${selectedLine.corLinha}44`,
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Map size={16} color={selectedLine.corLinha} />
-                        <span style={{ fontSize: '0.82rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          Capstone Infoônibus • Mapa & Telemetria DF
-                        </span>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <span className="status-pill pending">{h.sentido}</span>
+                          <span className="status-pill passed">{h.dias}</span>
+                        </div>
                       </div>
-                      <span className="status-pill active" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                        <Radio size={10} className="pulse-icon" /> GPS Ativo
-                      </span>
-                    </div>
-
-                    {/* Canvas do Mapa SVG */}
-                    <div style={{ width: '100%', height: '240px', position: 'relative' }}>
-                      <svg viewBox="0 0 600 500" style={{ width: '100%', height: '100%', borderRadius: '8px' }}>
-                        <defs>
-                          <pattern id="grid-fe" width="40" height="40" patternUnits="userSpaceOnUse">
-                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(148, 163, 184, 0.07)" strokeWidth="1" />
-                          </pattern>
-                          <filter id="glow-fe" x="-20%" y="-20%" width="140%" height="140%">
-                            <feGaussianBlur stdDeviation="3" result="glow" />
-                            <feComposite in="SourceGraphic" in2="glow" operator="over" />
-                          </filter>
-                        </defs>
-                        <rect width="600" height="500" fill="url(#grid-fe)" />
-
-                        {/* Lago Paranoá */}
-                        <path d="M 430,120 Q 510,160 480,220 T 450,290 T 520,340 T 440,390" fill="none" stroke="rgba(56, 189, 248, 0.2)" strokeWidth="14" strokeLinecap="round" />
-                        <text x="495" y="270" fill="rgba(56, 189, 248, 0.4)" fontSize="11">Lago Paranoá</text>
-
-                        {/* Rodoviária */}
-                        <circle cx="360" cy="250" r="7" fill="#ffffff" stroke="#0f172a" strokeWidth="2" />
-                        <text x="372" y="254" fill="#ffffff" fontSize="11" fontWeight="bold">Rodoviária</text>
-
-                        {/* Rota Ativa */}
-                        <path d={selectedLine.pathD} fill="none" stroke={selectedLine.corLinha} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" filter="url(#glow-fe)" />
-
-                        {/* Marcadores de Paradas */}
-                        {selectedLine.itinerario.map((p, idx) => (
-                          <g key={idx}>
-                            <circle cx={p.x} cy={p.y} r={idx === 0 || idx === selectedLine.itinerario.length - 1 ? 6 : 4} fill={idx === 0 ? '#10b981' : idx === selectedLine.itinerario.length - 1 ? '#ef4444' : selectedLine.corLinha} stroke="#ffffff" strokeWidth="1.5" />
-                            <text x={p.x + 8} y={p.y - 6} fill="#f8fafc" fontSize="9" fontWeight="600">{idx + 1}. {p.nomeVia.split(' ')[0]}</text>
-                          </g>
-                        ))}
-
-                        {/* Ônibus em Movimento Animado */}
-                        <circle r="8" fill={selectedLine.corLinha} stroke="#ffffff" strokeWidth="2">
-                          <animateMotion path={selectedLine.pathD} dur="12s" repeatCount="indefinite" />
-                        </circle>
-                        <circle r="14" fill="none" stroke={selectedLine.corLinha} strokeWidth="1.5" opacity="0.6">
-                          <animateMotion path={selectedLine.pathD} dur="12s" repeatCount="indefinite" />
-                          <animate attributeName="r" values="8;18;8" dur="2s" repeatCount="indefinite" />
-                          <animate attributeName="opacity" values="0.8;0.1;0.8" dur="2s" repeatCount="indefinite" />
-                        </circle>
-                      </svg>
-                    </div>
-
-                    {/* Telemetria do Veículo */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.6rem', padding: '0.5rem 0.75rem', background: 'rgba(30, 41, 59, 0.7)', borderRadius: '8px', fontSize: '0.78rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                      <div><span className="text-muted">Prefixo: </span><strong>{selectedLine.prefixoAtivo}</strong></div>
-                      <div><span className="text-muted">Velocidade: </span><strong style={{ color: '#10b981' }}>{selectedLine.velocidadeMedia}</strong></div>
-                      <div><span className="text-muted">Status: </span><span style={{ color: selectedLine.corLinha }}>{selectedLine.gpsStatus}</span></div>
-                    </div>
+                    ))}
                   </div>
                 )}
               </div>
-            </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Roteiro de Arquitetura Frontend em 5 Camadas */}
+      {/* Mapa da Estrutura de Ficheiros que o Aluno Deve Criar no SCL */}
       <section className="section-card">
-        <div className="section-header-row">
-          <div>
-            <h2>
-              <Layers size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
-              Sequência Guiada de Desenvolvimento (Passo a Passo SUTINF)
-            </h2>
-            <p className="text-muted">
-              Siga a ordem arquitetural rigorosa para construir os submódulos de Itinerários e Horários e destravar o Infoônibus:
-            </p>
-          </div>
-        </div>
+        <h2>
+          <FolderTree size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
+          Árvore de Ficheiros Esperada dentro do seu BoilerPlate_Front_end
+        </h2>
+        <pre className="code-block" style={{ marginTop: '0.85rem' }}>
+          <code>{`src/
+ ├── config/
+ │    └── modules.ts                     ← 1. Registar os 2 novos submódulos dentro de 'scl'
+ ├── App.tsx                             ← 2. Registar as rotas /scl/consultar-itinerario e /scl/consultar-horarios
+ └── modulos/
+      └── SCL/
+           ├── SCLMenu.tsx               ← 3. Adicionar os 2 novos Cards no menu do SCL
+           ├── RelatorioLinha/           ← (Use esta pasta existente como modelo!)
+           ├── ConsultarItinerario/      ← 4. CRIAR SUBMÓDULO 1:
+           │    ├── types/               (typesItinerario.ts + index.ts)
+           │    ├── services/            (itinerarioService.ts -> GET /linhas/:codigo/itinerario)
+           │    ├── hooks/               (useItinerarioData.ts)
+           │    ├── components/          (FormSearch.tsx, ViasList.tsx, Loading.tsx, ErrorMessage.tsx)
+           │    └── ConsultarItinerario.tsx  ← (Ficheiro final que compila os hooks e components!)
+           │
+           └── ConsultarHorarios/        ← 5. CRIAR SUBMÓDULO 2:
+                ├── types/               (typesHorarios.ts + index.ts)
+                ├── services/            (horariosService.ts -> GET /linhas/:codigo/horarios)
+                ├── hooks/               (useHorariosData.ts)
+                ├── components/          (FormSearch.tsx, HorariosTable.tsx, Loading.tsx, ErrorMessage.tsx)
+                └── ConsultarHorarios.tsx    ← (Ficheiro final que compila os hooks e components!)`}</code>
+        </pre>
+      </section>
 
+      {/* Checklist Guiado das 5 Estações */}
+      <section className="section-card">
+        <h2>
+          <Layers size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
+          Roteiro das Estações de Implementação no SCL
+        </h2>
         <div className="checklist-box" style={{ marginTop: '1rem' }}>
-          {FRONTEND_STEPS.map((step) => {
+          {SCL_CHALLENGE_STATIONS.map((step) => {
             const done = completedItems.includes(step.key);
             return (
               <div
@@ -713,58 +476,21 @@ export const FrontendChallengeScreen: React.FC<FrontendChallengeScreenProps> = (
         </div>
       </section>
 
-      {/* Diretrizes de Excelência e Governança SUTINF */}
-      <section className="section-card">
-        <div className="cards-grid three-cols">
-          <div className="glass-card" style={{ padding: '1.25rem', borderLeft: '4px solid #3b82f6' }}>
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1rem' }}>
-              <Cpu size={18} color="#3b82f6" /> Regra das 50 Linhas
-            </h3>
-            <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.4rem', lineHeight: 1.5 }}>
-              Todo custom hook (<code>useItinerario.ts</code> e <code>useHorarios.ts</code>) deve ter no máximo 50 linhas de código, mantendo responsabilidade única e alta coesão.
-            </p>
-          </div>
-
-          <div className="glass-card" style={{ padding: '1.25rem', borderLeft: '4px solid #10b981' }}>
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1rem' }}>
-              <Zap size={18} color="#10b981" /> Dual-Mode Resiliente
-            </h3>
-            <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.4rem', lineHeight: 1.5 }}>
-              Seus services devem tentar conectar ao backend em <code>/api</code>. Se a API estiver offline ou em manutenção, o sistema faz fallback gracioso para mock sem quebrar a tela.
-            </p>
-          </div>
-
-          <div className="glass-card" style={{ padding: '1.25rem', borderLeft: '4px solid #8b5cf6' }}>
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1rem' }}>
-              <Shield size={18} color="#8b5cf6" /> Guardas CDP
-            </h3>
-            <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.4rem', lineHeight: 1.5 }}>
-              No <code>SCLMenu.tsx</code>, utilize o componente <code>&lt;Can action="LEITURA"&gt;</code> para proteger a navegação conforme o perfil (Aluno, Operador ou Administrador).
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Painel Padronizado de Revisão de PR e Submissão */}
+      {/* Submissão do Desafio Front-end (Módulo SCL) */}
       <ChallengeSubmissionPanel
         challengeId="challenge-frontend-ui"
-        title="Entrega do Repositório & Checklist dos Submódulos SCL & Infoônibus"
-        subtitle="Confirme o cumprimento das 5 camadas, Dual-Mode e cole o link do seu Merge Request / Repositório Git."
+        title="Entrega das 2 Novas Telas no Módulo SCL (BoilerPlate_Front_end)"
+        subtitle="Confirme se seguiu o fluxo completo desde src/config/modules.ts até os ficheiros .tsx compiladores e envie o link do repositório."
         requireRepoUrl={true}
         existingSubmission={submission}
         onSaveSubmission={onSaveSubmission}
         prChecklist={[
-          'Criei os submódulos src/modulos/SCL/Itinerarios/ e Horarios/ seguindo as 5 camadas canônicas?',
-          'Isolei as chamadas HTTP em itinerarioService.ts e horarioService.ts consumindo o backend NestJS (:8097)?',
-          'Implementei a resiliência Dual-Mode (conexão real com fallback gracioso para mock se offline)?',
-          'Os custom hooks useItinerario e useHorarios respeitam a regra de ouro de ter menos de 50 linhas?',
-          'Tratei os 4 estados obrigatórios de UI: Loading/Skeleton, Erro de Rede, Lista Vazia e Sucesso com dados?',
-          'Adicionei os novos submódulos no SCLMenu.tsx protegidos por guardas de permissão CDP <Can action="LEITURA">?',
-          'Integrei o projeto final Infoônibus no módulo VOL (src/modulos/SCL/Vol/VolDesafio.tsx) com o mapa e rotas?',
+          'Registei os submódulos consultar-itinerario e consultar-horarios em src/config/modules.ts, no SCLMenu.tsx e no src/App.tsx?',
+          'Isolei as chamadas para GET /linhas/:codigo/itinerario e GET /linhas/:codigo/horarios nas pastas services/ usando o api global?',
+          'Separei estados e buscas em micro-hooks dentro de hooks/ e dividi a interface em micro-componentes dentro de components/?',
+          'Os ficheiros finais ConsultarItinerario.tsx e ConsultarHorarios.tsx atuam apenas como compiladores/orquestradores limpos e sem "any"?',
         ]}
       />
     </div>
   );
 };
-
-export default FrontendChallengeScreen;

@@ -15,6 +15,7 @@ import { QuizCenterScreen } from './screens/QuizCenterScreen';
 import { SqlChallengeScreen } from './screens/SqlChallengeScreen';
 import { BackendChallengeScreen } from './screens/BackendChallengeScreen';
 import { FrontendChallengeScreen } from './screens/FrontendChallengeScreen';
+import { FullStackChallengeScreen } from './screens/FullStackChallengeScreen';
 import { CertificateScreen } from './screens/CertificateScreen';
 import { CertificateValidationScreen } from './screens/CertificateValidationScreen';
 
@@ -76,6 +77,7 @@ export const App: React.FC = () => {
               if (screen === 'sql-challenge') handleNavigate('desafio-sql');
               if (screen === 'backend-challenge') handleNavigate('desafio-backend');
               if (screen === 'frontend-challenge') handleNavigate('desafio-frontend');
+              if (screen === 'fullstack-challenge' || screen === 'infoonibus-challenge') handleNavigate('desafio-infoonibus');
               if (screen === 'certificado') handleNavigate('certificado');
             }}
             onNavigate={handleNavigate}
@@ -201,6 +203,24 @@ export const App: React.FC = () => {
             submission={progress.challengeSubmissions?.['challenge-frontend-ui']}
             onSaveSubmission={saveChallenge}
             onOpenModule={handleOpenModule}
+            onNavigateFinalChallenge={() => handleNavigate('desafio-infoonibus')}
+          />
+        );
+
+      case 'desafio-infoonibus':
+      case 'fullstack-challenge':
+        return (
+          <FullStackChallengeScreen
+            completedItems={
+              progress.completedChecklists['challenge-fullstack-infoonibus'] ||
+              progress.completedChecklists['fullstack-challenge'] ||
+              []
+            }
+            onToggleItem={(key) => {
+              toggleChecklist('challenge-fullstack-infoonibus', key);
+            }}
+            submission={progress.challengeSubmissions?.['challenge-fullstack-infoonibus']}
+            onSaveSubmission={saveChallenge}
           />
         );
 
